@@ -9,10 +9,10 @@ async function searchMember(){
     return;
   }
 
-  result.innerHTML = `<p>กำลังค้นหาข้อมูล...</p>`;
+  result.innerHTML = `<div class="loading">กำลังค้นหาข้อมูล...</div>`;
 
   try{
-    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
+    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`);
     const data = await res.json();
 
     if(!data.success){
@@ -20,40 +20,106 @@ async function searchMember(){
       return;
     }
 
-    let paymentsHtml = "";
-
-    data.payments.forEach((p, index) => {
-      paymentsHtml += `
-        <div class="item">
-          <strong>รายการที่ ${index + 1}</strong><br>
-          วันที่: ${p.pay_date || "-"} เวลา: ${p.pay_time || "-"}<br>
-          ยอดลงทุน: ${Number(p.investment).toLocaleString()} บาท<br>
-          เลขอ้างอิง: ${p.reference || "-"}<br>
-          ค่าเดินทาง: ${p.travel_fee || "-"}<br>
-          เงินด่วน: ${p.urgent_money || "-"}<br>
-          เงินหลัก: ${p.principal_money || "-"}<br>
-          หมายเหตุ: ${p.note || "-"}
+    const paymentsHtml = data.payments.map((p, index) => `
+      <div class="payment-card">
+        <div class="payment-left">
+          <div class="payment-date">${formatDate(p.pay_date)}</div>
+          <div class="payment-time">เวลา ${formatTime(p.pay_time)}</div>
         </div>
-      `;
-    });
+
+        <div class="payment-main">
+          <span>ยอดลงทุน</span>
+          <strong>${money(p.investment)} บาท</strong>
+        </div>
+
+        <div class="payment-detail">
+          <p>เลขอ้างอิง: <b>${p.reference || "-"}</b></p>
+          <p>ค่าเดินทาง: <b>${p.travel_fee || 0}</b> บาท</p>
+          <p>เงินด่วน: <b>${p.urgent_money || 0}</b> บาท</p>
+          <p>เงินหลัก: <b>${p.principal_money || 0}</b> บาท</p>
+          <p>หมายเหตุ: <b>${p.note || "-"}</b></p>
+        </div>
+      </div>
+    `).join("");
 
     result.innerHTML = `
-      <div class="card">
-        <h2>${data.member.fullname}</h2>
-        <p>เลขบัตรประชาชน: ${data.member.citizen_id}</p>
-        <p>เบอร์โทรศัพท์: ${data.member.phone}</p>
+      <section class="found-box">
+        <div class="found-icon">✓</div>
+        <div>
+          <h2>พบข้อมูลสมาชิก</h2>
+          <p>ข้อมูลสำหรับตรวจสอบรายการลงทุนของท่าน</p>
+        </div>
+      </section>
 
-        <hr>
+      <section class="member-card">
+        <h3>ข้อมูลสมาชิก</h3>
 
-        <p>ยอดลงทุนรวมทั้งหมด</p>
-        <div class="total">${Number(data.totalInvestment).toLocaleString()} บาท</div>
+        <div class="member-grid">
+          <div>
+            <span>ชื่อ-นามสกุล</span>
+            <strong>${data.member.fullname}</strong>
+          </div>
+          <div>
+            <span>เลขบัตรประชาชน</span>
+            <strong>${formatCitizenId(data.member.citizen_id)}</strong>
+          </div>
+          <div>
+            <span>เบอร์โทรศัพท์</span>
+            <strong>${data.member.phone}</strong>
+          </div>
+        </div>
+      </section>
 
+      <section class="summary-grid">
+        <div class="summary-card green">
+          <span>ยอดลงทุนสะสมทั้งหมด</span>
+          <strong>${money(data.totalInvestment)} บาท</strong>
+        </div>
+
+        <div class="summary-card blue">
+          <span>จำนวนรายการลงทุน</span>
+          <strong>${data.payments.length} รายการ</strong>
+        </div>
+      </section>
+
+      <section class="history">
         <h3>ประวัติการลงทุน</h3>
-        ${paymentsHtml || "<p>ยังไม่มีรายการลงทุน</p>"}
-      </div>
+        ${paymentsHtml || `<p class="empty">ยังไม่มีรายการลงทุน</p>`}
+      </section>
+
+      <section class="notice">
+        หากข้อมูลไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อทำการตรวจสอบ
+      </section>
     `;
 
   }catch(error){
     result.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
   }
+}
+
+function money(value){
+  return Number(value || 0).toLocaleString("th-TH");
+}
+
+function formatCitizenId(id){
+  const x = String(id || "");
+  if(x.length !== 13) return x;
+  return `${x[0]}-${x.slice(1,5)}-${x.slice(5,10)}-${x.slice(10,12)}-${x[12]}`;
+}
+
+function formatDate(value){
+  if(!value) return "-";
+  const d = new Date(value);
+  if(isNaN(d)) return value;
+  return d.toLocaleDateString("th-TH");
+}
+
+function formatTime(value){
+  if(!value) return "-";
+  const d = new Date(value);
+  if(isNaN(d)) return value;
+  return d.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
