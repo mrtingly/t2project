@@ -1,356 +1,74 @@
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
+<!DOCTYPE html>
 
-body{
-  font-family:"Segoe UI",Tahoma,sans-serif;
-  background:#f3f7fd;
-  color:#0f2454;
-}
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตรวจสอบข้อมูลสมาชิก</title>
 
-.topbar{
-  background:linear-gradient(135deg,#003f9e,#0057d9);
-  color:white;
-  padding:26px 44px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+<link rel="stylesheet" href="style.css">
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap:18px;
-}
+</head>
+<body>
 
-.shield{
-  width:58px;
-  height:58px;
-  border:3px solid white;
-  border-radius:18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:30px;
-  font-weight:bold;
-}
+<header class="topbar">
 
-.brand h1{
-  font-size:34px;
-  margin-bottom:6px;
-}
+  <div class="brand">
 
-.brand p{
-  font-size:18px;
-  opacity:.95;
-}
+```
+<div class="shield">
+  ✓
+</div>
 
-.secure-text{
-  font-size:16px;
-}
+<div>
+  <h1>ตรวจสอบข้อมูลสมาชิก</h1>
+  <p>กรุณากรอกเลขบัตรประชาชนเพื่อค้นหาข้อมูล</p>
+</div>
+```
 
-.page{
-  padding:24px 34px;
-}
+  </div>
 
-.search-box{
-  background:white;
-  border:1px solid #cfe0ff;
-  border-radius:18px;
-  padding:28px 34px;
-  margin-bottom:22px;
-  box-shadow:0 12px 30px rgba(0,63,158,.06);
-}
+  <div class="secure-text">
+    🔒 ข้อมูลของท่านปลอดภัย
+  </div>
 
-.search-label{
-  font-size:18px;
-  margin-bottom:12px;
-  font-weight:600;
-}
+</header>
 
-.search-row{
-  display:grid;
-  grid-template-columns:1fr 230px;
-  gap:18px;
-}
+<main class="page">
 
-input{
-  height:58px;
-  border:1px solid #bdd0ee;
-  border-radius:10px;
-  padding:0 22px;
-  font-size:24px;
-  color:#0f2454;
-}
+  <section class="search-box">
 
-button{
-  height:58px;
-  border:0;
-  border-radius:10px;
-  background:#0057d9;
-  color:white;
-  font-size:19px;
-  font-weight:700;
-  cursor:pointer;
-}
+```
+<div class="search-label">
+  กรอกเลขบัตรประชาชน 13 หลัก
+</div>
 
-button:hover{
-  background:#0047b5;
-}
+<div class="search-row">
 
-.hint{
-  margin-top:14px;
-  color:#0057d9;
-  font-weight:600;
-}
+  <input
+    id="citizenId"
+    type="text"
+    maxlength="13"
+    placeholder="กรอกเลขบัตรประชาชน">
 
-.found-box{
-  background:linear-gradient(180deg,#f7fffb,#ffffff);
-  border:1px solid #d6efe1;
-  border-radius:18px;
-  padding:26px;
-  display:flex;
-  gap:22px;
-  align-items:center;
-  margin-bottom:18px;
-}
+  <button onclick="searchMember()">
+    🔍 ค้นหาข้อมูล
+  </button>
 
-.found-icon{
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:#07883f;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:36px;
-  font-weight:bold;
-}
+</div>
 
-.found-box h2{
-  color:#087a3a;
-  font-size:28px;
-}
+<p class="hint">
+  🛡 ระบบจะค้นหาข้อมูลเฉพาะของท่านเท่านั้น
+</p>
+```
 
-.found-box p{
-  margin-top:5px;
-  color:#29416f;
-}
+  </section>
 
-.member-card{
-  background:white;
-  border:1px solid #d2e2ff;
-  border-radius:18px;
-  padding:24px;
-  margin-bottom:18px;
-}
+  <div id="result"></div>
 
-.member-card h3{
-  color:#0057d9;
-  font-size:24px;
-  margin-bottom:18px;
-}
+</main>
 
-.member-grid{
-  border:1px solid #d8e5fb;
-  border-radius:14px;
-  padding:22px;
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:24px;
-}
+<script src="app.js"></script>
 
-.member-grid span{
-  display:block;
-  color:#546681;
-  font-weight:600;
-  margin-bottom:8px;
-}
-
-.member-grid strong{
-  font-size:24px;
-  color:#0a2f84;
-}
-
-.summary-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:22px;
-  margin-bottom:18px;
-}
-
-.summary-card{
-  border-radius:18px;
-  padding:28px 36px;
-  display:flex;
-  align-items:center;
-  gap:24px;
-  min-height:130px;
-}
-
-.summary-card .icon{
-  width:76px;
-  height:76px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:36px;
-}
-
-.summary-card span{
-  display:block;
-  font-size:18px;
-  margin-bottom:6px;
-  font-weight:700;
-}
-
-.summary-card strong{
-  font-size:46px;
-}
-
-.green{
-  background:#effcf5;
-  border:1px solid #bfead0;
-  color:#07883f;
-}
-
-.green .icon{
-  background:#dff7e9;
-}
-
-.blue{
-  background:#f2f7ff;
-  border:1px solid #c7ddff;
-  color:#0057d9;
-}
-
-.blue .icon{
-  background:#e3efff;
-}
-
-.history{
-  background:white;
-  border:1px solid #d2e2ff;
-  border-radius:18px;
-  padding:22px;
-}
-
-.history h3{
-  color:#0057d9;
-  font-size:24px;
-  margin-bottom:18px;
-}
-
-.payment-card{
-  display:grid;
-  grid-template-columns:190px 170px 1fr;
-  gap:22px;
-  align-items:center;
-  border:1px solid #e1e8f4;
-  border-radius:16px;
-  padding:18px 22px;
-  margin-bottom:12px;
-  background:#fff;
-}
-
-.payment-date{
-  font-size:20px;
-  font-weight:800;
-  color:#0a2f84;
-}
-
-.payment-time{
-  margin-top:5px;
-  color:#29416f;
-}
-
-.payment-main span{
-  display:block;
-  color:#546681;
-  font-weight:700;
-}
-
-.payment-main strong{
-  font-size:28px;
-  color:#0a2f84;
-}
-
-.payment-detail{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:14px;
-}
-
-.payment-detail p{
-  color:#29416f;
-  font-size:15px;
-}
-
-.payment-detail b{
-  display:block;
-  color:#0a2f84;
-  margin-top:4px;
-  font-size:16px;
-}
-
-.notice{
-  margin-top:18px;
-  background:#f1f7ff;
-  border:1px solid #c7ddff;
-  border-radius:14px;
-  padding:18px 22px;
-  color:#0a2f84;
-  font-weight:600;
-}
-
-.error,
-.loading{
-  background:white;
-  border-radius:14px;
-  padding:20px;
-  margin-top:20px;
-  font-weight:700;
-}
-
-.error{
-  color:#dc2626;
-  border:1px solid #fecaca;
-}
-
-.loading{
-  color:#0057d9;
-  border:1px solid #bfdbfe;
-}
-
-@media(max-width:900px){
-  .topbar{
-    padding:22px;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:12px;
-  }
-
-  .brand h1{
-    font-size:26px;
-  }
-
-  .page{
-    padding:18px;
-  }
-
-  .search-row,
-  .member-grid,
-  .summary-grid,
-  .payment-card,
-  .payment-detail{
-    grid-template-columns:1fr;
-  }
-
-  .summary-card strong{
-    font-size:36px;
-  }
-}
+</body>
+</html>
