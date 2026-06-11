@@ -389,3 +389,22 @@ button:hover{
     grid-template-columns:1fr;
   }
 }
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.form-group label{
+  font-weight:700;
+  color:#0f2454;
+}
+
+.admin-submit{
+  grid-column:1 / -1;
+}
+
+#adminResult{
+  grid-column:1 / -1;
+}
