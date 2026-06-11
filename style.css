@@ -465,3 +465,15 @@ button:hover{
     grid-template-columns:1fr;
   }
 }
+
+.small-btn{
+  height:44px;
+  margin-top:8px;
+  font-size:15px;
+  border-radius:10px;
+  background:#0f766e;
+}
+
+.small-btn:hover{
+  background:#115e59;
+}
