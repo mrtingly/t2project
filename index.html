@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ตรวจสอบข้อมูลสมาชิก</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>ตรวจสอบข้อมูลสมาชิก</h1>
+  <p>กรอกเลขบัตรประชาชน 13 หลัก</p>
+
+  <input id="citizenId" type="text" maxlength="13" placeholder="เลขบัตรประชาชน">
+  <button onclick="searchMember()">ตรวจสอบข้อมูล</button>
+
+  <div id="result"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
