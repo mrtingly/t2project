@@ -16,62 +16,81 @@
       <p>บันทึกข้อมูลสมาชิกและรายการลงทุน</p>
     </div>
   </div>
-
-  <div class="secure-text">
-    🔒 Admin Area
-  </div>
+  <div class="secure-text">🔒 Admin Area</div>
 </header>
 
 <main class="page">
-
   <section class="search-box">
     <h2>บันทึกรายการลงทุน</h2>
 
     <div class="admin-form">
 
-      <label>รหัสผ่านแอดมิน</label>
-      <input id="password" type="password" placeholder="กรอกรหัสผ่านแอดมิน">
+      <div class="form-group">
+        <label>รหัสผ่านแอดมิน</label>
+        <input id="password" type="password" placeholder="กรอกรหัสผ่านแอดมิน">
+      </div>
 
-      <label>เลขบัตรประชาชน 13 หลัก</label>
-      <input id="citizen_id" type="text" maxlength="13" placeholder="1234567890123">
+      <div class="form-group">
+        <label>เลขบัตรประชาชน 13 หลัก</label>
+        <input id="citizen_id" type="text" maxlength="13" placeholder="1234567890123">
+      </div>
 
-      <label>ชื่อ-นามสกุล</label>
-      <input id="fullname" type="text" placeholder="นายสมชาย ใจดี">
+      <div class="form-group">
+        <label>ชื่อ-นามสกุล</label>
+        <input id="fullname" type="text" placeholder="นายสมชาย ใจดี">
+      </div>
 
-      <label>เบอร์โทรศัพท์</label>
-      <input id="phone" type="text" placeholder="0812345678">
+      <div class="form-group">
+        <label>เบอร์โทรศัพท์</label>
+        <input id="phone" type="text" placeholder="0812345678">
+      </div>
 
-      <label>วันที่จ่ายเงิน</label>
-      <input id="pay_date" type="text" placeholder="12/06/2569">
+      <div class="form-group">
+        <label>วันที่จ่ายเงิน</label>
+        <input id="pay_date" type="text" placeholder="12/06/2569">
+      </div>
 
-      <label>เวลา</label>
-      <input id="pay_time" type="text" placeholder="10:30">
+      <div class="form-group">
+        <label>เวลา</label>
+        <input id="pay_time" type="text" placeholder="10:30">
+      </div>
 
-      <label>ยอดลงทุน</label>
-      <input id="investment" type="number" placeholder="500">
+      <div class="form-group">
+        <label>ยอดลงทุน</label>
+        <input id="investment" type="number" placeholder="500">
+      </div>
 
-      <label>เลขอ้างอิง</label>
-      <input id="reference" type="text" placeholder="REF001">
+      <div class="form-group">
+        <label>เลขอ้างอิง</label>
+        <input id="reference" type="text" placeholder="REF001">
+      </div>
 
-      <label>ค่าเดินทาง</label>
-      <input id="travel_fee" type="number" placeholder="0">
+      <div class="form-group">
+        <label>ค่าเดินทาง</label>
+        <input id="travel_fee" type="number" placeholder="0">
+      </div>
 
-      <label>เงินด่วน</label>
-      <input id="urgent_money" type="number" placeholder="0">
+      <div class="form-group">
+        <label>เงินด่วน</label>
+        <input id="urgent_money" type="number" placeholder="0">
+      </div>
 
-      <label>เงินหลัก</label>
-      <input id="principal_money" type="number" placeholder="0">
+      <div class="form-group">
+        <label>เงินหลัก</label>
+        <input id="principal_money" type="number" placeholder="0">
+      </div>
 
-      <label>หมายเหตุ</label>
-      <input id="note" type="text" placeholder="หมายเหตุ">
+      <div class="form-group">
+        <label>หมายเหตุ</label>
+        <input id="note" type="text" placeholder="หมายเหตุ">
+      </div>
 
-      <button onclick="addPayment()">บันทึกข้อมูล</button>
+      <button class="admin-submit" onclick="addPayment()">บันทึกข้อมูล</button>
 
       <div id="adminResult"></div>
 
     </div>
   </section>
-
 </main>
 
 <script src="admin.js"></script>
