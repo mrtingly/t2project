@@ -8,15 +8,41 @@
 </head>
 <body>
 
-<div class="container">
-  <h1>ตรวจสอบข้อมูลสมาชิก</h1>
-  <p>กรอกเลขบัตรประชาชน 13 หลัก</p>
+<header class="topbar">
+  <div class="brand">
+    <div class="shield">✓</div>
+    <div>
+      <h1>ตรวจสอบข้อมูลสมาชิก</h1>
+      <p>กรุณากรอกเลขบัตรประชาชนเพื่อค้นหาข้อมูล</p>
+    </div>
+  </div>
 
-  <input id="citizenId" type="text" maxlength="13" placeholder="เลขบัตรประชาชน">
-  <button onclick="searchMember()">ตรวจสอบข้อมูล</button>
+  <div class="secure-text">🔒 ข้อมูลของท่านปลอดภัย</div>
+</header>
 
-  <div id="result"></div>
-</div>
+<main class="page">
+
+  <section class="search-box">
+    <div class="search-label">
+      กรอกเลขบัตรประชาชน 13 หลัก
+    </div>
+
+    <div class="search-row">
+      <input
+        id="citizenId"
+        type="text"
+        maxlength="13"
+        placeholder="กรอกเลขบัตรประชาชน"
+      >
+      <button onclick="searchMember()">🔍 ค้นหาข้อมูล</button>
+    </div>
+
+    <p class="hint">🛡 ระบบจะค้นหาข้อมูลเฉพาะของท่านเท่านั้น</p>
+  </section>
+
+  <section id="result"></section>
+
+</main>
 
 <script src="app.js"></script>
 </body>
