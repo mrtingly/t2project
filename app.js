@@ -1,26 +1,39 @@
 const API_URL = "https://script.google.com/macros/s/AKfycby58k-_g4GNZZmwRbsFiktc4YUTFlx9qHt8lx1YA7UP8CjEoeqMXkHvZiOwx-5dx_n6rg/exec";
 
-async function searchMember(){
-  const citizenId = document.getElementById("citizenId").value.trim().replace(/\D/g,"");
+async function searchMember() {
+  const input = document.getElementById("citizenId");
   const result = document.getElementById("result");
 
-  if(citizenId.length !== 13){
+  const citizenId = input.value.trim().replace(/\D/g, "");
+
+  if (citizenId.length !== 13) {
     result.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลัก</div>`;
     return;
   }
 
   result.innerHTML = `<div class="loading">กำลังค้นหาข้อมูล...</div>`;
 
-  try{
-    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`);
+  try {
+    const url = `${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`;
+    const res = await fetch(url);
     const data = await res.json();
 
-    if(!data.success){
-      result.innerHTML = `<div class="error">${data.message}</div>`;
+    if (!data.success) {
+      result.innerHTML = `<div class="error">${data.message || "ไม่พบข้อมูลสมาชิก"}</div>`;
       return;
     }
 
-    const paymentsHtml = data.payments.map((p) => `
+    const payments = Array.isArray(data.payments) ? data.payments : [];
+
+    const firstPaymentDate = payments.length
+      ? formatDate(payments[0].pay_date)
+      : "-";
+
+    const lastPaymentDate = payments.length
+      ? formatDate(payments[payments.length - 1].pay_date)
+      : "-";
+
+    const paymentsHtml = payments.map((p) => `
       <div class="payment-card">
 
         <div>
@@ -59,17 +72,17 @@ async function searchMember(){
         <div class="member-grid">
           <div>
             <span>ชื่อ-นามสกุล</span>
-            <strong>${data.member.fullname || "-"}</strong>
+            <strong>${data.member?.fullname || "-"}</strong>
           </div>
 
           <div>
             <span>เลขบัตรประชาชน</span>
-            <strong>${formatCitizenId(data.member.citizen_id)}</strong>
+            <strong>${formatCitizenId(data.member?.citizen_id)}</strong>
           </div>
 
           <div>
             <span>เบอร์โทรศัพท์</span>
-            <strong>${maskPhone(data.member.phone)}</strong>
+            <strong>${maskPhone(data.member?.phone)}</strong>
           </div>
         </div>
       </section>
@@ -87,7 +100,23 @@ async function searchMember(){
           <div class="icon">📄</div>
           <div>
             <span>จำนวนรายการลงทุน</span>
-            <strong>${data.payments.length}</strong> รายการ
+            <strong>${payments.length}</strong> รายการ
+          </div>
+        </div>
+
+        <div class="summary-card blue">
+          <div class="icon">📅</div>
+          <div>
+            <span>วันลงทุนครั้งแรก</span>
+            <strong>${firstPaymentDate}</strong>
+          </div>
+        </div>
+
+        <div class="summary-card green">
+          <div class="icon">🕒</div>
+          <div>
+            <span>วันลงทุนล่าสุด</span>
+            <strong>${lastPaymentDate}</strong>
           </div>
         </div>
       </section>
@@ -102,55 +131,76 @@ async function searchMember(){
       </section>
     `;
 
-  }catch(error){
+  } catch (error) {
     result.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
   }
 }
 
-function money(value){
+function money(value) {
   const num = Number(value || 0);
   return num.toLocaleString("th-TH");
 }
 
-function formatCitizenId(id){
-  const x = String(id || "").replace(/\D/g,"");
-  if(x.length !== 13) return x || "-";
-  return `${x[0]}-${x.slice(1,5)}-${x.slice(5,10)}-${x.slice(10,12)}-${x[12]}`;
+function formatCitizenId(id) {
+  const x = String(id || "").replace(/\D/g, "");
+  if (x.length !== 13) return x || "-";
+  return `${x[0]}-${x.slice(1, 5)}-${x.slice(5, 10)}-${x.slice(10, 12)}-${x[12]}`;
 }
 
-function maskPhone(phone){
-  const x = String(phone || "").replace(/\D/g,"");
-  if(x.length < 4) return "-";
-  return `${x.slice(0,2)}x-xxx-${x.slice(-4)}`;
+function maskPhone(phone) {
+  const x = String(phone || "").replace(/\D/g, "");
+  if (x.length < 4) return "-";
+  return `${x.slice(0, 2)}x-xxx-${x.slice(-4)}`;
 }
 
-function formatDate(value){
-  if(!value) return "-";
+function formatDate(value) {
+  if (!value) return "-";
 
-  const text = String(value);
+  const text = String(value).trim();
 
-  if(text.includes("T")){
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) {
+    return text;
+  }
+
+  if (text.includes("T")) {
     const d = new Date(text);
-    return d.toLocaleDateString("th-TH", {
-      day:"2-digit",
-      month:"2-digit",
-      year:"numeric"
-    });
+    if (isNaN(d)) return text;
+
+    let day = String(d.getDate()).padStart(2, "0");
+    let month = String(d.getMonth() + 1).padStart(2, "0");
+    let year = d.getFullYear();
+
+    if (year > 2600) {
+      year = year - 543;
+    }
+
+    if (year < 2400) {
+      year = year + 543;
+    }
+
+    return `${day}/${month}/${year}`;
   }
 
   return text;
 }
 
-function formatTime(value){
-  if(!value) return "-";
+function formatTime(value) {
+  if (!value) return "-";
 
-  const text = String(value);
+  const text = String(value).trim();
 
-  if(text.includes("T")){
+  if (/^\d{1,2}:\d{2}$/.test(text)) {
+    return text;
+  }
+
+  if (text.includes("T")) {
     const d = new Date(text);
+    if (isNaN(d)) return text;
+
     return d.toLocaleTimeString("th-TH", {
-      hour:"2-digit",
-      minute:"2-digit"
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
     });
   }
 
