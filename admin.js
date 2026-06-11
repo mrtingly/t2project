@@ -1,22 +1,18 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwUOkimec_D0XROnvf8zPmZ2acJsDh0ChOpklL9Fmm5JS9PrdGcIYRz3xrgVhDEnLOwEA/exec";
-
 const ADMIN_PASSWORD = "123456";
+
+let editingRowNumber = null;
+let editingPaymentId = null;
 
 function adminLogin() {
   const password = document.getElementById("loginPassword").value.trim();
-  const loginResult = document.getElementById("loginResult");
 
   if (password !== ADMIN_PASSWORD) {
-    loginResult.innerHTML = `
-      <div class="error">
-        รหัสผ่านไม่ถูกต้อง
-      </div>
-    `;
+    document.getElementById("loginResult").innerHTML = `<div class="error">รหัสผ่านไม่ถูกต้อง</div>`;
     return;
   }
 
   sessionStorage.setItem("admin_login", "true");
-
   showAdminPanel();
 }
 
@@ -26,9 +22,7 @@ function adminLogout() {
 }
 
 window.onload = function () {
-  const isLogin = sessionStorage.getItem("admin_login");
-
-  if (isLogin === "true") {
+  if (sessionStorage.getItem("admin_login") === "true") {
     showAdminPanel();
   }
 };
@@ -40,37 +34,159 @@ function showAdminPanel() {
 }
 
 async function loadDashboard() {
-  try {
-    const res = await fetch(`${API_URL}?action=getDashboard`);
-    const data = await res.json();
+  const res = await fetch(`${API_URL}?action=getDashboard`);
+  const data = await res.json();
 
-    if (!data.success) {
-      console.log("Dashboard load failed");
-      return;
-    }
+  if (!data.success) return;
 
-    document.getElementById("totalMembers").textContent =
-      Number(data.totalMembers || 0).toLocaleString("th-TH");
+  document.getElementById("totalMembers").textContent = Number(data.totalMembers || 0).toLocaleString("th-TH");
+  document.getElementById("totalInvestmentAll").textContent = Number(data.totalInvestment || 0).toLocaleString("th-TH");
+  document.getElementById("totalPayments").textContent = Number(data.totalPayments || 0).toLocaleString("th-TH");
+  document.getElementById("todayInvestment").textContent = Number(data.todayInvestment || 0).toLocaleString("th-TH");
+}
 
-    document.getElementById("totalInvestmentAll").textContent =
-      Number(data.totalInvestment || 0).toLocaleString("th-TH");
+async function findMemberForAdmin() {
+  const citizenId = document.getElementById("citizen_id").value.trim().replace(/\D/g, "");
+  const adminResult = document.getElementById("adminResult");
 
-    document.getElementById("totalPayments").textContent =
-      Number(data.totalPayments || 0).toLocaleString("th-TH");
-
-    document.getElementById("todayInvestment").textContent =
-      Number(data.todayInvestment || 0).toLocaleString("th-TH");
-
-  } catch (error) {
-    console.log("Dashboard error:", error);
+  if (citizenId.length !== 13) {
+    adminResult.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลักก่อนค้นหา</div>`;
+    return;
   }
+
+  adminResult.innerHTML = `<div class="loading">กำลังค้นหาสมาชิก...</div>`;
+
+  const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
+  const data = await res.json();
+
+  if (!data.success) {
+    adminResult.innerHTML = `<div class="error">ไม่พบสมาชิก สามารถกรอกชื่อและเบอร์เพื่อเพิ่มสมาชิกใหม่ได้</div>`;
+    document.getElementById("memberHistory").innerHTML = "";
+    return;
+  }
+
+  document.getElementById("fullname").value = data.member.fullname || "";
+  document.getElementById("phone").value = data.member.phone || "";
+
+  renderMemberHistory(data.payments || []);
+
+  adminResult.innerHTML = `<div class="loading">✅ พบสมาชิกและประวัติรายการลงทุน</div>`;
+}
+
+function renderMemberHistory(payments) {
+  const box = document.getElementById("memberHistory");
+
+  if (!payments.length) {
+    box.innerHTML = `<div class="notice">ยังไม่มีรายการลงทุน</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="history admin-history">
+      <h3>ประวัติรายการลงทุน</h3>
+      ${payments.map(p => `
+        <div class="payment-card">
+          <div>
+            <div class="payment-date">${p.pay_date || "-"}</div>
+            <div class="payment-time">เวลา ${p.pay_time || "-"} น.</div>
+          </div>
+
+          <div class="payment-main">
+            <span>ยอดลงทุน</span>
+            <strong>${Number(p.investment || 0).toLocaleString("th-TH")} บาท</strong>
+          </div>
+
+          <div class="payment-detail">
+            <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
+            <p>ค่าเดินทาง <b>${p.travel_fee || 0}</b></p>
+            <p>เงินด่วน <b>${p.urgent_money || 0}</b></p>
+            <p>เงินหลัก <b>${p.principal_money || 0}</b></p>
+            <p>หมายเหตุ <b>${p.note || "-"}</b></p>
+          </div>
+
+          <button class="small-btn" onclick='startEdit(${JSON.stringify(p)})'>แก้ไข</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function startEdit(p) {
+  editingRowNumber = p.rowNumber;
+  editingPaymentId = p.payment_id;
+
+  document.getElementById("citizen_id").value = p.citizen_id || "";
+  document.getElementById("pay_date").value = p.pay_date || "";
+  document.getElementById("pay_time").value = p.pay_time || "";
+  document.getElementById("investment").value = p.investment || "";
+  document.getElementById("reference").value = p.reference || "";
+  document.getElementById("travel_fee").value = p.travel_fee || "";
+  document.getElementById("urgent_money").value = p.urgent_money || "";
+  document.getElementById("principal_money").value = p.principal_money || "";
+  document.getElementById("note").value = p.note || "";
+
+  document.getElementById("updateBtn").classList.remove("hidden");
+  document.getElementById("cancelEditBtn").classList.remove("hidden");
+
+  document.getElementById("adminResult").innerHTML = `<div class="loading">กำลังแก้ไขรายการ ${p.payment_id}</div>`;
+}
+
+async function updatePayment() {
+  if (!editingRowNumber) {
+    document.getElementById("adminResult").innerHTML = `<div class="error">ยังไม่ได้เลือกรายการที่จะแก้ไข</div>`;
+    return;
+  }
+
+  const payload = buildPayload("updatePayment");
+  payload.rowNumber = editingRowNumber;
+  payload.payment_id = editingPaymentId;
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    document.getElementById("adminResult").innerHTML = `<div class="error">${data.message}</div>`;
+    return;
+  }
+
+  document.getElementById("adminResult").innerHTML = `<div class="loading">✅ แก้ไขข้อมูลเรียบร้อยแล้ว</div>`;
+
+  const citizenId = document.getElementById("citizen_id").value;
+  cancelEdit();
+  await loadDashboard();
+  await reloadMember(citizenId);
 }
 
 async function addPayment() {
-  const adminResult = document.getElementById("adminResult");
+  const payload = buildPayload("addPayment");
 
-  const payload = {
-    action: "addPayment",
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    document.getElementById("adminResult").innerHTML = `<div class="error">${data.message}</div>`;
+    return;
+  }
+
+  document.getElementById("adminResult").innerHTML = `<div class="loading">✅ บันทึกข้อมูลเรียบร้อยแล้ว</div>`;
+
+  const citizenId = payload.citizen_id;
+  clearForm();
+  await loadDashboard();
+  await reloadMember(citizenId);
+}
+
+function buildPayload(action) {
+  return {
+    action,
     password: ADMIN_PASSWORD,
     citizen_id: document.getElementById("citizen_id").value.trim().replace(/\D/g, ""),
     fullname: document.getElementById("fullname").value.trim(),
@@ -84,76 +200,25 @@ async function addPayment() {
     principal_money: document.getElementById("principal_money").value.trim() || 0,
     note: document.getElementById("note").value.trim()
   };
+}
 
-  if (payload.citizen_id.length !== 13) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลัก</div>`;
-    return;
+async function reloadMember(citizenId) {
+  if (!citizenId) return;
+
+  const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
+  const data = await res.json();
+
+  if (data.success) {
+    renderMemberHistory(data.payments || []);
   }
+}
 
-  if (!payload.fullname) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกชื่อ-นามสกุล</div>`;
-    return;
-  }
+function cancelEdit() {
+  editingRowNumber = null;
+  editingPaymentId = null;
 
-  if (!payload.phone) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกเบอร์โทรศัพท์</div>`;
-    return;
-  }
-
-  if (!payload.pay_date) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกวันที่จ่ายเงิน</div>`;
-    return;
-  }
-
-  if (!payload.pay_time) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกเวลา</div>`;
-    return;
-  }
-
-  if (!payload.investment || Number(payload.investment) <= 0) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกยอดลงทุนให้ถูกต้อง</div>`;
-    return;
-  }
-
-  adminResult.innerHTML = `
-    <div class="loading">
-      กำลังบันทึกข้อมูล...
-    </div>
-  `;
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      adminResult.innerHTML = `
-        <div class="error">
-          ${data.message || "บันทึกไม่สำเร็จ"}
-        </div>
-      `;
-      return;
-    }
-
-    adminResult.innerHTML = `
-      <div class="loading">
-        ✅ บันทึกข้อมูลเรียบร้อยแล้ว
-      </div>
-    `;
-
-    clearForm();
-    loadDashboard();
-
-  } catch (error) {
-    adminResult.innerHTML = `
-      <div class="error">
-        เกิดข้อผิดพลาดในการเชื่อมต่อ
-      </div>
-    `;
-  }
+  document.getElementById("updateBtn").classList.add("hidden");
+  document.getElementById("cancelEditBtn").classList.add("hidden");
 }
 
 function clearForm() {
@@ -168,34 +233,4 @@ function clearForm() {
   document.getElementById("urgent_money").value = "";
   document.getElementById("principal_money").value = "";
   document.getElementById("note").value = "";
-}
-
-async function findMemberForAdmin() {
-  const citizenId = document.getElementById("citizen_id").value.trim().replace(/\D/g, "");
-  const adminResult = document.getElementById("adminResult");
-
-  if (citizenId.length !== 13) {
-    adminResult.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลักก่อนค้นหา</div>`;
-    return;
-  }
-
-  adminResult.innerHTML = `<div class="loading">กำลังค้นหาสมาชิก...</div>`;
-
-  try {
-    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`);
-    const data = await res.json();
-
-    if (!data.success) {
-      adminResult.innerHTML = `<div class="error">ไม่พบสมาชิก สามารถกรอกชื่อและเบอร์เพื่อเพิ่มสมาชิกใหม่ได้</div>`;
-      return;
-    }
-
-    document.getElementById("fullname").value = data.member.fullname || "";
-    document.getElementById("phone").value = data.member.phone || "";
-
-    adminResult.innerHTML = `<div class="loading">✅ พบสมาชิกและเติมข้อมูลเรียบร้อยแล้ว</div>`;
-
-  } catch (error) {
-    adminResult.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการค้นหาสมาชิก</div>`;
-  }
 }
