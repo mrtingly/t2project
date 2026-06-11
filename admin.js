@@ -169,3 +169,33 @@ function clearForm() {
   document.getElementById("principal_money").value = "";
   document.getElementById("note").value = "";
 }
+
+async function findMemberForAdmin() {
+  const citizenId = document.getElementById("citizen_id").value.trim().replace(/\D/g, "");
+  const adminResult = document.getElementById("adminResult");
+
+  if (citizenId.length !== 13) {
+    adminResult.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลักก่อนค้นหา</div>`;
+    return;
+  }
+
+  adminResult.innerHTML = `<div class="loading">กำลังค้นหาสมาชิก...</div>`;
+
+  try {
+    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      adminResult.innerHTML = `<div class="error">ไม่พบสมาชิก สามารถกรอกชื่อและเบอร์เพื่อเพิ่มสมาชิกใหม่ได้</div>`;
+      return;
+    }
+
+    document.getElementById("fullname").value = data.member.fullname || "";
+    document.getElementById("phone").value = data.member.phone || "";
+
+    adminResult.innerHTML = `<div class="loading">✅ พบสมาชิกและเติมข้อมูลเรียบร้อยแล้ว</div>`;
+
+  } catch (error) {
+    adminResult.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการค้นหาสมาชิก</div>`;
+  }
+}
