@@ -408,3 +408,20 @@ button:hover{
 #adminResult{
   grid-column:1 / -1;
 }
+
+.hidden{
+  display:none;
+}
+
+.form-group.full{
+  grid-column:1 / -1;
+}
+
+.admin-logout{
+  grid-column:1 / -1;
+  background:#64748b;
+}
+
+.admin-logout:hover{
+  background:#475569;
+}
