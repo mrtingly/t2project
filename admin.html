@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - บันทึกข้อมูลสมาชิก</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="shield">A</div>
+    <div>
+      <h1>ระบบแอดมิน</h1>
+      <p>บันทึกข้อมูลสมาชิกและรายการลงทุน</p>
+    </div>
+  </div>
+
+  <div class="secure-text">
+    🔒 Admin Area
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="search-box">
+    <h2>บันทึกรายการลงทุน</h2>
+
+    <div class="admin-form">
+
+      <label>รหัสผ่านแอดมิน</label>
+      <input id="password" type="password" placeholder="กรอกรหัสผ่านแอดมิน">
+
+      <label>เลขบัตรประชาชน 13 หลัก</label>
+      <input id="citizen_id" type="text" maxlength="13" placeholder="1234567890123">
+
+      <label>ชื่อ-นามสกุล</label>
+      <input id="fullname" type="text" placeholder="นายสมชาย ใจดี">
+
+      <label>เบอร์โทรศัพท์</label>
+      <input id="phone" type="text" placeholder="0812345678">
+
+      <label>วันที่จ่ายเงิน</label>
+      <input id="pay_date" type="text" placeholder="12/06/2569">
+
+      <label>เวลา</label>
+      <input id="pay_time" type="text" placeholder="10:30">
+
+      <label>ยอดลงทุน</label>
+      <input id="investment" type="number" placeholder="500">
+
+      <label>เลขอ้างอิง</label>
+      <input id="reference" type="text" placeholder="REF001">
+
+      <label>ค่าเดินทาง</label>
+      <input id="travel_fee" type="number" placeholder="0">
+
+      <label>เงินด่วน</label>
+      <input id="urgent_money" type="number" placeholder="0">
+
+      <label>เงินหลัก</label>
+      <input id="principal_money" type="number" placeholder="0">
+
+      <label>หมายเหตุ</label>
+      <input id="note" type="text" placeholder="หมายเหตุ">
+
+      <button onclick="addPayment()">บันทึกข้อมูล</button>
+
+      <div id="adminResult"></div>
+
+    </div>
+  </section>
+
+</main>
+
+<script src="admin.js"></script>
+
+</body>
+</html>
