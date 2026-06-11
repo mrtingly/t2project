@@ -20,15 +20,26 @@
 </header>
 
 <main class="page">
-  <section class="search-box">
+
+  <section id="loginBox" class="search-box">
+    <h2>เข้าสู่ระบบแอดมิน</h2>
+
+    <div class="admin-form">
+      <div class="form-group full">
+        <label>รหัสผ่านแอดมิน</label>
+        <input id="loginPassword" type="password" placeholder="กรอกรหัสผ่านแอดมิน">
+      </div>
+
+      <button class="admin-submit" onclick="adminLogin()">เข้าสู่ระบบ</button>
+
+      <div id="loginResult"></div>
+    </div>
+  </section>
+
+  <section id="adminBox" class="search-box hidden">
     <h2>บันทึกรายการลงทุน</h2>
 
     <div class="admin-form">
-
-      <div class="form-group">
-        <label>รหัสผ่านแอดมิน</label>
-        <input id="password" type="password" placeholder="กรอกรหัสผ่านแอดมิน">
-      </div>
 
       <div class="form-group">
         <label>เลขบัตรประชาชน 13 หลัก</label>
@@ -80,17 +91,20 @@
         <input id="principal_money" type="number" placeholder="0">
       </div>
 
-      <div class="form-group">
+      <div class="form-group full">
         <label>หมายเหตุ</label>
         <input id="note" type="text" placeholder="หมายเหตุ">
       </div>
 
       <button class="admin-submit" onclick="addPayment()">บันทึกข้อมูล</button>
 
+      <button class="admin-logout" onclick="adminLogout()">ออกจากระบบ</button>
+
       <div id="adminResult"></div>
 
     </div>
   </section>
+
 </main>
 
 <script src="admin.js"></script>
