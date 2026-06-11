@@ -1,68 +1,101 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ตรวจสอบข้อมูลสมาชิก</title>
-
+<title>ระบบตรวจสอบข้อมูลสมาชิก</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
+
 <body>
 
 <header class="topbar">
-
   <div class="brand">
-
-<div class="shield">
-  ✓
-</div>
-
-<div>
-  <h1>ตรวจสอบข้อมูลสมาชิก</h1>
-  <p>กรุณากรอกเลขบัตรประชาชนเพื่อค้นหาข้อมูล</p>
-</div>
-
+    <div class="shield">✓</div>
+    <div>
+      <h1>ระบบตรวจสอบข้อมูลสมาชิก</h1>
+      <p>Member Investment Verification System</p>
+    </div>
   </div>
 
-  <div class="secure-text">
-    🔒 ข้อมูลของท่านปลอดภัย
-  </div>
-
+  <a href="admin.html" class="admin-link">🔐 สำหรับแอดมิน</a>
 </header>
 
-<main class="page">
+<main class="home-page">
 
-  <section class="search-box">
+  <section class="hero-card">
+    <div class="hero-content">
+      <span class="badge">ระบบตรวจสอบข้อมูลส่วนตัว</span>
 
-<div class="search-label">
-  กรอกเลขบัตรประชาชน 13 หลัก
-</div>
+      <h2>ตรวจสอบข้อมูลสมาชิก<br>และประวัติการลงทุนของท่าน</h2>
 
-<div class="search-row">
+      <p>
+        กรุณากรอกเลขบัตรประชาชน 13 หลัก เพื่อดูข้อมูลสมาชิก
+        ยอดลงทุนสะสม และรายการลงทุนทั้งหมดของท่าน
+      </p>
 
-  <input
-    id="citizenId"
-    type="text"
-    maxlength="13"
-    placeholder="กรอกเลขบัตรประชาชน">
+      <div class="search-panel">
+        <label>เลขบัตรประชาชน 13 หลัก</label>
 
-  <button onclick="searchMember()">
-    🔍 ค้นหาข้อมูล
-  </button>
+        <div class="home-search-row">
+          <input
+            id="citizenId"
+            type="text"
+            maxlength="13"
+            placeholder="กรอกเลขบัตรประชาชนของท่าน">
 
-</div>
+          <button onclick="searchMember()">ตรวจสอบข้อมูล</button>
+        </div>
 
-<p class="hint">
-  🛡 ระบบจะค้นหาข้อมูลเฉพาะของท่านเท่านั้น
-</p>
+        <small>ระบบจะแสดงเฉพาะข้อมูลของเลขบัตรประชาชนที่ค้นหาเท่านั้น</small>
+      </div>
+    </div>
 
+    <div class="hero-side">
+      <div class="stat-box">
+        <span>ข้อมูลที่ตรวจสอบได้</span>
+        <strong>ยอดลงทุนสะสม</strong>
+      </div>
+
+      <div class="stat-box">
+        <span>แสดงผลแบบปลอดภัย</span>
+        <strong>เฉพาะเจ้าของข้อมูล</strong>
+      </div>
+
+      <div class="stat-box highlight">
+        <span>รองรับ</span>
+        <strong>ประวัติหลายรายการ</strong>
+      </div>
+    </div>
   </section>
 
-  <div id="result"></div>
+  <section id="result" class="result-area"></section>
+
+  <section class="info-grid">
+    <div class="info-card">
+      <div class="info-icon">🔎</div>
+      <h3>ค้นหาข้อมูลตนเอง</h3>
+      <p>กรอกเลขบัตรประชาชนเพื่อดูข้อมูลสมาชิกและรายการลงทุน</p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-icon">📊</div>
+      <h3>สรุปยอดอัตโนมัติ</h3>
+      <p>ระบบรวมยอดลงทุนทั้งหมดและแสดงจำนวนรายการให้อัตโนมัติ</p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-icon">🔐</div>
+      <h3>แยกส่วนแอดมิน</h3>
+      <p>ผู้ดูแลระบบสามารถเข้าหน้าแอดมินเพื่อจัดการข้อมูลได้</p>
+    </div>
+  </section>
 
 </main>
+
+<footer class="site-footer">
+  <p>หากข้อมูลไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อตรวจสอบ</p>
+</footer>
 
 <script src="app.js"></script>
 
