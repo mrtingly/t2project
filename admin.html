@@ -6,6 +6,7 @@
 <title>Admin - บันทึกข้อมูลสมาชิก</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header class="topbar">
@@ -16,6 +17,7 @@
       <p>บันทึกข้อมูลสมาชิกและรายการลงทุน</p>
     </div>
   </div>
+
   <div class="secure-text">🔒 Admin Area</div>
 </header>
 
@@ -37,6 +39,35 @@
   </section>
 
   <section id="adminBox" class="search-box hidden">
+
+    <h2>Dashboard</h2>
+
+    <div class="admin-dashboard">
+      <div class="dash-card green">
+        <span>สมาชิกทั้งหมด</span>
+        <strong id="totalMembers">0</strong>
+        <small>คน</small>
+      </div>
+
+      <div class="dash-card blue">
+        <span>ยอดลงทุนรวม</span>
+        <strong id="totalInvestmentAll">0</strong>
+        <small>บาท</small>
+      </div>
+
+      <div class="dash-card blue">
+        <span>รายการลงทุนทั้งหมด</span>
+        <strong id="totalPayments">0</strong>
+        <small>รายการ</small>
+      </div>
+
+      <div class="dash-card green">
+        <span>ยอดวันนี้</span>
+        <strong id="todayInvestment">0</strong>
+        <small>บาท</small>
+      </div>
+    </div>
+
     <h2>บันทึกรายการลงทุน</h2>
 
     <div class="admin-form">
@@ -103,6 +134,7 @@
       <div id="adminResult"></div>
 
     </div>
+
   </section>
 
 </main>
