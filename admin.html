@@ -72,11 +72,11 @@
 
     <div class="admin-form">
 
-     <div class="form-group">
-      <label>เลขบัตรประชาชน 13 หลัก</label>
-      <input id="citizen_id" type="text" maxlength="13" placeholder="1234567890123">
-      <button type="button" class="small-btn" onclick="findMemberForAdmin()">ค้นหาสมาชิก</button>
-    </div>
+      <div class="form-group">
+        <label>เลขบัตรประชาชน 13 หลัก</label>
+        <input id="citizen_id" type="text" maxlength="13" placeholder="1234567890123">
+        <button type="button" class="small-btn" onclick="findMemberForAdmin()">ค้นหาสมาชิก</button>
+      </div>
 
       <div class="form-group">
         <label>ชื่อ-นามสกุล</label>
@@ -128,17 +128,17 @@
         <input id="note" type="text" placeholder="หมายเหตุ">
       </div>
 
-      <button class="admin-submit" onclick="addPayment()">บันทึกข้อมูล</button>
+      <button id="addBtn" class="admin-submit" onclick="addPayment()">บันทึกข้อมูล</button>
 
       <button id="updateBtn" class="admin-submit hidden" onclick="updatePayment()">บันทึกการแก้ไข</button>
 
-<button id="cancelEditBtn" class="admin-logout hidden" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
-
-<div id="memberHistory"></div>
-
-      <button class="admin-logout" onclick="adminLogout()">ออกจากระบบ</button>
+      <button id="cancelEditBtn" class="admin-logout hidden" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
 
       <div id="adminResult"></div>
+
+      <div id="memberHistory" class="form-group full"></div>
+
+      <button class="admin-logout" onclick="adminLogout()">ออกจากระบบ</button>
 
     </div>
 
