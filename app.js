@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycby58k-_g4GNZZmwRbsFiktc4YUTFlx9qHt8lx1YA7UP8CjEoeqMXkHvZiOwx-5dx_n6rg/exec";
 
 async function searchMember(){
-  const citizenId = document.getElementById("citizenId").value.trim();
+  const citizenId = document.getElementById("citizenId").value.trim().replace(/\D/g,"");
   const result = document.getElementById("result");
 
   if(citizenId.length !== 13){
@@ -20,11 +20,12 @@ async function searchMember(){
       return;
     }
 
-    const paymentsHtml = data.payments.map((p, index) => `
+    const paymentsHtml = data.payments.map((p) => `
       <div class="payment-card">
-        <div class="payment-left">
+
+        <div>
           <div class="payment-date">${formatDate(p.pay_date)}</div>
-          <div class="payment-time">เวลา ${formatTime(p.pay_time)}</div>
+          <div class="payment-time">เวลา ${formatTime(p.pay_time)} น.</div>
         </div>
 
         <div class="payment-main">
@@ -33,12 +34,13 @@ async function searchMember(){
         </div>
 
         <div class="payment-detail">
-          <p>เลขอ้างอิง: <b>${p.reference || "-"}</b></p>
-          <p>ค่าเดินทาง: <b>${p.travel_fee || 0}</b> บาท</p>
-          <p>เงินด่วน: <b>${p.urgent_money || 0}</b> บาท</p>
-          <p>เงินหลัก: <b>${p.principal_money || 0}</b> บาท</p>
-          <p>หมายเหตุ: <b>${p.note || "-"}</b></p>
+          <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
+          <p>ค่าเดินทาง <b>${money(p.travel_fee)} บาท</b></p>
+          <p>เงินด่วน <b>${money(p.urgent_money)} บาท</b></p>
+          <p>เงินหลัก <b>${money(p.principal_money)} บาท</b></p>
+          <p>หมายเหตุ <b>${p.note || "-"}</b></p>
         </div>
+
       </div>
     `).join("");
 
@@ -57,34 +59,42 @@ async function searchMember(){
         <div class="member-grid">
           <div>
             <span>ชื่อ-นามสกุล</span>
-            <strong>${data.member.fullname}</strong>
+            <strong>${data.member.fullname || "-"}</strong>
           </div>
+
           <div>
             <span>เลขบัตรประชาชน</span>
             <strong>${formatCitizenId(data.member.citizen_id)}</strong>
           </div>
+
           <div>
             <span>เบอร์โทรศัพท์</span>
-            <strong>${data.member.phone}</strong>
+            <strong>${maskPhone(data.member.phone)}</strong>
           </div>
         </div>
       </section>
 
       <section class="summary-grid">
         <div class="summary-card green">
-          <span>ยอดลงทุนสะสมทั้งหมด</span>
-          <strong>${money(data.totalInvestment)} บาท</strong>
+          <div class="icon">💰</div>
+          <div>
+            <span>ยอดลงทุนสะสมทั้งหมด</span>
+            <strong>${money(data.totalInvestment)}</strong> บาท
+          </div>
         </div>
 
         <div class="summary-card blue">
-          <span>จำนวนรายการลงทุน</span>
-          <strong>${data.payments.length} รายการ</strong>
+          <div class="icon">📄</div>
+          <div>
+            <span>จำนวนรายการลงทุน</span>
+            <strong>${data.payments.length}</strong> รายการ
+          </div>
         </div>
       </section>
 
       <section class="history">
         <h3>ประวัติการลงทุน</h3>
-        ${paymentsHtml || `<p class="empty">ยังไม่มีรายการลงทุน</p>`}
+        ${paymentsHtml || `<p>ยังไม่มีรายการลงทุน</p>`}
       </section>
 
       <section class="notice">
@@ -98,28 +108,51 @@ async function searchMember(){
 }
 
 function money(value){
-  return Number(value || 0).toLocaleString("th-TH");
+  const num = Number(value || 0);
+  return num.toLocaleString("th-TH");
 }
 
 function formatCitizenId(id){
-  const x = String(id || "");
-  if(x.length !== 13) return x;
+  const x = String(id || "").replace(/\D/g,"");
+  if(x.length !== 13) return x || "-";
   return `${x[0]}-${x.slice(1,5)}-${x.slice(5,10)}-${x.slice(10,12)}-${x[12]}`;
+}
+
+function maskPhone(phone){
+  const x = String(phone || "").replace(/\D/g,"");
+  if(x.length < 4) return "-";
+  return `${x.slice(0,2)}x-xxx-${x.slice(-4)}`;
 }
 
 function formatDate(value){
   if(!value) return "-";
-  const d = new Date(value);
-  if(isNaN(d)) return value;
-  return d.toLocaleDateString("th-TH");
+
+  const text = String(value);
+
+  if(text.includes("T")){
+    const d = new Date(text);
+    return d.toLocaleDateString("th-TH", {
+      day:"2-digit",
+      month:"2-digit",
+      year:"numeric"
+    });
+  }
+
+  return text;
 }
 
 function formatTime(value){
   if(!value) return "-";
-  const d = new Date(value);
-  if(isNaN(d)) return value;
-  return d.toLocaleTimeString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+
+  const text = String(value);
+
+  if(text.includes("T")){
+    const d = new Date(text);
+    return d.toLocaleTimeString("th-TH", {
+      hour:"2-digit",
+      minute:"2-digit"
+    });
+  }
+
+  return text;
 }
