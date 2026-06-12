@@ -210,3 +210,16 @@ function formatTime(value) {
 
   return text;
 }
+
+function togglePayment(index){
+  const detail = document.getElementById(`payment-detail-${index}`);
+  const arrow = document.getElementById(`arrow-${index}`);
+
+  detail.classList.toggle("hidden");
+
+  if(detail.classList.contains("hidden")){
+    arrow.textContent = "⌄";
+  }else{
+    arrow.textContent = "⌃";
+  }
+}
