@@ -8,8 +8,15 @@
   box-sizing:border-box;
 }
 
+body,
+button,
+input,
+textarea,
+select{
+  font-family:'Prompt',sans-serif;
+}
+
 body{
-  font-family:"Segoe UI",Tahoma,sans-serif;
   background:#f3f7fd;
   color:#0f2454;
 }
