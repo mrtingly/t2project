@@ -708,3 +708,142 @@ button:hover{
     text-align:center;
   }
 }
+
+/* ===== Mobile Premium Fix ===== */
+@media(max-width:768px){
+
+  body{
+    background:#eef4fb;
+  }
+
+  .topbar{
+    padding:18px 16px;
+    gap:14px;
+  }
+
+  .brand{
+    gap:12px;
+  }
+
+  .shield{
+    width:46px;
+    height:46px;
+    border-radius:14px;
+    font-size:24px;
+  }
+
+  .brand h1{
+    font-size:22px;
+    line-height:1.25;
+  }
+
+  .brand p{
+    font-size:13px;
+  }
+
+  .home-page,
+  .page{
+    padding:14px;
+  }
+
+  .hero-card{
+    padding:20px;
+    border-radius:22px;
+    gap:18px;
+  }
+
+  .badge{
+    font-size:13px;
+    padding:7px 12px;
+  }
+
+  .hero-content h2{
+    font-size:26px;
+    line-height:1.3;
+  }
+
+  .hero-content p{
+    font-size:15px;
+    line-height:1.65;
+  }
+
+  .search-panel{
+    padding:16px;
+    border-radius:18px;
+  }
+
+  input,
+  button{
+    height:52px;
+    font-size:16px;
+  }
+
+  .stat-box,
+  .info-card,
+  .member-card,
+  .history,
+  .search-box{
+    padding:18px;
+    border-radius:18px;
+  }
+
+  .summary-card{
+    padding:20px;
+    min-height:auto;
+  }
+
+  .summary-card .icon{
+    width:54px;
+    height:54px;
+    font-size:26px;
+  }
+
+  .summary-card strong{
+    font-size:30px;
+  }
+
+  .payment-card{
+    padding:16px;
+    gap:12px;
+  }
+
+  .payment-date{
+    font-size:18px;
+  }
+
+  .payment-main strong{
+    font-size:24px;
+  }
+
+  .payment-detail{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .payment-detail p{
+    background:#f6f9ff;
+    padding:10px;
+    border-radius:10px;
+  }
+
+  .admin-dashboard{
+    gap:12px;
+  }
+
+  .dash-card{
+    min-height:auto;
+    padding:18px;
+  }
+
+  .dash-card strong{
+    font-size:30px;
+  }
+
+  .admin-history .payment-card{
+    padding:14px;
+  }
+
+  .admin-history .small-btn{
+    width:100%;
+  }
+}
