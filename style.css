@@ -709,93 +709,114 @@ button:hover{
   }
 }
 
-/* ===== Mobile Premium Fix ===== */
 @media(max-width:768px){
 
-  body{
-    background:#eef4fb;
-  }
-
   .topbar{
-    padding:18px 16px;
-    gap:14px;
+    padding:16px;
+    border-radius:0 0 24px 24px;
   }
 
   .brand{
-    gap:12px;
+    width:100%;
   }
 
   .shield{
-    width:46px;
-    height:46px;
-    border-radius:14px;
-    font-size:24px;
+    display:none;
   }
 
   .brand h1{
-    font-size:22px;
-    line-height:1.25;
+    font-size:20px;
   }
 
   .brand p{
     font-size:13px;
   }
 
-  .home-page,
-  .page{
-    padding:14px;
+  .admin-link{
+    width:100%;
+    text-align:center;
+    padding:12px;
+  }
+
+  .home-page{
+    padding:12px;
   }
 
   .hero-card{
-    padding:20px;
-    border-radius:22px;
-    gap:18px;
+    display:block;
+    padding:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+  }
+
+  .hero-content{
+    background:white;
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 10px 28px rgba(0,0,0,.06);
   }
 
   .badge{
-    font-size:13px;
-    padding:7px 12px;
+    font-size:12px;
   }
 
   .hero-content h2{
-    font-size:26px;
-    line-height:1.3;
+    font-size:24px;
+    line-height:1.35;
   }
 
   .hero-content p{
-    font-size:15px;
-    line-height:1.65;
+    font-size:14px;
+  }
+
+  .hero-side,
+  .info-grid{
+    display:none;
   }
 
   .search-panel{
-    padding:16px;
-    border-radius:18px;
+    padding:0;
+    border:0;
   }
 
-  input,
+  .home-search-row{
+    display:block;
+  }
+
+  input{
+    height:54px;
+    font-size:16px;
+    margin-bottom:10px;
+  }
+
   button{
-    height:52px;
+    width:100%;
+    height:54px;
     font-size:16px;
   }
 
-  .stat-box,
-  .info-card,
+  .found-box,
   .member-card,
   .history,
-  .search-box{
+  .summary-card{
+    border-radius:20px;
     padding:18px;
-    border-radius:18px;
+  }
+
+  .member-grid,
+  .summary-grid,
+  .payment-card,
+  .payment-detail{
+    display:block;
   }
 
   .summary-card{
-    padding:20px;
-    min-height:auto;
+    margin-bottom:12px;
   }
 
   .summary-card .icon{
-    width:54px;
-    height:54px;
-    font-size:26px;
+    display:none;
   }
 
   .summary-card strong{
@@ -803,47 +824,14 @@ button:hover{
   }
 
   .payment-card{
-    padding:16px;
-    gap:12px;
-  }
-
-  .payment-date{
-    font-size:18px;
-  }
-
-  .payment-main strong{
-    font-size:24px;
-  }
-
-  .payment-detail{
-    grid-template-columns:1fr;
-    gap:8px;
+    background:white;
+    margin-bottom:12px;
   }
 
   .payment-detail p{
-    background:#f6f9ff;
+    background:#f4f8ff;
     padding:10px;
     border-radius:10px;
-  }
-
-  .admin-dashboard{
-    gap:12px;
-  }
-
-  .dash-card{
-    min-height:auto;
-    padding:18px;
-  }
-
-  .dash-card strong{
-    font-size:30px;
-  }
-
-  .admin-history .payment-card{
-    padding:14px;
-  }
-
-  .admin-history .small-btn{
-    width:100%;
+    margin-top:8px;
   }
 }
