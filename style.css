@@ -835,3 +835,61 @@ button:hover{
     margin-top:8px;
   }
 }
+
+.roll-card{
+  display:block;
+}
+
+.roll-head{
+  display:grid;
+  grid-template-columns:170px 1fr 40px;
+  gap:16px;
+  align-items:center;
+  cursor:pointer;
+}
+
+.roll-arrow{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#eef4ff;
+  color:#0057d9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:900;
+}
+
+.roll-detail{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #e1e8f4;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+}
+
+.roll-detail p{
+  background:#f6f9ff;
+  padding:12px;
+  border-radius:12px;
+  color:#29416f;
+}
+
+.roll-detail b{
+  display:block;
+  margin-top:4px;
+  color:#0a2f84;
+}
+
+@media(max-width:768px){
+  .roll-head{
+    grid-template-columns:1fr 1fr 32px;
+    gap:10px;
+  }
+
+  .roll-detail{
+    grid-template-columns:1fr;
+  }
+}
