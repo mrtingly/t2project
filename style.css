@@ -123,9 +123,7 @@ button{
 ========================= */
 
 .hero-card{
-  display:grid;
-  grid-template-columns:1.4fr .8fr;
-  gap:28px;
+  display:block;
   background:linear-gradient(135deg,#ffffff,#eef6ff);
   border:1px solid #d3e4ff;
   border-radius:28px;
