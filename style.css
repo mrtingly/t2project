@@ -1,3 +1,7 @@
+/* =========================
+   GLOBAL
+========================= */
+
 *{
   margin:0;
   padding:0;
@@ -10,7 +14,27 @@ body{
   color:#0f2454;
 }
 
-/* Header */
+a{
+  text-decoration:none;
+}
+
+button,
+input{
+  font-family:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.hidden{
+  display:none !important;
+}
+
+/* =========================
+   HEADER
+========================= */
+
 .topbar{
   background:linear-gradient(135deg,#003f9e,#0057d9);
   color:white;
@@ -36,7 +60,7 @@ body{
   align-items:center;
   justify-content:center;
   font-size:30px;
-  font-weight:bold;
+  font-weight:900;
 }
 
 .brand h1{
@@ -54,84 +78,50 @@ body{
 }
 
 .admin-link{
-  text-decoration:none;
   background:white;
   color:#0057d9;
   padding:12px 18px;
   border-radius:12px;
-  font-weight:800;
-  box-shadow:0 8px 20px rgba(0,0,0,.12);
+  font-weight:900;
   white-space:nowrap;
+  box-shadow:0 8px 20px rgba(0,0,0,.12);
 }
 
 .admin-link:hover{
   background:#eaf2ff;
 }
 
-/* General page */
+/* =========================
+   LAYOUT
+========================= */
+
 .page,
 .home-page{
   padding:34px;
 }
 
-.search-box{
+.search-box,
+.member-card,
+.history{
   background:white;
-  border:1px solid #cfe0ff;
+  border:1px solid #d2e2ff;
   border-radius:22px;
-  padding:30px 34px;
-  margin-bottom:22px;
-  box-shadow:0 12px 30px rgba(0,63,158,.06);
-}
-
-.search-box h2{
-  color:#0a2f84;
+  padding:28px;
   margin-bottom:20px;
+  box-shadow:0 12px 30px rgba(0,63,158,.05);
 }
 
-.search-label{
-  font-size:18px;
-  margin-bottom:12px;
-  font-weight:700;
-}
-
-.search-row{
-  display:grid;
-  grid-template-columns:1fr 230px;
-  gap:18px;
-}
-
-input{
-  height:58px;
-  border:1px solid #bdd0ee;
-  border-radius:12px;
-  padding:0 20px;
-  font-size:20px;
-  color:#0f2454;
-  background:white;
-}
-
-button{
-  height:58px;
-  border:0;
-  border-radius:12px;
-  background:#0057d9;
-  color:white;
-  font-size:18px;
-  font-weight:800;
-  cursor:pointer;
-}
-
-button:hover{
-  background:#0047b5;
-}
-
-.hint{
-  margin-top:14px;
+.search-box h2,
+.member-card h3,
+.history h3{
   color:#0057d9;
-  font-weight:600;
+  margin-bottom:18px;
 }
 
-/* Home / Member search */
+/* =========================
+   HOME
+========================= */
+
 .hero-card{
   display:grid;
   grid-template-columns:1.4fr .8fr;
@@ -149,7 +139,7 @@ button:hover{
   color:#0057d9;
   padding:8px 14px;
   border-radius:999px;
-  font-weight:800;
+  font-weight:900;
   margin-bottom:18px;
 }
 
@@ -176,19 +166,14 @@ button:hover{
 
 .search-panel label{
   display:block;
-  font-weight:800;
+  font-weight:900;
   margin-bottom:12px;
-  color:#0f2454;
 }
 
 .home-search-row{
   display:grid;
   grid-template-columns:1fr 220px;
   gap:14px;
-}
-
-.home-search-row input{
-  width:100%;
 }
 
 .search-panel small{
@@ -213,7 +198,7 @@ button:hover{
 .stat-box span{
   display:block;
   color:#64748b;
-  font-weight:700;
+  font-weight:800;
   margin-bottom:8px;
 }
 
@@ -270,29 +255,61 @@ button:hover{
   color:#64748b;
 }
 
-/* Member result */
+/* =========================
+   FORM
+========================= */
+
+input{
+  width:100%;
+  height:58px;
+  border:1px solid #bdd0ee;
+  border-radius:12px;
+  padding:0 20px;
+  font-size:20px;
+  color:#0f2454;
+  background:white;
+}
+
+button{
+  height:58px;
+  border:0;
+  border-radius:12px;
+  background:#0057d9;
+  color:white;
+  font-size:18px;
+  font-weight:900;
+}
+
+button:hover{
+  background:#0047b5;
+}
+
+/* =========================
+   MEMBER RESULT
+========================= */
+
 .found-box{
   background:linear-gradient(180deg,#f7fffb,#ffffff);
   border:1px solid #d6efe1;
-  border-radius:18px;
-  padding:26px;
+  border-radius:20px;
+  padding:24px;
   display:flex;
-  gap:22px;
+  gap:18px;
   align-items:center;
   margin-bottom:18px;
 }
 
 .found-icon{
-  width:58px;
-  height:58px;
+  width:56px;
+  height:56px;
   border-radius:50%;
   background:#07883f;
   color:white;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:36px;
-  font-weight:bold;
+  font-size:34px;
+  font-weight:900;
 }
 
 .found-box h2{
@@ -305,33 +322,19 @@ button:hover{
   color:#29416f;
 }
 
-.member-card{
-  background:white;
-  border:1px solid #d2e2ff;
-  border-radius:18px;
-  padding:24px;
-  margin-bottom:18px;
-}
-
-.member-card h3{
-  color:#0057d9;
-  font-size:24px;
-  margin-bottom:18px;
-}
-
 .member-grid{
-  border:1px solid #d8e5fb;
-  border-radius:14px;
-  padding:22px;
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:24px;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+  border:1px solid #d8e5fb;
+  border-radius:16px;
+  padding:22px;
 }
 
 .member-grid span{
   display:block;
   color:#546681;
-  font-weight:700;
+  font-weight:800;
   margin-bottom:8px;
 }
 
@@ -343,38 +346,37 @@ button:hover{
 .summary-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:22px;
-  margin-bottom:18px;
+  gap:20px;
+  margin-bottom:20px;
 }
 
 .summary-card{
-  border-radius:18px;
-  padding:28px 36px;
+  border-radius:20px;
+  padding:28px;
   display:flex;
   align-items:center;
-  gap:24px;
-  min-height:130px;
+  gap:22px;
+  min-height:120px;
 }
 
 .summary-card .icon{
-  width:76px;
-  height:76px;
+  width:70px;
+  height:70px;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:36px;
+  font-size:34px;
 }
 
 .summary-card span{
   display:block;
-  font-size:18px;
+  font-weight:900;
   margin-bottom:6px;
-  font-weight:700;
 }
 
 .summary-card strong{
-  font-size:46px;
+  font-size:42px;
 }
 
 .green{
@@ -397,443 +399,16 @@ button:hover{
   background:#e3efff;
 }
 
-.history{
-  background:white;
-  border:1px solid #d2e2ff;
-  border-radius:18px;
-  padding:22px;
-}
-
-.history h3{
-  color:#0057d9;
-  font-size:24px;
-  margin-bottom:18px;
-}
+/* =========================
+   PAYMENT ROLLUP
+========================= */
 
 .payment-card{
-  display:grid;
-  grid-template-columns:190px 170px 1fr;
-  gap:22px;
-  align-items:center;
+  background:white;
   border:1px solid #e1e8f4;
   border-radius:16px;
-  padding:18px 22px;
+  padding:16px 18px;
   margin-bottom:12px;
-  background:#fff;
-}
-
-.payment-date{
-  font-size:20px;
-  font-weight:800;
-  color:#0a2f84;
-}
-
-.payment-time{
-  margin-top:5px;
-  color:#29416f;
-}
-
-.payment-main span{
-  display:block;
-  color:#546681;
-  font-weight:700;
-}
-
-.payment-main strong{
-  font-size:28px;
-  color:#0a2f84;
-}
-
-.payment-detail{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:14px;
-}
-
-.payment-detail p{
-  color:#29416f;
-  font-size:15px;
-}
-
-.payment-detail b{
-  display:block;
-  color:#0a2f84;
-  margin-top:4px;
-  font-size:16px;
-}
-
-.notice{
-  margin-top:18px;
-  background:#f1f7ff;
-  border:1px solid #c7ddff;
-  border-radius:14px;
-  padding:18px 22px;
-  color:#0a2f84;
-  font-weight:700;
-}
-
-.error,
-.loading{
-  background:white;
-  border-radius:14px;
-  padding:20px;
-  margin-top:20px;
-  font-weight:800;
-}
-
-.error{
-  color:#dc2626;
-  border:1px solid #fecaca;
-}
-
-.loading{
-  color:#0057d9;
-  border:1px solid #bfdbfe;
-}
-
-/* Admin */
-.hidden{
-  display:none !important;
-}
-
-.admin-form{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px 24px;
-  margin-top:20px;
-}
-
-.form-group{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.form-group.full{
-  grid-column:1 / -1;
-}
-
-.form-group label{
-  font-weight:800;
-  color:#0f2454;
-}
-
-.admin-submit{
-  grid-column:1 / -1;
-}
-
-.admin-logout{
-  grid-column:1 / -1;
-  background:#64748b;
-}
-
-.admin-logout:hover{
-  background:#475569;
-}
-
-#adminResult{
-  grid-column:1 / -1;
-}
-
-#memberHistory{
-  grid-column:1 / -1;
-  margin-top:10px;
-}
-
-.small-btn{
-  height:44px;
-  margin-top:8px;
-  font-size:15px;
-  border-radius:10px;
-  background:#0f766e;
-}
-
-.small-btn:hover{
-  background:#115e59;
-}
-
-/* Admin dashboard */
-.admin-dashboard{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:18px;
-  margin-bottom:24px;
-}
-
-.dash-card{
-  border-radius:18px;
-  padding:24px;
-  min-height:130px;
-}
-
-.dash-card span{
-  display:block;
-  font-weight:800;
-  margin-bottom:10px;
-}
-
-.dash-card strong{
-  display:block;
-  font-size:36px;
-}
-
-.dash-card small{
-  font-weight:800;
-}
-
-/* Compact admin history */
-.admin-history{
-  margin-top:18px;
-  padding:18px;
-  border-radius:18px;
-  background:#f8fbff;
-}
-
-.admin-history h3{
-  font-size:20px;
-  margin-bottom:12px;
-}
-
-.admin-history .payment-card{
-  grid-template-columns:150px 140px 1fr 90px;
-  gap:14px;
-  padding:14px 16px;
-  border-radius:14px;
-  margin-bottom:10px;
-  align-items:center;
-}
-
-.admin-history .payment-date{
-  font-size:16px;
-}
-
-.admin-history .payment-time{
-  font-size:13px;
-}
-
-.admin-history .payment-main strong{
-  font-size:20px;
-}
-
-.admin-history .payment-detail{
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-}
-
-.admin-history .payment-detail p{
-  font-size:12px;
-}
-
-.admin-history .payment-detail b{
-  font-size:13px;
-}
-
-.admin-history .small-btn{
-  height:38px;
-  margin-top:0;
-  font-size:14px;
-  border-radius:10px;
-  background:#0057d9;
-}
-
-.admin-history .small-btn:hover{
-  background:#003f9e;
-}
-
-/* Responsive */
-@media(max-width:1000px){
-  .admin-dashboard{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .hero-card{
-    grid-template-columns:1fr;
-    padding:28px;
-  }
-
-  .payment-card,
-  .admin-history .payment-card{
-    grid-template-columns:1fr;
-  }
-
-  .payment-detail,
-  .admin-history .payment-detail{
-    grid-template-columns:1fr 1fr;
-  }
-}
-
-@media(max-width:768px){
-  .topbar{
-    padding:22px;
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .brand h1{
-    font-size:26px;
-  }
-
-  .brand p{
-    font-size:15px;
-  }
-
-  .page,
-  .home-page{
-    padding:18px;
-  }
-
-  .hero-content h2{
-    font-size:34px;
-  }
-
-  .home-search-row,
-  .search-row,
-  .member-grid,
-  .summary-grid,
-  .info-grid,
-  .admin-form{
-    grid-template-columns:1fr;
-  }
-
-  .summary-card strong{
-    font-size:34px;
-  }
-
-  .admin-dashboard{
-    grid-template-columns:1fr;
-  }
-
-  .admin-link{
-    width:100%;
-    text-align:center;
-  }
-}
-
-@media(max-width:768px){
-
-  .topbar{
-    padding:16px;
-    border-radius:0 0 24px 24px;
-  }
-
-  .brand{
-    width:100%;
-  }
-
-  .shield{
-    display:none;
-  }
-
-  .brand h1{
-    font-size:20px;
-  }
-
-  .brand p{
-    font-size:13px;
-  }
-
-  .admin-link{
-    width:100%;
-    text-align:center;
-    padding:12px;
-  }
-
-  .home-page{
-    padding:12px;
-  }
-
-  .hero-card{
-    display:block;
-    padding:0;
-    background:transparent;
-    border:0;
-    box-shadow:none;
-  }
-
-  .hero-content{
-    background:white;
-    border-radius:24px;
-    padding:22px;
-    box-shadow:0 10px 28px rgba(0,0,0,.06);
-  }
-
-  .badge{
-    font-size:12px;
-  }
-
-  .hero-content h2{
-    font-size:24px;
-    line-height:1.35;
-  }
-
-  .hero-content p{
-    font-size:14px;
-  }
-
-  .hero-side,
-  .info-grid{
-    display:none;
-  }
-
-  .search-panel{
-    padding:0;
-    border:0;
-  }
-
-  .home-search-row{
-    display:block;
-  }
-
-  input{
-    height:54px;
-    font-size:16px;
-    margin-bottom:10px;
-  }
-
-  button{
-    width:100%;
-    height:54px;
-    font-size:16px;
-  }
-
-  .found-box,
-  .member-card,
-  .history,
-  .summary-card{
-    border-radius:20px;
-    padding:18px;
-  }
-
-  .member-grid,
-  .summary-grid,
-  .payment-card,
-  .payment-detail{
-    display:block;
-  }
-
-  .summary-card{
-    margin-bottom:12px;
-  }
-
-  .summary-card .icon{
-    display:none;
-  }
-
-  .summary-card strong{
-    font-size:30px;
-  }
-
-  .payment-card{
-    background:white;
-    margin-bottom:12px;
-  }
-
-  .payment-detail p{
-    background:#f4f8ff;
-    padding:10px;
-    border-radius:10px;
-    margin-top:8px;
-  }
 }
 
 .roll-card{
@@ -842,10 +417,42 @@ button:hover{
 
 .roll-head{
   display:grid;
-  grid-template-columns:170px 1fr 40px;
+  grid-template-columns:120px 170px 1fr 40px;
   gap:16px;
   align-items:center;
   cursor:pointer;
+}
+
+.payment-order{
+  background:#e8f1ff;
+  color:#0057d9;
+  font-weight:900;
+  padding:10px 12px;
+  border-radius:12px;
+  text-align:center;
+  white-space:nowrap;
+}
+
+.payment-date{
+  font-size:18px;
+  font-weight:900;
+  color:#0a2f84;
+}
+
+.payment-time{
+  margin-top:4px;
+  color:#64748b;
+}
+
+.payment-main span{
+  display:block;
+  color:#64748b;
+  font-weight:800;
+}
+
+.payment-main strong{
+  font-size:26px;
+  color:#0a2f84;
 }
 
 .roll-arrow{
@@ -870,6 +477,10 @@ button:hover{
   gap:12px;
 }
 
+.roll-detail.hidden{
+  display:none !important;
+}
+
 .roll-detail p{
   background:#f6f9ff;
   padding:12px;
@@ -883,13 +494,279 @@ button:hover{
   color:#0a2f84;
 }
 
-@media(max-width:768px){
-  .roll-head{
-    grid-template-columns:1fr 1fr 32px;
-    gap:10px;
+/* =========================
+   ADMIN
+========================= */
+
+.admin-form{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px 24px;
+  margin-top:20px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.form-group.full{
+  grid-column:1 / -1;
+}
+
+.form-group label{
+  font-weight:900;
+}
+
+.admin-submit,
+.admin-logout,
+#adminResult,
+#memberHistory{
+  grid-column:1 / -1;
+}
+
+.admin-logout{
+  background:#64748b;
+}
+
+.admin-logout:hover{
+  background:#475569;
+}
+
+.small-btn{
+  height:44px;
+  margin-top:8px;
+  font-size:15px;
+  border-radius:10px;
+  background:#0f766e;
+}
+
+.small-btn:hover{
+  background:#115e59;
+}
+
+.admin-dashboard{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+  margin-bottom:24px;
+}
+
+.dash-card{
+  border-radius:18px;
+  padding:24px;
+  min-height:120px;
+}
+
+.dash-card span{
+  display:block;
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+.dash-card strong{
+  display:block;
+  font-size:36px;
+}
+
+.dash-card small{
+  font-weight:900;
+}
+
+/* Admin compact history */
+.admin-history{
+  margin-top:18px;
+  padding:18px;
+  border-radius:18px;
+  background:#f8fbff;
+}
+
+.admin-history h3{
+  font-size:20px;
+  margin-bottom:12px;
+}
+
+.admin-history .roll-head{
+  grid-template-columns:120px 140px 1fr 80px;
+}
+
+.admin-history .payment-date{
+  font-size:15px;
+}
+
+.admin-history .payment-main strong{
+  font-size:20px;
+}
+
+.admin-history .roll-detail{
+  grid-template-columns:repeat(3,1fr);
+}
+
+.admin-history .small-btn{
+  height:38px;
+  font-size:14px;
+  background:#0057d9;
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+.error,
+.loading,
+.notice{
+  border-radius:14px;
+  padding:18px;
+  margin-top:18px;
+  font-weight:900;
+}
+
+.error{
+  color:#dc2626;
+  background:white;
+  border:1px solid #fecaca;
+}
+
+.loading{
+  color:#0057d9;
+  background:white;
+  border:1px solid #bfdbfe;
+}
+
+.notice{
+  color:#0a2f84;
+  background:#f1f7ff;
+  border:1px solid #c7ddff;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:1000px){
+  .hero-card{
+    grid-template-columns:1fr;
+    padding:28px;
   }
 
-  .roll-detail{
+  .admin-dashboard{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .roll-head,
+  .admin-history .roll-head{
+    grid-template-columns:1fr;
+  }
+
+  .roll-detail,
+  .admin-history .roll-detail{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:768px){
+  .topbar{
+    padding:16px;
+    flex-direction:column;
+    align-items:flex-start;
+    border-radius:0 0 24px 24px;
+  }
+
+  .shield{
+    display:none;
+  }
+
+  .brand h1{
+    font-size:21px;
+  }
+
+  .brand p{
+    font-size:13px;
+  }
+
+  .admin-link{
+    width:100%;
+    text-align:center;
+  }
+
+  .page,
+  .home-page{
+    padding:12px;
+  }
+
+  .hero-card{
+    display:block;
+    padding:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+  }
+
+  .hero-content{
+    background:white;
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 10px 28px rgba(0,0,0,.06);
+  }
+
+  .hero-content h2{
+    font-size:25px;
+    line-height:1.35;
+  }
+
+  .hero-content p{
+    font-size:14px;
+  }
+
+  .hero-side,
+  .info-grid{
+    display:none;
+  }
+
+  .search-panel{
+    padding:0;
+    border:0;
+  }
+
+  .home-search-row,
+  .member-grid,
+  .summary-grid,
+  .admin-form,
+  .admin-dashboard{
+    grid-template-columns:1fr;
+  }
+
+  input,
+  button{
+    height:52px;
+    font-size:16px;
+  }
+
+  .summary-card{
+    padding:20px;
+    min-height:auto;
+  }
+
+  .summary-card .icon{
+    display:none;
+  }
+
+  .summary-card strong{
+    font-size:30px;
+  }
+
+  .roll-head,
+  .admin-history .roll-head{
+    grid-template-columns:1fr;
+  }
+
+  .payment-order{
+    text-align:left;
+  }
+
+  .roll-detail,
+  .admin-history .roll-detail{
     grid-template-columns:1fr;
   }
 }
