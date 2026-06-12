@@ -218,35 +218,6 @@ button{
   margin-top:24px;
 }
 
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:20px;
-  margin-top:26px;
-}
-
-.info-card{
-  background:white;
-  border:1px solid #d8e5fb;
-  border-radius:20px;
-  padding:26px;
-  box-shadow:0 10px 28px rgba(0,63,158,.05);
-}
-
-.info-icon{
-  font-size:36px;
-  margin-bottom:12px;
-}
-
-.info-card h3{
-  color:#0a2f84;
-  margin-bottom:8px;
-}
-
-.info-card p{
-  color:#52637f;
-}
-
 .site-footer{
   text-align:center;
   padding:26px;
