@@ -33,33 +33,44 @@ async function searchMember() {
       ? formatDate(payments[payments.length - 1].pay_date)
       : "-";
 
-    const paymentsHtml = payments.map((p, index) => `
-  <div class="payment-card roll-card">
+   const sortedPayments = [...payments].reverse();
 
-    <div class="roll-head" onclick="togglePayment(${index})">
-      <div>
-        <div class="payment-date">${formatDate(p.pay_date)}</div>
-        <div class="payment-time">เวลา ${formatTime(p.pay_time)} น.</div>
+const paymentsHtml = sortedPayments.map((p, index) => {
+  const itemNumber = payments.length - index;
+
+  return `
+    <div class="payment-card roll-card">
+
+      <div class="roll-head" onclick="togglePayment(${index})">
+
+        <div class="payment-order">
+          รายการที่ ${itemNumber}
+        </div>
+
+        <div>
+          <div class="payment-date">${formatDate(p.pay_date)}</div>
+          <div class="payment-time">เวลา ${formatTime(p.pay_time)} น.</div>
+        </div>
+
+        <div class="payment-main">
+          <span>ยอดลงทุน</span>
+          <strong>${money(p.investment)} บาท</strong>
+        </div>
+
+        <div class="roll-arrow" id="arrow-${index}">⌄</div>
       </div>
 
-      <div class="payment-main">
-        <span>ยอดลงทุน</span>
-        <strong>${money(p.investment)} บาท</strong>
+      <div class="roll-detail hidden" id="payment-detail-${index}">
+        <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
+        <p>ค่าเดินทาง <b>${money(p.travel_fee)} บาท</b></p>
+        <p>เงินด่วน <b>${money(p.urgent_money)} บาท</b></p>
+        <p>เงินหลัก <b>${money(p.principal_money)} บาท</b></p>
+        <p>หมายเหตุ <b>${p.note || "-"}</b></p>
       </div>
 
-      <div class="roll-arrow" id="arrow-${index}">⌄</div>
     </div>
-
-    <div class="roll-detail hidden" id="payment-detail-${index}">
-      <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
-      <p>ค่าเดินทาง <b>${money(p.travel_fee)} บาท</b></p>
-      <p>เงินด่วน <b>${money(p.urgent_money)} บาท</b></p>
-      <p>เงินหลัก <b>${money(p.principal_money)} บาท</b></p>
-      <p>หมายเหตุ <b>${p.note || "-"}</b></p>
-    </div>
-
-  </div>
-`).join("");
+  `;
+}).join("");
 
     result.innerHTML = `
       <section class="found-box">
