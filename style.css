@@ -1214,3 +1214,22 @@ button:hover{
   color:#64748b;
   margin-top:18px;
 }
+
+.pdf-report{
+  width:760px;
+  padding:20px;
+  background:white;
+  color:#0f2454;
+  font-family:'Prompt',sans-serif;
+}
+
+.pdf-section,
+.pdf-header{
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+.pdf-table tr{
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
