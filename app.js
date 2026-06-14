@@ -149,6 +149,18 @@ async function searchMember() {
 
       <div class="summary-grid">
 
+      <div class="action-bar">
+
+          <button class="print-btn" onclick="printMember()">
+            🖨️ พิมพ์ข้อมูล
+          </button>
+        
+          <button class="pdf-btn" onclick="downloadPDF()">
+            📄 ดาวน์โหลด PDF
+          </button>
+        
+        </div>
+
         <div class="summary-card green">
           <div class="icon">💰</div>
           <div>
