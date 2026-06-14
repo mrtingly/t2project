@@ -148,19 +148,6 @@ async function searchMember() {
       ${memberCardHtml}
 
       <div class="summary-grid">
-
-      <div class="action-bar">
-
-          <button class="print-btn" onclick="printMember()">
-            🖨️ พิมพ์ข้อมูล
-          </button>
-        
-          <button class="pdf-btn" onclick="downloadPDF()">
-            📄 ดาวน์โหลด PDF
-          </button>
-        
-        </div>
-
         <div class="summary-card green">
           <div class="icon">💰</div>
           <div>
@@ -192,7 +179,17 @@ async function searchMember() {
             <strong>${lastPayment ? formatDate(lastPayment.pay_date) : "-"}</strong>
           </div>
         </div>
-
+      
+        <div class="action-bar">
+          <button class="print-btn" onclick="printMember()">
+            🖨️ พิมพ์ข้อมูล
+          </button>
+        
+          <button class="pdf-btn" onclick="downloadPDF()">
+            📄 ดาวน์โหลด PDF
+          </button>
+        
+        </div>
       </div>
 
       <section class="history">
