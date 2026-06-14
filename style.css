@@ -1115,3 +1115,102 @@ button:hover{
   }
 
 }
+.pdf-report{
+  width:760px;
+  padding:28px;
+  background:white;
+  color:#0f2454;
+  font-family:'Prompt',sans-serif;
+}
+
+.pdf-header{
+  background:#0057d9;
+  color:white;
+  padding:24px;
+  border-radius:18px;
+  margin-bottom:18px;
+}
+
+.pdf-header h1{
+  font-size:28px;
+  margin-bottom:4px;
+}
+
+.pdf-section{
+  border:1px solid #dbe8ff;
+  border-radius:16px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.pdf-section h2{
+  color:#0057d9;
+  font-size:20px;
+  margin-bottom:12px;
+}
+
+.pdf-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.pdf-grid p{
+  background:#f6f9ff;
+  padding:10px;
+  border-radius:10px;
+  font-size:13px;
+}
+
+.pdf-grid .full{
+  grid-column:1 / -1;
+}
+
+.pdf-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.pdf-summary div{
+  background:#effcf5;
+  border-radius:14px;
+  padding:18px;
+  text-align:center;
+}
+
+.pdf-summary b{
+  display:block;
+  font-size:30px;
+  color:#07883f;
+}
+
+.pdf-summary small{
+  display:block;
+  margin-top:6px;
+}
+
+.pdf-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+
+.pdf-table th{
+  background:#e8f1ff;
+  color:#0057d9;
+}
+
+.pdf-table th,
+.pdf-table td{
+  border:1px solid #dbe8ff;
+  padding:8px;
+  text-align:left;
+}
+
+.pdf-footer{
+  text-align:center;
+  font-size:12px;
+  color:#64748b;
+  margin-top:18px;
+}
