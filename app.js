@@ -265,3 +265,44 @@ function formatPhone(value) {
 
   return value || "-";
 }
+
+function printMember() {
+  window.print();
+}
+
+function downloadPDF() {
+  if (typeof html2pdf === "undefined") {
+    alert("ระบบดาวน์โหลด PDF ยังไม่พร้อม กรุณารีเฟรชหน้าเว็บอีกครั้ง");
+    return;
+  }
+
+  const element = document.getElementById("result");
+
+  if (!element || !element.innerHTML.trim()) {
+    alert("กรุณาค้นหาข้อมูลสมาชิกก่อนดาวน์โหลด PDF");
+    return;
+  }
+
+  const opt = {
+    margin: 0.4,
+    filename: "T2-Member-Statement.pdf",
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true
+    },
+    jsPDF: {
+      unit: "in",
+      format: "a4",
+      orientation: "portrait"
+    }
+  };
+
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .save();
+}
