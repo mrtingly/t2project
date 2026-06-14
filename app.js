@@ -356,13 +356,39 @@ function downloadPDF() {
     </div>
   `;
 
+  report.style.position = "fixed";
+  report.style.left = "0";
+  report.style.top = "0";
+  report.style.zIndex = "-1";
+  report.style.background = "#ffffff";
+
+  document.body.appendChild(report);
+
   const opt = {
-    margin: 0.35,
+    margin: [0.25, 0.25, 0.25, 0.25],
     filename: `T2-${data.member.citizen_id || "member"}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "in",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"],
+      avoid: [".pdf-header", ".pdf-section"]
+    }
   };
 
-  html2pdf().set(opt).from(report).save();
+  html2pdf()
+    .set(opt)
+    .from(report)
+    .save()
+    .then(() => {
+      document.body.removeChild(report);
+    });
 }
