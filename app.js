@@ -1,21 +1,25 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwUOkimec_D0XROnvf8zPmZ2acJsDh0ChOpklL9Fmm5JS9PrdGcIYRz3xrgVhDEnLOwEA/exec";
 
 async function searchMember() {
-  const input = document.getElementById("citizenId");
+  const citizenIdInput = document.getElementById("citizenId");
   const result = document.getElementById("result");
 
-  const citizenId = input.value.trim().replace(/\D/g, "");
+  const citizenId = citizenIdInput.value.trim().replace(/\D/g, "");
 
-  if (citizenId.length !== 13) {
-    result.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน 13 หลัก</div>`;
+  if (!citizenId) {
+    result.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชน</div>`;
     return;
   }
 
-  result.innerHTML = `<div class="loading">กำลังค้นหาข้อมูล...</div>`;
+  if (citizenId.length !== 13) {
+    result.innerHTML = `<div class="error">กรุณากรอกเลขบัตรประชาชนให้ครบ 13 หลัก</div>`;
+    return;
+  }
+
+  result.innerHTML = `<div class="loading">กำลังตรวจสอบข้อมูล...</div>`;
 
   try {
-    const url = `${API_URL}?action=searchMember&citizen_id=${encodeURIComponent(citizenId)}`;
-    const res = await fetch(url);
+    const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
     const data = await res.json();
 
     if (!data.success) {
@@ -24,118 +28,132 @@ async function searchMember() {
     }
 
     const payments = Array.isArray(data.payments) ? data.payments : [];
+    const sortedPayments = [...payments].reverse();
 
-    const firstPaymentDate = payments.length
-      ? formatDate(payments[0].pay_date)
-      : "-";
+    const totalInvestment = Number(data.totalInvestment || 0);
+    const firstPayment = payments.length ? payments[0] : null;
+    const lastPayment = payments.length ? payments[payments.length - 1] : null;
 
-    const lastPaymentDate = payments.length
-      ? formatDate(payments[payments.length - 1].pay_date)
-      : "-";
+    const memberCardHtml = `
+      <section class="member-card member-roll-card">
 
-   const sortedPayments = [...payments].reverse();
+        <div class="member-roll-head" onclick="toggleMemberSummary()">
+          <div class="member-roll-left">
+            <div class="member-roll-icon">👤</div>
+            <div>
+              <h3>ข้อมูลสรุปสมาชิก</h3>
+              <p>กดเพื่อดูข้อมูลส่วนตัว บัญชีธนาคาร และที่อยู่</p>
+            </div>
+          </div>
 
-const paymentsHtml = sortedPayments.map((p, index) => {
-  const itemNumber = payments.length - index;
-
-  return `
-    <div class="payment-card roll-card">
-
-      <div class="roll-head" onclick="togglePayment(${index})">
-
-        <div class="payment-order">
-          รายการที่ ${itemNumber}
+          <div id="memberSummaryArrow" class="member-roll-arrow">⌄</div>
         </div>
 
-        <div>
-          <div class="payment-date">${formatDate(p.pay_date)}</div>
-          <div class="payment-time">เวลา ${formatTime(p.pay_time)} น.</div>
+        <div id="memberSummaryDetail" class="member-roll-detail hidden">
+
+          <div class="member-info-grid">
+
+            <div class="member-info-item">
+              <span>ชื่อ-นามสกุล</span>
+              <strong>${data.member.fullname || "-"}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>เลขบัตรประชาชน</span>
+              <strong>${formatCitizenId(data.member.citizen_id)}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>เบอร์โทรศัพท์</span>
+              <strong>${formatPhone(data.member.phone)}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>ธนาคาร</span>
+              <strong>${data.member.bank_name || "-"}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>สาขา</span>
+              <strong>${data.member.bank_branch || "-"}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>เลขที่บัญชี</span>
+              <strong>${data.member.bank_account || "-"}</strong>
+            </div>
+
+            <div class="member-info-item full">
+              <span>ที่อยู่</span>
+              <strong>${data.member.address || "-"}</strong>
+            </div>
+
+            <div class="member-info-item">
+              <span>รหัสไปรษณีย์</span>
+              <strong>${data.member.zipcode || "-"}</strong>
+            </div>
+
+          </div>
+
         </div>
+      </section>
+    `;
 
-        <div class="payment-main">
-          <span>ยอดลงทุน</span>
-          <strong>${money(p.investment)} บาท</strong>
-        </div>
+    const paymentsHtml = sortedPayments.length
+      ? sortedPayments.map((p, index) => {
+          const itemNumber = payments.length - index;
 
-        <div class="roll-arrow" id="arrow-${index}">⌄</div>
-      </div>
+          return `
+            <div class="payment-card roll-card">
 
-      <div class="roll-detail hidden" id="payment-detail-${index}">
-        <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
-        <p>ค่าเดินทาง <b>${money(p.travel_fee)} บาท</b></p>
-        <p>เงินด่วน <b>${money(p.urgent_money)} บาท</b></p>
-        <p>เงินหลัก <b>${money(p.principal_money)} บาท</b></p>
-        <p>หมายเหตุ <b>${p.note || "-"}</b></p>
-      </div>
+              <div class="roll-head" onclick="togglePayment(${index})">
 
-    </div>
-  `;
-}).join("");
+                <div class="payment-order">รายการที่ ${itemNumber}</div>
+
+                <div>
+                  <div class="payment-date">${formatDate(p.pay_date)}</div>
+                  <div class="payment-time">เวลา ${formatTime(p.pay_time)} น.</div>
+                </div>
+
+                <div class="payment-main">
+                  <span>ยอดลงทุน</span>
+                  <strong>${money(p.investment)} บาท</strong>
+                </div>
+
+                <div class="roll-arrow" id="arrow-${index}">⌄</div>
+              </div>
+
+              <div class="roll-detail hidden" id="payment-detail-${index}">
+                <p>เลขอ้างอิง <b>${p.reference || "-"}</b></p>
+                <p>ค่าเดินทาง <b>${money(p.travel_fee)} บาท</b></p>
+                <p>เงินด่วน <b>${money(p.urgent_money)} บาท</b></p>
+                <p>เงินหลัก <b>${money(p.principal_money)} บาท</b></p>
+                <p>หมายเหตุ <b>${p.note || "-"}</b></p>
+              </div>
+
+            </div>
+          `;
+        }).join("")
+      : `<div class="notice">ยังไม่มีรายการลงทุน</div>`;
 
     result.innerHTML = `
-      <section class="found-box">
+      <div class="found-box">
         <div class="found-icon">✓</div>
         <div>
           <h2>พบข้อมูลสมาชิก</h2>
           <p>ข้อมูลสำหรับตรวจสอบรายการลงทุนของท่าน</p>
         </div>
-      </section>
-
-      <section class="member-card">
-        <h3>ข้อมูลสมาชิก</h3>
-
-        <div class="member-grid">
-          <div>
-            <span>ชื่อ-นามสกุล</span>
-              <strong>${data.member?.fullname || "-"}</strong>
-          </div>
-
-          <div>
-            <span>เลขบัตรประชาชน</span>
-              <strong>${formatCitizenId(data.member?.citizen_id)}</strong>
-          </div>
-
-          <div>
-            <span>เบอร์โทรศัพท์</span>
-              <strong>${maskPhone(data.member?.phone)}</strong>
-          </div>
-        </div>
-
-      <div class="bank-grid">
-        <div class="bank-item">
-          <span>ธนาคาร</span>
-            <strong>${data.member.bank_name || "-"}</strong>
-        </div>
-      
-        <div class="bank-item">
-          <span>สาขา</span>
-            <strong>${data.member.bank_branch || "-"}</strong>
-        </div>
-      
-        <div class="bank-item">
-          <span>เลขที่บัญชี</span>
-            <strong>${data.member.bank_account || "-"}</strong>
-        </div>
-      
-        <div class="bank-item full">
-          <span>ที่อยู่</span>
-            <strong>${data.member.address || "-"}</strong>
-        </div>
-      
-        <div class="bank-item">
-          <span>รหัสไปรษณีย์</span>
-            <strong>${data.member.zipcode || "-"}</strong>
-        </div>
       </div>
-        
-      </section>
 
-      <section class="summary-grid">
+      ${memberCardHtml}
+
+      <div class="summary-grid">
+
         <div class="summary-card green">
           <div class="icon">💰</div>
           <div>
             <span>ยอดลงทุนสะสมทั้งหมด</span>
-            <strong>${money(data.totalInvestment)}</strong> บาท
+            <strong>${money(totalInvestment)}</strong> บาท
           </div>
         </div>
 
@@ -148,117 +166,93 @@ const paymentsHtml = sortedPayments.map((p, index) => {
         </div>
 
         <div class="summary-card blue">
-          <div class="icon">📅</div>
+          <div class="icon">🗓️</div>
           <div>
             <span>วันลงทุนครั้งแรก</span>
-            <strong>${firstPaymentDate}</strong>
+            <strong>${firstPayment ? formatDate(firstPayment.pay_date) : "-"}</strong>
           </div>
         </div>
 
         <div class="summary-card green">
-          <div class="icon">🕒</div>
+          <div class="icon">🕘</div>
           <div>
             <span>วันลงทุนล่าสุด</span>
-            <strong>${lastPaymentDate}</strong>
+            <strong>${lastPayment ? formatDate(lastPayment.pay_date) : "-"}</strong>
           </div>
         </div>
-      </section>
+
+      </div>
 
       <section class="history">
         <h3>ประวัติการลงทุน</h3>
-        ${paymentsHtml || `<p>ยังไม่มีรายการลงทุน</p>`}
+        ${paymentsHtml}
       </section>
 
-      <section class="notice">
+      <div class="notice">
         หากข้อมูลไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่เพื่อทำการตรวจสอบ
-      </section>
+      </div>
     `;
 
   } catch (error) {
-    result.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
+    console.error(error);
+    result.innerHTML = `<div class="error">เกิดข้อผิดพลาดในการเชื่อมต่อระบบ</div>`;
   }
 }
 
-function money(value) {
-  const num = Number(value || 0);
-  return num.toLocaleString("th-TH");
-}
+function toggleMemberSummary(){
+  const detail = document.getElementById("memberSummaryDetail");
+  const arrow = document.getElementById("memberSummaryArrow");
 
-function formatCitizenId(id) {
-  const x = String(id || "").replace(/\D/g, "");
-  if (x.length !== 13) return x || "-";
-  return `${x[0]}-${x.slice(1, 5)}-${x.slice(5, 10)}-${x.slice(10, 12)}-${x[12]}`;
-}
+  if(!detail || !arrow) return;
 
-function maskPhone(phone) {
-  const x = String(phone || "").replace(/\D/g, "");
-  if (x.length < 4) return "-";
-  return `${x.slice(0, 2)}x-xxx-${x.slice(-4)}`;
-}
+  detail.classList.toggle("hidden");
 
-function formatDate(value) {
-  if (!value) return "-";
-
-  const text = String(value).trim();
-
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) {
-    return text;
-  }
-
-  if (text.includes("T")) {
-    const d = new Date(text);
-    if (isNaN(d)) return text;
-
-    let day = String(d.getDate()).padStart(2, "0");
-    let month = String(d.getMonth() + 1).padStart(2, "0");
-    let year = d.getFullYear();
-
-    if (year > 2600) {
-      year = year - 543;
-    }
-
-    if (year < 2400) {
-      year = year + 543;
-    }
-
-    return `${day}/${month}/${year}`;
-  }
-
-  return text;
-}
-
-function formatTime(value) {
-  if (!value) return "-";
-
-  const text = String(value).trim();
-
-  if (/^\d{1,2}:\d{2}$/.test(text)) {
-    return text;
-  }
-
-  if (text.includes("T")) {
-    const d = new Date(text);
-    if (isNaN(d)) return text;
-
-    return d.toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
-  }
-
-  return text;
+  arrow.textContent = detail.classList.contains("hidden") ? "⌄" : "⌃";
 }
 
 function togglePayment(index){
   const detail = document.getElementById(`payment-detail-${index}`);
   const arrow = document.getElementById(`arrow-${index}`);
 
+  if(!detail || !arrow) return;
+
   detail.classList.toggle("hidden");
 
-  if(detail.classList.contains("hidden")){
-    arrow.textContent = "⌄";
-  }else{
-    arrow.textContent = "⌃";
+  arrow.textContent = detail.classList.contains("hidden") ? "⌄" : "⌃";
+}
+
+function money(value) {
+  return Number(value || 0).toLocaleString("th-TH");
+}
+
+function formatDate(value) {
+  return value || "-";
+}
+
+function formatTime(value) {
+  return value || "-";
+}
+
+function formatCitizenId(value) {
+  const text = String(value || "").replace(/\D/g, "");
+
+  if (text.length !== 13) {
+    return value || "-";
   }
+
+  return `${text[0]}-${text.slice(1, 5)}-${text.slice(5, 10)}-${text.slice(10, 12)}-${text.slice(12)}`;
+}
+
+function formatPhone(value) {
+  const text = String(value || "").replace(/\D/g, "");
+
+  if (text.length === 10) {
+    return `${text.slice(0, 3)}-${text.slice(3, 6)}-${text.slice(6)}`;
+  }
+
+  if (text.length === 9) {
+    return `${text.slice(0, 2)}-${text.slice(2, 5)}-${text.slice(5)}`;
+  }
+
+  return value || "-";
 }
