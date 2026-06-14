@@ -35,11 +35,6 @@ if (!data.success) {
 }
 
 saveLatestData(data);
-    
-    if (!data.success) {
-      result.innerHTML = `<div class="error">${data.message || "ไม่พบข้อมูลสมาชิก"}</div>`;
-      return;
-    }
 
     const payments = Array.isArray(data.payments) ? data.payments : [];
     const sortedPayments = [...payments].reverse();
