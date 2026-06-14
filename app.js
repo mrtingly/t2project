@@ -21,6 +21,7 @@ async function searchMember() {
   try {
     const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
     const data = await res.json();
+    saveLatestData(data);
 
     if (!data.success) {
       result.innerHTML = `<div class="error">${data.message || "ไม่พบข้อมูลสมาชิก"}</div>`;
@@ -272,37 +273,88 @@ function printMember() {
 
 function downloadPDF() {
   if (typeof html2pdf === "undefined") {
-    alert("ระบบดาวน์โหลด PDF ยังไม่พร้อม กรุณารีเฟรชหน้าเว็บอีกครั้ง");
+    alert("ระบบ PDF ยังไม่พร้อม กรุณารีเฟรชหน้าเว็บ");
     return;
   }
 
-  const element = document.getElementById("result");
-
-  if (!element || !element.innerHTML.trim()) {
+  if (!latestMemberData || !latestMemberData.success) {
     alert("กรุณาค้นหาข้อมูลสมาชิกก่อนดาวน์โหลด PDF");
     return;
   }
 
+  const data = latestMemberData;
+  const payments = Array.isArray(data.payments) ? data.payments : [];
+  const sortedPayments = [...payments].reverse();
+
+  const report = document.createElement("div");
+  report.className = "pdf-report";
+
+  report.innerHTML = `
+    <div class="pdf-header">
+      <h1>รายงานข้อมูลสมาชิก T2</h1>
+      <p>Member Investment Statement</p>
+    </div>
+
+    <div class="pdf-section">
+      <h2>ข้อมูลสมาชิก</h2>
+      <div class="pdf-grid">
+        <p><b>ชื่อ-นามสกุล</b><br>${data.member.fullname || "-"}</p>
+        <p><b>เลขบัตรประชาชน</b><br>${formatCitizenId(data.member.citizen_id)}</p>
+        <p><b>เบอร์โทรศัพท์</b><br>${formatPhone(data.member.phone)}</p>
+        <p><b>ธนาคาร</b><br>${data.member.bank_name || "-"}</p>
+        <p><b>สาขา</b><br>${data.member.bank_branch || "-"}</p>
+        <p><b>เลขที่บัญชี</b><br>${data.member.bank_account || "-"}</p>
+        <p class="full"><b>ที่อยู่</b><br>${data.member.address || "-"}</p>
+        <p><b>รหัสไปรษณีย์</b><br>${data.member.zipcode || "-"}</p>
+      </div>
+    </div>
+
+    <div class="pdf-section">
+      <h2>สรุปยอดลงทุน</h2>
+      <div class="pdf-summary">
+        <div><b>${money(data.totalInvestment)}</b><span>บาท</span><small>ยอดลงทุนสะสม</small></div>
+        <div><b>${payments.length}</b><span>รายการ</span><small>จำนวนรายการลงทุน</small></div>
+      </div>
+    </div>
+
+    <div class="pdf-section">
+      <h2>ประวัติการลงทุน</h2>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th>วันที่</th>
+            <th>เวลา</th>
+            <th>ยอดลงทุน</th>
+            <th>อ้างอิง</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sortedPayments.map((p, index) => `
+            <tr>
+              <td>${payments.length - index}</td>
+              <td>${p.pay_date || "-"}</td>
+              <td>${p.pay_time || "-"}</td>
+              <td>${money(p.investment)} บาท</td>
+              <td>${p.reference || "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pdf-footer">
+      เอกสารนี้ออกจากระบบตรวจสอบข้อมูลสมาชิก T2
+    </div>
+  `;
+
   const opt = {
-    margin: 0.4,
-    filename: "T2-Member-Statement.pdf",
-    image: {
-      type: "jpeg",
-      quality: 0.98
-    },
-    html2canvas: {
-      scale: 2,
-      useCORS: true
-    },
-    jsPDF: {
-      unit: "in",
-      format: "a4",
-      orientation: "portrait"
-    }
+    margin: 0.35,
+    filename: `T2-${data.member.citizen_id || "member"}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
   };
 
-  html2pdf()
-    .set(opt)
-    .from(element)
-    .save();
+  html2pdf().set(opt).from(report).save();
 }
