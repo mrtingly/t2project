@@ -1071,3 +1071,47 @@ button:hover{
     grid-column:auto;
   }
 }
+
+.action-bar{
+  display:flex;
+  gap:12px;
+  margin:20px 0;
+  flex-wrap:wrap;
+}
+
+.print-btn,
+.pdf-btn{
+  border:0;
+  border-radius:14px;
+  padding:14px 22px;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.print-btn{
+  background:#0057d9;
+  color:#fff;
+}
+
+.pdf-btn{
+  background:#16a34a;
+  color:#fff;
+}
+
+.print-btn:hover{
+  background:#0047b5;
+}
+
+.pdf-btn:hover{
+  background:#15803d;
+}
+
+@media(max-width:768px){
+
+  .action-bar{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+}
