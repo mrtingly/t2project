@@ -101,30 +101,32 @@ const paymentsHtml = sortedPayments.map((p, index) => {
           </div>
         </div>
 
-        <div>
+      <div class="bank-grid">
+        <div class="bank-item">
           <span>ธนาคาร</span>
             <strong>${data.member.bank_name || "-"}</strong>
         </div>
-        
-          <div>
-            <span>สาขา</span>
-              <strong>${data.member.bank_branch || "-"}</strong>
-          </div>
-          
-          <div>
-            <span>เลขที่บัญชี</span>
-              <strong>${data.member.bank_account || "-"}</strong>
-          </div>
-          
-          <div>
-            <span>ที่อยู่</span>
-              <strong>${data.member.address || "-"}</strong>
-          </div>
-          
-          <div>
-            <span>รหัสไปรษณีย์</span>
-              <strong>${data.member.zipcode || "-"}</strong>
-          </div>
+      
+        <div class="bank-item">
+          <span>สาขา</span>
+            <strong>${data.member.bank_branch || "-"}</strong>
+        </div>
+      
+        <div class="bank-item">
+          <span>เลขที่บัญชี</span>
+            <strong>${data.member.bank_account || "-"}</strong>
+        </div>
+      
+        <div class="bank-item full">
+          <span>ที่อยู่</span>
+            <strong>${data.member.address || "-"}</strong>
+        </div>
+      
+        <div class="bank-item">
+          <span>รหัสไปรษณีย์</span>
+            <strong>${data.member.zipcode || "-"}</strong>
+        </div>
+      </div>
         
       </section>
 
