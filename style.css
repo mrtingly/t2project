@@ -900,3 +900,43 @@ button:hover{
     grid-template-columns:1fr;
   }
 }
+
+.bank-grid{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.bank-item{
+  background:#f6f9ff;
+  border:1px solid #dbe8ff;
+  border-radius:14px;
+  padding:14px 16px;
+}
+
+.bank-item.full{
+  grid-column:1 / -1;
+}
+
+.bank-item span{
+  display:block;
+  color:#546681;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.bank-item strong{
+  display:block;
+  color:#0a2f84;
+  font-size:17px;
+  font-weight:900;
+  line-height:1.45;
+}
+
+@media(max-width:768px){
+  .bank-grid{
+    grid-template-columns:1fr;
+  }
+}
