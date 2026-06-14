@@ -1,5 +1,11 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwUOkimec_D0XROnvf8zPmZ2acJsDh0ChOpklL9Fmm5JS9PrdGcIYRz3xrgVhDEnLOwEA/exec";
 
+let latestMemberData = null;
+
+function saveLatestData(data) {
+  latestMemberData = data;
+}
+
 async function searchMember() {
   const citizenIdInput = document.getElementById("citizenId");
   const result = document.getElementById("result");
@@ -20,9 +26,16 @@ async function searchMember() {
 
   try {
     const res = await fetch(`${API_URL}?action=searchMember&citizen_id=${citizenId}`);
-    const data = await res.json();
-    saveLatestData(data);
+   const data = await res.json();
 
+if (!data.success) {
+  latestMemberData = null;
+  result.innerHTML = `<div class="error">${data.message || "ไม่พบข้อมูลสมาชิก"}</div>`;
+  return;
+}
+
+saveLatestData(data);
+    
     if (!data.success) {
       result.innerHTML = `<div class="error">${data.message || "ไม่พบข้อมูลสมาชิก"}</div>`;
       return;
