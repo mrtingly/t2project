@@ -1,3 +1,1 @@
-// T2 Project — clean foundation
-// Member features will be rebuilt on the new role/privacy model.
-console.info("T2 Project reset: member foundation ready.");
+function memberSearch(){const id=document.getElementById('citizenId').value.replace(/\D/g,'');const name=document.getElementById('fullName').value.trim();const out=document.getElementById('memberResult');if(id.length!==13||!name){out.innerHTML='<div class="warn">กรุณากรอกเลขบัตรประชาชน 13 หลัก และชื่อ-นามสกุล</div>';return;}out.innerHTML='<div class="info">โครงหน้า Member พร้อมแล้ว — ขั้นเชื่อมฐานข้อมูลจริงจะค้นหาจากเลขบัตร + ชื่อ และแสดงเฉพาะข้อมูลที่ตรงกัน</div>';}
