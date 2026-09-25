@@ -37,5 +37,47 @@ const MONEY_RULES=[
 function rulesForDate(d){return MONEY_RULES.filter(x=>d>=x.from&&d<=x.to)}
 function calculateMoney(d,a){const rs=rulesForDate(d);if(!rs.length)return {status:"none"};let matches=[];for(const r of rs){for(const [paid,receive] of r.tiers){if(a===paid)matches.push({period:r.n,paid,receive})}}return matches.length?{status:"matched",matches}:{status:"review",periods:rs.map(x=>x.n)}}
 
-function findMember(){const id=document.getElementById('aCitizen').value.replace(/\D/g,'');const n=document.getElementById('aName').value.trim();document.getElementById('findResult').innerHTML=(id.length===13&&n)?'<div class="info">พร้อมค้นหาฐานสมาชิกจาก Excel ที่นำเข้า</div>':'<div class="warn">กรอกเลขบัตรและชื่อ-นามสกุล</div>';}
-function previewPayment(){const a=Number(document.getElementById('amount').value),d=document.getElementById('payDate').value,t=document.getElementById('payTime').value,r=document.getElementById('reference').value.trim(),o=document.getElementById('paymentResult');if(!a||!d||!t){o.innerHTML='<div class="warn">กรุณากรอกยอด วันที่ และเวลาโอน</div>';return;}const c=calculateMoney(d,a);let result='';if(c.status==='matched')result=c.matches.map(x=>'<b>ช่วง '+x.period+'</b> • จ่าย '+x.paid.toLocaleString('th-TH')+' บาท → จำนวนเงินตามตาราง '+x.receive.toLocaleString('th-TH')+' บาท').join('<br>');else if(c.status==='none')result='<b>ไม่พบช่วงเงินใน PDF สำหรับวันที่นี้</b>';else result='<b>พบช่วง '+c.periods.join(', ')+'</b> แต่ยอดนี้ไม่มีคู่ตัวเงินที่ถอดได้ชัดเจนจาก PDF — ให้ตรวจสอบก่อนบันทึก';o.innerHTML='<div class="'+(c.status==='matched'?'info':'warn')+'"><b>รายการ:</b> '+a.toLocaleString('th-TH')+' บาท • '+d+' '+t+(r?' • '+r:'')+'<br>'+result+'<br><small>ระบบไม่นำรถ ทอง พระ QFS A17 กล่อง iPad ซิม SPC หรือของแถมอื่นมาคำนวณ</small></div>';}
+
+const API_URL='https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec';
+let selectedMember=null;
+function cleanName(v){return String(v||'').trim().replace(/^(นาย|นางสาว|นาง|น\.ส\.|น\.ส)\s*/,'').replace(/\s+/g,' ')}
+async function findMember(){
+ const id=aCitizen.value.replace(/\D/g,''),name=cleanName(aName.value),out=findResult;
+ if(id.length!==13||!name){out.innerHTML='<div class="warn">กรอกเลขบัตร 13 หลัก และชื่อ-นามสกุล</div>';return}
+ out.innerHTML='<div class="info">กำลังค้นหา Master...</div>';
+ try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',citizenId:id,fullName:name})});const data=await res.json();
+ if(data.ok&&data.member){selectedMember={citizenId:id,firstName:data.member.firstName,lastName:data.member.lastName};out.innerHTML='<div class="saveOk">✓ พบสมาชิก: <b>'+selectedMember.firstName+' '+selectedMember.lastName+'</b></div>';selectedMemberBox();}
+ else{selectedMember=null;out.innerHTML='<div class="warn">ไม่พบข้อมูลสมาชิกที่ตรงกัน</div>';selectedMemberBox();}}
+ catch(e){out.innerHTML='<div class="warn">เชื่อมต่อฐานสมาชิกไม่ได้ กรุณาลองใหม่</div>'}
+}
+function selectedMemberBox(){document.getElementById('selectedMember').innerHTML=selectedMember?'สมาชิกที่เลือก: <b>'+selectedMember.firstName+' '+selectedMember.lastName+'</b>':'กรุณาค้นหาและเลือกสมาชิกก่อนลงรายการ'}
+function previewPayment(){
+ const a=Number(amount.value),d=payDate.value,t=payTime.value,r=reference.value.trim(),o=paymentResult;
+ if(!selectedMember){o.innerHTML='<div class="warn">กรุณาค้นหาสมาชิกก่อน</div>';return}
+ if(!a||!d||!t||!r){o.innerHTML='<div class="warn">กรุณากรอกยอด วันที่ เวลา และเลขอ้างอิง</div>';return}
+ const c=calculateMoney(d,a);let result='';
+ if(c.status==='matched')result=c.matches.map(x=>'<b>ช่วง '+x.period+'</b> • จ่าย '+x.paid.toLocaleString('th-TH')+' บาท → จำนวนเงินตามตาราง '+x.receive.toLocaleString('th-TH')+' บาท').join('<br>');
+ else if(c.status==='none')result='<b>ไม่พบช่วงเงินใน PDF สำหรับวันที่นี้</b>';
+ else result='<b>พบช่วง '+c.periods.join(', ')+'</b> แต่ยอดนี้ไม่มีคู่ตัวเงินที่ถอดได้ชัดเจน — ต้องตรวจสอบ';
+ o.innerHTML='<div class="'+(bankVerified.checked?'info':'warn')+'"><b>'+selectedMember.firstName+' '+selectedMember.lastName+'</b><br>'+a.toLocaleString('th-TH')+' บาท • '+d+' '+t+' • Ref '+r+'<br>'+result+'<br><b>ธนาคาร:</b> '+(bankVerified.checked?'✓ Admin ยืนยันเงินเข้าแล้ว':'รอตรวจด้วยแอปธนาคาร')+'</div>';
+}
+function loadPayments(){try{return JSON.parse(localStorage.getItem('t2_admin_payments')||'[]')}catch(e){return[]}}
+function savePayments(v){localStorage.setItem('t2_admin_payments',JSON.stringify(v))}
+function savePayment(){
+ if(!selectedMember){paymentResult.innerHTML='<div class="warn">กรุณาค้นหาสมาชิกก่อน</div>';return}
+ const a=Number(amount.value),d=payDate.value,t=payTime.value,r=reference.value.trim();
+ if(!a||!d||!t||!r){paymentResult.innerHTML='<div class="warn">ข้อมูลรายการยังไม่ครบ</div>';return}
+ if(!bankVerified.checked){paymentResult.innerHTML='<div class="warn">ต้องตรวจสลิปด้วยแอปธนาคารและยืนยันเงินเข้าก่อนบันทึก</div>';return}
+ const list=loadPayments();if(list.some(x=>x.reference===r)){paymentResult.innerHTML='<div class="warn">เลขอ้างอิงนี้ถูกบันทึกแล้ว — ไม่อนุญาตรายการซ้ำ</div>';return}
+ const c=calculateMoney(d,a),match=c.status==='matched'?c.matches[0]:null;
+ list.push({id:'PAY-'+Date.now(),citizenId:selectedMember.citizenId,member:selectedMember.firstName+' '+selectedMember.lastName,amount:a,date:d,time:t,reference:r,note:note.value.trim(),bankVerified:true,period:match?match.period:'ตรวจสอบ',reward:match?match.receive:null,memberStatus:'รอตรวจทาน',createdAt:new Date().toISOString()});
+ savePayments(list);paymentResult.innerHTML='<div class="saveOk">✓ บันทึกรายการแล้ว และนำเข้า Report แล้ว</div>';renderReport();
+}
+function filteredPayments(){let list=loadPayments(),f=reportFrom.value,to=reportTo.value,s=reportStatus.value;return list.filter(x=>(!f||x.date>=f)&&(!to||x.date<=to)&&(!s||(s==='verified'?x.bankVerified:!x.bankVerified)))}
+function renderReport(){
+ const list=filteredPayments(),total=list.reduce((s,x)=>s+x.amount,0),reward=list.reduce((s,x)=>s+(Number(x.reward)||0),0),members=new Set(list.map(x=>x.citizenId)).size;
+ reportSummary.innerHTML='<div><small>จำนวนรายการ</small><b>'+list.length.toLocaleString('th-TH')+'</b></div><div><small>สมาชิก</small><b>'+members.toLocaleString('th-TH')+'</b></div><div><small>ยอดรวม</small><b>'+total.toLocaleString('th-TH')+' ฿</b></div><div><small>ผลตอบแทนรวม</small><b>'+reward.toLocaleString('th-TH')+' ฿</b></div>';
+ reportRows.innerHTML=list.length?list.map(x=>'<tr><td>'+x.date+' '+x.time+'</td><td>'+x.member+'</td><td>'+x.amount.toLocaleString('th-TH')+'</td><td>'+x.period+'</td><td>'+(x.reward==null?'รอตรวจ':Number(x.reward).toLocaleString('th-TH'))+'</td><td>'+(x.bankVerified?'✓':'รอตรวจ')+'</td><td>'+x.memberStatus+'</td></tr>').join(''):'<tr><td colspan="7">ยังไม่มีรายการ</td></tr>';
+}
+function exportCSV(){const list=filteredPayments();if(!list.length){alert('ไม่มีข้อมูลสำหรับ Export');return}const rows=[['วันที่','เวลา','สมาชิก','เลขบัตร','ยอด','เลขอ้างอิง','ช่วง','ผลตอบแทน','ตรวจธนาคาร','สถานะสมาชิก'],...list.map(x=>[x.date,x.time,x.member,x.citizenId,x.amount,x.reference,x.period,x.reward??'',x.bankVerified?'ยืนยันแล้ว':'รอตรวจ',x.memberStatus])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='T2Project-Report-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href)}
+document.addEventListener('DOMContentLoaded',renderReport);
