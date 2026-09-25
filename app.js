@@ -1,1 +1,16 @@
-function toggleMenu(){document.getElementById('sideMenu').classList.toggle('open');document.getElementById('shade').classList.toggle('show')}function memberSearch(){const id=document.getElementById('citizenId').value.replace(/\D/g,'');const name=document.getElementById('fullName').value.trim();const out=document.getElementById('memberResult');if(id.length!==13||!name){out.innerHTML='<div class="warn">กรุณากรอกเลขบัตรประชาชน 13 หลัก และชื่อ-นามสกุล</div>';return;}out.innerHTML='<div class="info">พร้อมค้นหาข้อมูลสมาชิก</div>';}
+function toggleMenu(){document.getElementById('sideMenu').classList.toggle('open');document.getElementById('shade').classList.toggle('show')}
+const TEST_MEMBER={citizenId:'3100100629397',firstName:'exsam',lastName:'0001'};
+function normalizeName(v){return v.trim().replace(/\s+/g,' ').toLowerCase()}
+function memberSearch(){
+ const id=document.getElementById('citizenId').value.replace(/\D/g,'');
+ const name=document.getElementById('fullName').value.trim();
+ const out=document.getElementById('memberResult');
+ if(id.length!==13||!name){out.innerHTML='<div class="warn">กรุณากรอกเลขบัตรประชาชน 13 หลัก และชื่อ-นามสกุล</div>';return;}
+ const testName=TEST_MEMBER.firstName+' '+TEST_MEMBER.lastName;
+ if(id===TEST_MEMBER.citizenId&&normalizeName(name)===normalizeName(testName)){
+   sessionStorage.setItem('t2_member',JSON.stringify(TEST_MEMBER));
+   out.innerHTML='<div class="info"><b>เข้าสู่ระบบสำเร็จ</b><br>สมาชิกทดสอบ: '+TEST_MEMBER.firstName+' '+TEST_MEMBER.lastName+'</div>';
+   return;
+ }
+ out.innerHTML='<div class="warn">ไม่พบข้อมูลสมาชิกที่ตรงกับเลขบัตรประชาชนและชื่อ-นามสกุล</div>';
+}
