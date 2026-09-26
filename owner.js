@@ -1,8 +1,6 @@
 const API_URL='https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec';let staff=JSON.parse(sessionStorage.getItem('t2_owner')||'null'),REPORT=[];
 async function call(action,data={},token=staff&&staff.token){
- const payload=JSON.stringify({action,token,...data});
- const url=API_URL+'?payload='+encodeURIComponent(payload);
- const r=await fetch(url,{method:'GET',redirect:'follow',cache:'no-store'});
+ const r=await fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token,...data})});
  const raw=await r.text();
  try{return JSON.parse(raw)}catch(e){throw new Error('API response is not JSON')}
 }
