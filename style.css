@@ -5,3 +5,31 @@
 
 /* Member review v13 */
 .reviewBill{align-items:flex-start;flex-wrap:wrap}.reviewArea{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.reviewArea button{border:0;border-radius:10px;padding:9px 11px;font-weight:800;cursor:pointer}.reviewOk{background:#e9f7ef;color:#286443}.reviewBad{background:#fff0ee;color:#9a443b}.reviewDone{display:inline-block;padding:8px 10px;border-radius:10px;background:#eef4fa;color:#45627e;font-size:12px;font-weight:800}.profileCard input[readonly]{background:#f3f6f9;color:#6d7e91}@media(max-width:520px){.billCard.reviewBill{display:block}.reviewArea{justify-content:flex-start;margin-top:12px}.reviewArea button{width:100%}}
+
+/* Mobile luxury v14 */
+:root{--lux-bg:#f4f7fb;--lux-card:rgba(255,255,255,.94);--lux-shadow:0 18px 50px rgba(18,46,80,.09)}
+body{background:radial-gradient(circle at 50% -5%,#fff 0,#f7faff 35%,#eef3f8 100%);-webkit-font-smoothing:antialiased}
+.top,.adminTop{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.88);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.top a,.adminTop a{color:var(--navy);text-decoration:none;font-weight:800}
+.brandMark,.loginLogo{background:linear-gradient(145deg,#1b527f,#0b294b);box-shadow:0 14px 34px rgba(16,46,84,.22),inset 0 1px 0 rgba(255,255,255,.28)}
+.loginCard,.panel,.profileView,.profileCard,.beneficiaryCard,.summaryCard,.billCard{border-color:rgba(215,225,236,.86);box-shadow:var(--lux-shadow)}
+.primary,.adminBtn{min-height:54px;letter-spacing:.1px}
+input,select,textarea,.inputBox{font-size:16px!important}
+button,a,input,select{touch-action:manipulation}
+@media(max-width:699px){
+ .top{height:64px;padding-left:16px;padding-right:12px}.brand b{font-size:18px}.brandMark{width:34px;height:34px}
+ .loginShell{padding:32px 16px max(32px,env(safe-area-inset-bottom));align-items:flex-start}.loginCard{max-width:460px;background:transparent}.loginLogo{width:72px;height:72px;border-radius:22px;margin-bottom:17px}h1{font-size:27px}.memberTag{margin-bottom:25px}
+ .inputBox{height:58px;border-radius:16px}.primary{height:58px;border-radius:16px;margin-top:14px}
+ .memberShell{padding:18px 14px calc(36px + env(safe-area-inset-bottom));max-width:100%}.profileHero{padding:6px 2px 18px;gap:11px}.profileHero h1{font-size:20px}.profileAvatar{width:58px;height:58px}.editPill{padding:8px 11px;font-size:12px}
+ .profileMoney{gap:9px}.profileMoney>div{border-radius:18px;padding:15px 13px;min-width:0}.profileMoney strong{font-size:clamp(18px,5.5vw,23px);overflow-wrap:anywhere}
+ .profileView,.profileCard,.beneficiaryCard{border-radius:19px}.sectionTitle{font-size:17px!important;margin-top:24px!important}
+ .summaryGrid{gap:9px}.summaryCard{padding:15px;border-radius:17px}.summaryCard strong{font-size:22px}
+ .menu{width:min(320px,88vw);border-radius:22px 0 0 22px}.menu a{padding:17px 5px}
+ .adminTop{min-height:64px;padding:9px 14px;gap:8px;flex-wrap:wrap}.adminTop b{font-size:18px}.adminTop span{order:3;width:100%;font-size:10px!important;color:#8494a6}.adminTop .secondary{position:absolute;right:12px;top:7px;margin:0;padding:9px 11px}
+ .adminWrap{padding:14px 12px 40px}.panel{padding:17px 15px;border-radius:19px;margin-bottom:12px}.panel h1{font-size:23px}.panel h2{font-size:20px}
+ .form.two,.reportFilters{grid-template-columns:1fr}.panel input,.panel select{height:52px;border-radius:13px}.adminBtn,.secondaryAdmin{width:100%;margin:10px 0 0}.bankCheck{border-radius:14px}
+ .reportGrid{grid-template-columns:1fr 1fr}.reportGrid>div{padding:13px}.reportGrid b{font-size:17px}.reportActions{display:grid;grid-template-columns:1fr 1fr}.reportActions button{margin-top:10px;min-height:46px}
+ .tableWrap{margin-left:-15px;margin-right:-15px;padding:0 15px;-webkit-overflow-scrolling:touch}.tableWrap:after{content:'เลื่อนตารางซ้าย–ขวาได้';display:block;color:#98a5b4;font-size:10px;padding:7px 0}
+ .billCard{border-radius:17px;padding:15px}.reviewArea button{min-height:44px}
+}
+@media(min-width:700px){.loginCard{box-shadow:0 30px 80px rgba(18,46,80,.10)}}
