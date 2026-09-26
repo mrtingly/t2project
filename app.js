@@ -12,7 +12,7 @@ async function memberSearch(){
   const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',citizenId:id,fullName:name})});
   const data=await res.json();
   if(data&&data.ok&&data.member){
-   sessionStorage.setItem('t2_member',JSON.stringify({citizenId:id,firstName:data.member.firstName,lastName:data.member.lastName}));
+   sessionStorage.setItem('t2_member',JSON.stringify({citizenId:id,firstName:data.member.firstName,lastName:data.member.lastName,token:data.token}));
    location.href='member.html';return;
   }
   out.innerHTML='<div class="warn">ไม่พบข้อมูลสมาชิกที่ตรงกัน</div>';
