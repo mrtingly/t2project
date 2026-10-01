@@ -40,3 +40,8 @@ button,a,input,select{touch-action:manipulation}
 @media print{#ownerLogout,.ownerQuick,.ownerSectionHead .reportActions,.panel:has(.ownerQuick),.ownerHero p{display:none!important}.ownerStats{grid-template-columns:repeat(4,1fr)}}
 
 .passwordBox{position:relative}.passwordBox input{padding-right:64px!important}.passwordToggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:#edf4fa;color:#123f68;border-radius:10px;padding:7px 11px;font-weight:900;cursor:pointer}
+
+.forgotLink{display:block;margin:14px auto 0;border:0;background:transparent;color:#1769aa;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.forgotBox{margin-top:18px;padding:18px;border:1px solid #dce7f3;border-radius:16px;background:#f8fbff;text-align:left}
+.forgotBox p{margin:7px 0 14px;color:#5b6573;font-size:.92rem;line-height:1.5}
+.forgotBox .primary{width:100%;margin-top:12px}
