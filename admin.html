@@ -23,7 +23,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
 <section>
  <section class="card">
   <h2>เพิ่มใบเสร็จ / เงินลงทุน</h2>
-  <div id="selectedMember" class="selected">กรุณาเลือกสมาชิกก่อน</div>
+  <div id="selectedMember" class="selected">กรุณาเลือกสมาชิกก่อน</div>\n  <div class="promo"><b>📷 แนบสลิปก่อนกรอกข้อมูล</b><div class="muted tiny" style="margin:4px 0 10px">ใช้กล้องมือถือถ่ายสลิป หรือเลือกรูปจากเครื่อง แล้วตรวจข้อมูลจากภาพก่อนบันทึก</div><input id="slipImage" type="file" accept="image/*" capture="environment" onchange="previewSlip(event)" style="width:100%"><div id="slipPreviewBox" class="hidden" style="margin-top:12px;text-align:center"><img id="slipPreview" alt="ภาพสลิป" style="max-width:100%;max-height:520px;border-radius:12px;border:1px solid #dfe7f2;object-fit:contain"><div class="tiny muted" style="margin-top:6px">ตรวจจากภาพ: ผู้โอน · วันที่ · เวลา · จำนวนเงิน · เลขอ้างอิง 6 หลักท้าย</div></div></div>
   <div class="fields">
    <div class="field"><label>วันที่โอน</label><input id="payDate" type="date" oninput="previewPromo()"></div>
    <div class="field"><label>เวลา</label><input id="payTime" type="time"></div>
@@ -34,7 +34,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
    <div class="field wide"><label>หมายเหตุ</label><textarea id="note" rows="2"></textarea></div>
   </div>
   <div id="promoBox" class="promo">เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร</div>
-  <label style="display:flex;gap:9px;align-items:flex-start;margin:12px 0"><input id="bankVerified" type="checkbox"> <span><b>ตรวจสอบเงินเข้าแล้ว</b><br><span class="muted tiny">Admin ยืนยันหลังตรวจด้วยแอปธนาคาร</span></span></label>
+  <label style="display:flex;gap:9px;align-items:flex-start;margin:12px 0"><input id="bankVerified" type="checkbox"> <span><b>ตรวจข้อมูลจากสลิปแล้ว</b><br><span class="muted tiny">Admin ตรวจว่าข้อมูลในฟอร์มตรงกับภาพสลิปแล้ว · Owner จะตรวจ Statement ภายหลัง</span></span></label>
   <div class="actions"><button class="btn" onclick="saveReceipt()">บันทึกใบเสร็จ</button><button id="newReceiptBtn" class="btn alt hidden" onclick="newReceipt()">＋ ADD NEW RECEIPT</button></div>
   <div id="saveMessage" style="margin-top:12px"></div>
  </section>
@@ -45,5 +45,5 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
  </section>
 </section>
 </div></main>
-<script src="admin.js?v=20"></script>
+<script src="admin.js?v=22"></script>
 </body></html>
