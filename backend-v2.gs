@@ -92,3 +92,54 @@ case 'createMember': return json(createMember(req));
 case 'createAdmin': return json(createAdmin(req));
 case 'setAdminStatus': return json(setAdminStatus(req));
 */
+
+
+/* T2Project Admin payment maintenance
+   Admin may edit/delete payments belonging to members assigned to that Admin.
+   Member is the first-level cross-check; Owner statement reconciliation is separate.
+*/
+const V2_PAYMENTS_SHEET='Payments';
+function v2PaymentAccess_(auth,citizenId){
+  if(auth.session.role==='owner')return true;
+  const d=v2Rows_(MEMBERS_SHEET),cid=String(citizenId||'').replace(/[\s-]/g,'');
+  for(const r of d.rows){if(!r.some(Boolean))continue;const x=v2Obj_(d.headers,r);if(String(x.citizen_id||'').replace(/[\s-]/g,'')===cid)return x.admin_id===auth.admin.admin_id}
+  return false;
+}
+function updatePayment(req){
+  const auth=v2RequireAdmin_(req.token);if(!auth)return {ok:false,auth:false,message:'Unauthorized'};
+  const id=String(req.paymentId||'').trim(),ref=String(req.referenceNo||'').trim();
+  if(!id)return {ok:false,message:'ไม่พบรหัสรายการ'};
+  if(!/^\d{6}$/.test(ref))return {ok:false,message:'รหัสสลิปต้องเป็นตัวเลข 6 หลัก'};
+  const d=v2Rows_(V2_PAYMENTS_SHEET);
+  for(let i=0;i<d.rows.length;i++){
+    const x=v2Obj_(d.headers,d.rows[i]);
+    const pid=String(x.payment_id||x.paymentId||d.rows[i][0]||'');
+    if(pid!==id)continue;
+    const cid=x.citizen_id||x.citizenId||d.rows[i][1]||'';
+    if(!v2PaymentAccess_(auth,cid))return {ok:false,auth:false,message:'ไม่มีสิทธิ์แก้ไขรายการนี้'};
+    for(let k=0;k<d.rows.length;k++){if(k===i)continue;const y=v2Obj_(d.headers,d.rows[k]);const yref=String(y.reference_no||y.referenceNo||d.rows[k][7]||'').trim();if(yref===ref)return {ok:false,duplicate:true,message:'รหัสสลิปนี้มีอยู่แล้ว'}}
+    const values=d.rows[i].slice();
+    values[4]=Number(req.amount||0);values[5]=String(req.transferDate||'');values[6]=String(req.transferTime||'');values[7]=ref;
+    values[9]=String(req.notes||'');values[10]=String(req.rulePeriod||'');values[11]=Number(req.promoReturn||0);
+    d.sheet.getRange(i+2,1,1,Math.max(12,values.length)).setValues([values.slice(0,Math.max(12,values.length))]);
+    return {ok:true,paymentId:id};
+  }
+  return {ok:false,message:'ไม่พบรายการ'};
+}
+function deletePayment(req){
+  const auth=v2RequireAdmin_(req.token);if(!auth)return {ok:false,auth:false,message:'Unauthorized'};
+  const id=String(req.paymentId||'').trim();if(!id)return {ok:false,message:'ไม่พบรหัสรายการ'};
+  const d=v2Rows_(V2_PAYMENTS_SHEET);
+  for(let i=0;i<d.rows.length;i++){
+    const x=v2Obj_(d.headers,d.rows[i]),pid=String(x.payment_id||x.paymentId||d.rows[i][0]||'');
+    if(pid!==id)continue;
+    const cid=x.citizen_id||x.citizenId||d.rows[i][1]||'';
+    if(!v2PaymentAccess_(auth,cid))return {ok:false,auth:false,message:'ไม่มีสิทธิ์ลบรายการนี้'};
+    d.sheet.deleteRow(i+2);return {ok:true,paymentId:id};
+  }
+  return {ok:false,message:'ไม่พบรายการ'};
+}
+/* Add to doPost switch:
+case 'updatePayment': return json(updatePayment(req));
+case 'deletePayment': return json(deletePayment(req));
+*/
