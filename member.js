@@ -52,8 +52,9 @@ function speakProfileNotice(){const t='กรุณาอัปเดตโป�
 let memberVoiceMode=localStorage.getItem('t2_member_voice')!=='off';
 function speakText(t){t=String(t||'').replace(/\s+/g,' ').trim();if(!t||!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';u.rate=.9;speechSynthesis.speak(u)}
 function readableText(el){if(!el)return'';if(el.matches('input,textarea,select')){const label=el.closest('label');return ((label?label.innerText.replace(el.value||'',''):'')||el.getAttribute('aria-label')||'ช่องข้อมูล')+' '+(el.value||el.placeholder||'ยังไม่มีข้อมูล')}return el.getAttribute('aria-label')||el.innerText||el.textContent||''}
-function updateVoiceButton(){if(!window.voiceModeBtn)return;voiceModeBtn.textContent=memberVoiceMode?'🔊 ระบบอ่านหน้าจอ: เปิด':'🔇 ระบบอ่านหน้าจอ: ปิด';voiceModeBtn.classList.toggle('off',!memberVoiceMode)}
-function toggleVoiceMode(){memberVoiceMode=!memberVoiceMode;localStorage.setItem('t2_member_voice',memberVoiceMode?'on':'off');if('speechSynthesis' in window)speechSynthesis.cancel();updateVoiceButton();if(memberVoiceMode)speakText('เปิดระบบอ่านหน้าจอแล้ว แตะข้อความ ข้อมูล หรือปุ่มใด ๆ เพื่อฟัง')}
+function updateVoiceButton(){if(window.voiceToggle)voiceToggle.checked=memberVoiceMode}
+function setVoiceMode(on){memberVoiceMode=!!on;localStorage.setItem('t2_member_voice',memberVoiceMode?'on':'off');if('speechSynthesis' in window)speechSynthesis.cancel();updateVoiceButton();if(memberVoiceMode)speakText('เปิดระบบอ่านออกเสียงแล้ว')}
+function toggleVoiceMode(){setVoiceMode(!memberVoiceMode)}
 document.addEventListener('click',e=>{if(!memberVoiceMode)return;const el=e.target.closest('button,a,input,textarea,select,th,td,h1,h2,h3,p,small,strong,b,span,.profileInfo>div,.summaryCard,.profileMoney>div,.sectionNote');if(!el||el.id==='voiceModeBtn')return;const t=readableText(el);if(t)setTimeout(()=>speakText(t),20)},true);
 document.addEventListener('focusin',e=>{if(memberVoiceMode&&e.target.matches('input,textarea,select'))speakText(readableText(e.target))});
 setTimeout(updateVoiceButton,0);
