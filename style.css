@@ -180,3 +180,6 @@ body{background:#f3f7fb}.memberShell{max-width:1180px;padding:52px 34px 90px}
 
 /* Member ID card v29 */
 .idCardPick{display:block}.idCardPick input{margin-top:7px}.idCardPreview{display:block;width:100%;max-width:430px;aspect-ratio:1.586/1;object-fit:cover;margin-top:10px;border:1px solid #d8e3ed;border-radius:14px;background:#f5f8fb}
+
+/* T2Project global Prompt */
+html,body,button,input,select,textarea,table{font-family:'Prompt',sans-serif!important}
