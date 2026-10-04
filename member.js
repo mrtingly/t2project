@@ -46,3 +46,5 @@ function reviewIncorrect(id){const note=prompt('กรุณาระบุข�
 function logout(){sessionStorage.removeItem('t2_member');location.href='index.html'}
 init();
 if(window.mapUrl)mapUrl.addEventListener('input',updateMapLink);
+
+function speakProfileNotice(){const t='กรุณาอัปเดตโปรไฟล์ของคุณให้ครบถ้วนและเป็นปัจจุบัน เพื่อประโยชน์ของท่านในการติดต่อ ติดตาม และประสานงานด้านต่าง ๆ ได้อย่างถูกต้อง รวดเร็ว และมีประสิทธิภาพ';if(!('speechSynthesis' in window)){alert('อุปกรณ์นี้ไม่รองรับการอ่านข้อความ');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';u.rate=.92;speechSynthesis.speak(u)}
