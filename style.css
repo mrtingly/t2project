@@ -169,3 +169,8 @@ body{background:#f3f7fb}.memberShell{max-width:1180px;padding:52px 34px 90px}
 .voiceBar button{border:0;border-radius:10px;background:#123f70;color:#fff;padding:9px 12px;font-family:'Prompt',sans-serif;font-weight:700;cursor:pointer}.voiceBar button.off{background:#7b8998}.voiceBar small{color:#708399}
 .memberPage button,.memberPage a,.memberPage input,.memberPage textarea,.memberPage select,.memberPage th,.memberPage td,.memberPage h1,.memberPage h2,.memberPage h3,.memberPage p,.memberPage small,.memberPage strong,.memberPage b,.memberPage span,.profileInfo>div,.summaryCard,.profileMoney>div{cursor:pointer}
 @media(max-width:699px){.voiceBar{align-items:flex-start;flex-direction:column}.voiceBar button{width:100%}.voiceBar small{font-size:10px}}
+
+/* Universal member voice accessibility v26 */
+.voiceBar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 15px;padding:11px 14px;border:1px solid #d9e5f0;border-radius:15px;background:rgba(255,255,255,.88)}.voiceBar button{border:0;border-radius:10px;background:#123f70;color:#fff;padding:9px 12px;font-family:'Prompt',sans-serif;font-weight:700;cursor:pointer}.voiceBar button.off{background:#7b8998}.voiceBar small{color:#708399}
+.memberPage button,.memberPage a,.memberPage input,.memberPage textarea,.memberPage select,.memberPage th,.memberPage td,.memberPage h1,.memberPage h2,.memberPage h3,.memberPage p,.memberPage small,.memberPage strong,.memberPage b,.memberPage span,.profileInfo>div,.summaryCard,.profileMoney>div{cursor:pointer}
+@media(max-width:699px){.voiceBar{align-items:flex-start;flex-direction:column}.voiceBar button{width:100%}.voiceBar small{font-size:10px}}
