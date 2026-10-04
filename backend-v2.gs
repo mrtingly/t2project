@@ -143,3 +143,42 @@ function deletePayment(req){
 case 'updatePayment': return json(updatePayment(req));
 case 'deletePayment': return json(deletePayment(req));
 */
+
+
+/* Member profile central storage for Owner dossier */
+const MEMBER_PROFILES_SHEET='MemberProfiles', BENEFICIARIES_SHEET='Beneficiaries', MEMBER_CONTACTS_SHEET='MemberContacts';
+function v2MemberSession_(token){const x=requireMember(token);return x||null}
+function v2MemberCitizen_(session){return String(session.documentId||session.citizenId||session.citizen_id||'').replace(/[\s-]/g,'')}
+function getMyProfile(req){
+  const ses=v2MemberSession_(req.token);if(!ses)return {ok:false,auth:false,message:'Unauthorized'};
+  const cid=v2MemberCitizen_(ses),p=v2Rows_(MEMBER_PROFILES_SHEET);let profile={};
+  p.rows.forEach(r=>{const x=v2Obj_(p.headers,r);if(String(x.citizen_id||'').replace(/[\s-]/g,'')===cid)profile=x});
+  const b=v2Rows_(BENEFICIARIES_SHEET),c=v2Rows_(MEMBER_CONTACTS_SHEET);
+  return {ok:true,profile:profile,beneficiaries:b.rows.filter(r=>String(v2Obj_(b.headers,r).citizen_id||'').replace(/[\s-]/g,'')===cid).map(r=>v2Obj_(b.headers,r)),contacts:c.rows.filter(r=>String(v2Obj_(c.headers,r).citizen_id||'').replace(/[\s-]/g,'')===cid).map(r=>v2Obj_(c.headers,r))};
+}
+function saveMyProfile(req){
+  const ses=v2MemberSession_(req.token);if(!ses)return {ok:false,auth:false,message:'Unauthorized'};
+  const cid=v2MemberCitizen_(ses),d=v2Rows_(MEMBER_PROFILES_SHEET),now=Utilities.formatDate(new Date(),'Asia/Bangkok',"yyyy-MM-dd'T'HH:mm:ss");
+  const vals=[cid,String(req.memberId||''),String(req.phone||''),String(req.email||''),String(req.bank||''),String(req.bankAccount||''),String(req.address||''),String(req.mapUrl||''),String(req.profilePhoto||''),String(req.idCardFront||''),now];
+  let row=0;for(let i=0;i<d.rows.length;i++){if(String(v2Obj_(d.headers,d.rows[i]).citizen_id||'').replace(/[\s-]/g,'')===cid){row=i+2;break}}
+  if(row)d.sheet.getRange(row,1,1,vals.length).setValues([vals]);else d.sheet.appendRow(vals);
+  return {ok:true};
+}
+function v2ReplaceMemberRows_(sheetName,cid,rows){
+  const d=v2Rows_(sheetName);for(let i=d.rows.length-1;i>=0;i--){if(String(v2Obj_(d.headers,d.rows[i]).citizen_id||'').replace(/[\s-]/g,'')===cid)d.sheet.deleteRow(i+2)}
+  rows.forEach(r=>d.sheet.appendRow(r));
+}
+function saveMyBeneficiaries(req){
+ const ses=v2MemberSession_(req.token);if(!ses)return {ok:false,auth:false,message:'Unauthorized'};const cid=v2MemberCitizen_(ses),now=new Date().toISOString(),a=Array.isArray(req.items)?req.items:[];
+ v2ReplaceMemberRows_(BENEFICIARIES_SHEET,cid,a.map((x,i)=>[cid,i+1,String(x.firstName||''),String(x.lastName||''),String(x.phone||''),String(x.citizenId||''),String(x.percent||''),now]));return {ok:true}
+}
+function saveMyContacts(req){
+ const ses=v2MemberSession_(req.token);if(!ses)return {ok:false,auth:false,message:'Unauthorized'};const cid=v2MemberCitizen_(ses),now=new Date().toISOString(),a=Array.isArray(req.items)?req.items:[];
+ v2ReplaceMemberRows_(MEMBER_CONTACTS_SHEET,cid,a.map((x,i)=>[cid,i+1,String(x.firstName||''),String(x.lastName||''),String(x.phone||''),String(x.relationship||''),now]));return {ok:true}
+}
+/* Deploy routes in Apps Script doPost:
+case 'getMyProfile': return json(getMyProfile(req));
+case 'saveMyProfile': return json(saveMyProfile(req));
+case 'saveMyBeneficiaries': return json(saveMyBeneficiaries(req));
+case 'saveMyContacts': return json(saveMyContacts(req));
+*/
