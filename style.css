@@ -157,3 +157,6 @@ body{background:#f3f7fb}.memberShell{max-width:1180px;padding:52px 34px 90px}
 
 /* Prompt font v22 */
 .memberShell,.memberPage,.menu,.top,.profileCard,.beneficiaryCard,.receiptTable,.primary,.editPill,.addBtn{font-family:'Prompt',sans-serif!important}
+
+/* Address + map pin v24 */
+.profileCard textarea{min-height:92px;line-height:1.55}.mapPinBox{padding:17px;border:1px solid #dce6ef;border-radius:17px;background:#f7faff}.mapPinBox>div{margin-bottom:12px}.mapPinBox b,.mapPinBox small{display:block}.mapPinBox b{color:#123f70}.mapPinBox small{margin-top:4px;color:#7f90a3;font-size:11px}.mapOpen{display:inline-flex;margin-top:11px;padding:9px 12px;border-radius:10px;background:#eaf3fb;color:#124777;text-decoration:none;font-size:12px;font-weight:800}.profileInfo a{color:#1769aa;text-decoration:none}
