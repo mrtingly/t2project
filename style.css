@@ -101,3 +101,44 @@ button,a,input,select{touch-action:manipulation}
  #payments .summaryGrid{grid-template-columns:1fr 1fr}#payments .summaryCard.wide{grid-column:1/-1}
  .sectionTitle{font-size:18px!important}
 }
+
+/* Member executive dashboard v21 */
+body{background:#f3f7fb}
+.memberShell{max-width:1180px;padding:52px 34px 90px}
+#profile{position:relative}
+.profileHero{background:#fff;border:1px solid #e1e9f2;border-radius:28px;padding:26px 28px;margin-bottom:18px;box-shadow:0 18px 55px rgba(16,46,84,.07)}
+.profileHero:before{content:"";position:absolute;left:0;top:0;width:5px;height:100%;border-radius:5px;background:#153f6b}
+.profileHero{position:relative;overflow:hidden}
+.profileHero h1{font-size:31px}.profileHero small{color:#b28a45}.profileHero span{color:#75879a}
+.profileAvatar{width:88px;height:88px;background:linear-gradient(145deg,#eef4fa,#e2ebf4);border:1px solid #dce6ef;color:#315f8d}
+.editPill{background:#f7faff;border-color:#cfddea;min-width:76px}
+.profileMoney{gap:16px;margin:0 0 18px}
+.profileMoney>div{position:relative;overflow:hidden;background:linear-gradient(135deg,#173f6c 0%,#0b2d52 100%);min-height:142px;padding:25px 26px;border-radius:25px}
+.profileMoney>div:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-55px;top:-75px;background:rgba(255,255,255,.055)}
+.profileMoney small{font-size:12px;letter-spacing:.3px}.profileMoney strong{font-size:36px}.profileMoney span{font-size:11px}
+.profileView{border-radius:25px;padding:8px 27px;background:#fff}
+.profileInfo>div{padding:21px 9px}.profileInfo small{font-size:11px;letter-spacing:.2px}.profileInfo b{font-size:15px}
+.profileSlipReport{margin-top:22px;padding:28px;border-radius:27px;background:#fff}
+.reportHead{padding-bottom:18px;border-bottom:1px solid #e7edf4;margin-bottom:18px}
+.reportHead small{color:#b28a45}.reportHead h2{font-size:25px!important;letter-spacing:-.2px}
+.reportHead .printAllBtn{background:#123d69;box-shadow:0 10px 24px rgba(18,61,105,.16)}
+.receiptTableWrap{border-radius:16px;border-color:#dfe8f1}
+.receiptTable th{height:45px;background:#f4f7fb;color:#657a91;font-size:10px;letter-spacing:.2px}
+.receiptTable td{height:54px;font-size:13px}
+.receiptTable tbody tr:nth-child(even){background:#fbfcfe}
+.receiptTable td:nth-child(8){font-size:14px}
+.receiptActions button{background:#f5f9fd;border-color:#d6e2ee;min-width:52px}
+.sectionTitle{margin-top:38px!important;font-size:21px!important}
+.sectionNote{color:#8292a4}
+#beneficiaryList,#contactList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.beneficiaryCard{margin:0;border-radius:22px;padding:21px}
+.addBtn{background:rgba(255,255,255,.82);border:1px dashed #aebfd1;color:#16436f;transition:.2s}
+.addBtn:hover{background:#fff;border-color:#6f91b3;transform:translateY(-1px)}
+@media(max-width:699px){
+ .memberShell{padding:16px 12px 50px}
+ .profileHero{border-radius:21px;padding:18px 16px;margin-bottom:12px}.profileHero h1{font-size:21px}.profileAvatar{width:60px;height:60px}
+ .profileMoney{gap:8px;margin-bottom:12px}.profileMoney>div{min-height:105px;padding:16px 14px;border-radius:20px}.profileMoney strong{font-size:clamp(21px,6.2vw,29px)}
+ .profileView{padding:3px 16px;border-radius:20px}
+ .profileSlipReport{padding:18px 12px;margin-top:16px;border-radius:21px}.reportHead{padding-bottom:14px}
+ #beneficiaryList,#contactList{grid-template-columns:1fr}
+}
