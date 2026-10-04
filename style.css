@@ -163,3 +163,9 @@ body{background:#f3f7fb}.memberShell{max-width:1180px;padding:52px 34px 90px}
 
 /* Profile notice + Thai speech v25 */
 .profileNotice{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px;padding:17px 19px;border:1px solid #d7e4f0;border-radius:18px;background:#f8fbff}.profileNotice b,.profileNotice span{display:block}.profileNotice b{color:#123f70;font-size:14px}.profileNotice span{margin-top:4px;color:#71859a;font-size:12px;line-height:1.55}.profileNotice button{flex:0 0 auto;border:0;border-radius:12px;padding:11px 14px;background:#123f70;color:#fff;font-family:'Prompt',sans-serif;font-weight:700;cursor:pointer}@media(max-width:699px){.profileNotice{align-items:flex-start;padding:14px}.profileNotice button{padding:10px;font-size:12px}.profileNotice b{font-size:13px}.profileNotice span{font-size:11px}}
+
+/* Universal member voice accessibility v26 */
+.voiceBar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 15px;padding:11px 14px;border:1px solid #d9e5f0;border-radius:15px;background:rgba(255,255,255,.88)}
+.voiceBar button{border:0;border-radius:10px;background:#123f70;color:#fff;padding:9px 12px;font-family:'Prompt',sans-serif;font-weight:700;cursor:pointer}.voiceBar button.off{background:#7b8998}.voiceBar small{color:#708399}
+.memberPage button,.memberPage a,.memberPage input,.memberPage textarea,.memberPage select,.memberPage th,.memberPage td,.memberPage h1,.memberPage h2,.memberPage h3,.memberPage p,.memberPage small,.memberPage strong,.memberPage b,.memberPage span,.profileInfo>div,.summaryCard,.profileMoney>div{cursor:pointer}
+@media(max-width:699px){.voiceBar{align-items:flex-start;flex-direction:column}.voiceBar button{width:100%}.voiceBar small{font-size:10px}}
