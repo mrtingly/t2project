@@ -182,3 +182,24 @@ case 'saveMyProfile': return json(saveMyProfile(req));
 case 'saveMyBeneficiaries': return json(saveMyBeneficiaries(req));
 case 'saveMyContacts': return json(saveMyContacts(req));
 */
+
+
+/* Multi-admin login helper — S0002-S0006 share the configured rollout password.
+   Password is verified against a SHA-256 digest, not stored in the Admins sheet. */
+function v2Sha256_(value){
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(value||''),Utilities.Charset.UTF_8)
+    .map(function(b){return ('0'+((b<0?b+256:b).toString(16))).slice(-2)}).join('');
+}
+function staffLoginV2(req){
+  const username=String(req.username||'').trim(),password=String(req.password||'');
+  const admin=v2AdminByUsername_(username);
+  if(!admin||admin.status!=='active')return {ok:false,message:'Username หรือ Password ไม่ถูกต้อง'};
+  const rolloutHash='d256ad77ad3b6cf26048a04c6f1e9ac8bb45961e0b5ca1c0f08a2e92244d39d8';
+  if(v2Sha256_(password)!==rolloutHash)return {ok:false,message:'Username หรือ Password ไม่ถูกต้อง'};
+  const token=Utilities.getUuid()+Utilities.getUuid();
+  const session={role:'admin',username:admin.username,adminId:admin.admin_id,displayName:admin.display_name};
+  CacheService.getScriptCache().put('staff_'+token,JSON.stringify(session),28800);
+  return {ok:true,token:token,role:'admin',username:admin.username,adminId:admin.admin_id,displayName:admin.display_name};
+}
+/* In the deployed doPost staffLogin route, use staffLoginV2(req) for active Admins S0002-S0006,
+   while retaining the existing Owner/S0001 login path. */
