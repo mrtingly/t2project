@@ -55,6 +55,23 @@ function t2Install(){
  }
  return "Installation complete";
 }
+/**
+ * Read-only deployment diagnostic. Returns no personal data or credentials.
+ * Run t2Preflight() from the Apps Script editor before deploying.
+ */
+function t2Preflight(){
+ const result={databaseConfigured:false,requiredTables:false,ownerProvisioned:false,readyForLogin:false};
+ try{
+  const db=t2Db_();result.databaseConfigured=true;
+  const required=["Users","AuditLog","Sessions","Rooms"];
+  result.requiredTables=required.every(name=>!!db.getSheetByName(name));
+  if(result.requiredTables){
+   result.ownerProvisioned=t2Rows_("Users").some(u=>u.role==="owner"&&u.status==="active");
+  }
+  result.readyForLogin=result.requiredTables&&result.ownerProvisioned;
+ }catch(e){result.error="Configuration or permissions incomplete"}
+ return result;
+}
 function t2LockKey_(username){return "T2_FAIL_"+Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,username.toLowerCase())).slice(0,32)}
 function login(payload){
  if(!payload||typeof payload!=="object")return {ok:false,message:"ข้อมูลไม่ถูกต้อง"};
