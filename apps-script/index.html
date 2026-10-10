@@ -2,12 +2,76 @@
 <html lang="th">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#102447"><title>T2PROJECT | เข้าสู่ระบบ</title>
+<meta name="theme-color" content="#ffffff"><title>T2PROJECT | เข้าสู่ระบบ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{font-family:Prompt,system-ui,sans-serif;color:#17304e;background:#f2f6fb}*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #4a91ec;outline-offset:2px}.top{height:68px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(22px,calc((100vw - 1140px)/2));box-shadow:0 2px 12px #17304e0a}.brand{font-weight:700;letter-spacing:.5px;font-size:21px;color:#102447}.brand small{font-size:11px;display:block;letter-spacing:0;font-weight:400;color:#64748b}.badge{font-size:12px;border:1px solid #d7e4f3;border-radius:99px;padding:6px 12px;color:#516781}.wrap{max-width:1080px;margin:0 auto;padding:55px 22px 45px}.intro{text-align:center}.intro h1{font-size:clamp(27px,4vw,39px);margin:0 0 9px;color:#11294d}.intro p{margin:0;color:#66768b}.panel{max-width:760px;margin:33px auto 0;background:white;border-radius:23px;padding:32px;box-shadow:0 20px 65px #19395713;border:1px solid #e4ebf4}.choose{font-weight:600;font-size:17px;margin:0 0 16px}.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.role{border:2px solid #e5edf5;background:#fff;border-radius:17px;min-height:155px;padding:20px 12px;text-align:center;transition:.15s}.role:hover{border-color:#91b9e9;background:#f9fbff}.role[aria-pressed=true]{border-color:#276fce;background:#eef6ff;box-shadow:0 0 0 2px #d8e9ff}.role .emoji{font-size:31px;display:block;margin-bottom:9px}.role strong{font-size:17px;display:block}.role small{font-size:12px;color:#697c91}.form{max-width:460px;margin:27px auto 0}.form h2{font-size:19px;margin:0 0 6px}.muted{font-size:13px;color:#728197;margin:0 0 21px}.field{margin:14px 0}.field label{font-weight:500;font-size:14px;display:block;margin-bottom:7px}.field input{width:100%;border:1px solid #cbd8e7;border-radius:11px;padding:13px 14px;background:#fff;min-height:49px}.primary{width:100%;border:0;border-radius:12px;background:#2369c8;color:#fff;font-weight:600;min-height:51px;margin-top:12px}.primary:hover{background:#1858ac}.links{display:flex;justify-content:space-between;gap:8px;margin-top:17px}.link{border:0;background:none;color:#2267c1;padding:4px;font-size:13px}.notice{background:#fff8e9;color:#775316;border:1px solid #f0dfb4;padding:12px 15px;border-radius:12px;font-size:12px;line-height:1.8;margin:22px auto 0;max-width:760px}.status{min-height:23px;color:#b45309;font-size:13px;margin:12px 0 0}.hidden{display:none!important}.foot{text-align:center;color:#8a99ac;font-size:12px;padding:25px}.dashboard{max-width:850px;margin:35px auto}.dashhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}.metric{border:1px solid #e3eaf3;background:#fff;border-radius:16px;padding:23px}.metric b{font-size:27px;color:#1c5da9;display:block}.metric span{color:#66768b;font-size:13px}.outline{border:1px solid #c6d6ea;background:#fff;color:#2369c8;border-radius:10px;padding:10px 16px}.dashinfo{background:#fff;border:1px solid #e3eaf3;border-radius:16px;padding:22px;line-height:1.9}.dashinfo h2{margin:0 0 8px;font-size:18px}.dashinfo p{margin:0;color:#65758a}.menu{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}.menu button{border:1px solid #d9e6f3;background:#f7faff;border-radius:11px;padding:13px;text-align:left;color:#1c4f89}.menu button:disabled{opacity:.55;cursor:not-allowed}.sr{position:absolute;left:-9999px}@media(max-width:620px){.top{padding:0 17px}.wrap{padding:33px 14px}.panel{padding:20px 16px;border-radius:18px}.roles{gap:8px}.role{padding:15px 4px;min-height:132px}.role .emoji{font-size:25px}.role strong{font-size:14px}.role small{font-size:10px}.cards{grid-template-columns:1fr}.menu{grid-template-columns:1fr}.badge{font-size:10px}}
-.workspace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:16px}.workspace-grid .field{margin:0}.workspace-grid input,.workspace-grid select,.workspace-grid textarea{width:100%;min-height:46px;padding:10px;border:1px solid #cbd8e7;border-radius:10px;background:#fff;font:inherit}.workspace-grid textarea{min-height:95px}.full{grid-column:1/-1}.data-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px}.data-table th,.data-table td{padding:12px 8px;text-align:left;border-bottom:1px solid #e6edf5}.tag{display:inline-block;padding:4px 9px;background:#e8f2ff;color:#1f5caa;border-radius:99px;font-size:12px}.workspace-note{padding:13px;background:#f5f9fe;border-radius:11px;margin-top:15px;color:#61738b;font-size:12px}.workspace-action{border:0;background:#2369c8;color:white;border-radius:10px;padding:12px 18px;margin-top:16px;font-weight:600}.workspace-action:disabled{opacity:.5;cursor:not-allowed}.slip-preview{min-height:160px;border:2px dashed #b7cde7;border-radius:12px;display:grid;place-items:center;background:#f7faff;color:#69809b;text-align:center;padding:15px}@media(max-width:620px){.workspace-grid{grid-template-columns:1fr}.data-table{font-size:11px}.data-table th,.data-table td{padding:9px 4px}}</style></head>
+.workspace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:16px}.workspace-grid .field{margin:0}.workspace-grid input,.workspace-grid select,.workspace-grid textarea{width:100%;min-height:46px;padding:10px;border:1px solid #cbd8e7;border-radius:10px;background:#fff;font:inherit}.workspace-grid textarea{min-height:95px}.full{grid-column:1/-1}.data-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px}.data-table th,.data-table td{padding:12px 8px;text-align:left;border-bottom:1px solid #e6edf5}.tag{display:inline-block;padding:4px 9px;background:#e8f2ff;color:#1f5caa;border-radius:99px;font-size:12px}.workspace-note{padding:13px;background:#f5f9fe;border-radius:11px;margin-top:15px;color:#61738b;font-size:12px}.workspace-action{border:0;background:#2369c8;color:white;border-radius:10px;padding:12px 18px;margin-top:16px;font-weight:600}.workspace-action:disabled{opacity:.5;cursor:not-allowed}.slip-preview{min-height:160px;border:2px dashed #b7cde7;border-radius:12px;display:grid;place-items:center;background:#f7faff;color:#69809b;text-align:center;padding:15px}@media(max-width:620px){.workspace-grid{grid-template-columns:1fr}.data-table{font-size:11px}.data-table th,.data-table td{padding:9px 4px}}
+/* T2PROJECT — Bright White & Royal Blue Design System */
+:root{color-scheme:light;--blue:#1769e0;--blue-deep:#124aaf;--ink:#16365c;--muted:#647b96;--border:#e0eaf6;--canvas:#f6faff;--white:#fff;background:var(--canvas);color:var(--ink)}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse 650px 440px at 6% 8%,#dfeeff 0%,transparent 75%),radial-gradient(ellipse 650px 460px at 97% 35%,#e7f3ff 0%,transparent 75%),linear-gradient(180deg,#fff 0%,#f5faff 75%);background-attachment:fixed;line-height:1.65}
+.top{height:82px;background:#ffffffed;backdrop-filter:blur(18px);border-bottom:1px solid #e8f0fa;box-shadow:0 5px 30px #1b5fb00a}
+.brand{font-size:25px;letter-spacing:.7px;color:var(--blue-deep);line-height:1.25}
+.brand small{margin-top:5px;font-size:11px;color:#7790ad}
+.badge{background:#f3f8ff;border:1px solid #dceaff;color:#3672bb;font-weight:500;padding:7px 14px}
+.wrap{padding-top:64px}
+.intro h1{font-size:clamp(30px,4.4vw,45px);font-weight:700;letter-spacing:-.7px;color:#12345d}
+.intro p{font-size:15px;color:#748aa4}
+.panel{border:1px solid #e1edfa;border-radius:28px;box-shadow:0 28px 85px #1a60b012,0 3px 18px #1a60b008;padding:37px 39px;background:#fff}
+.choose{font-size:18px;color:#1b3c67}
+.roles{gap:15px}
+.role{border:1.5px solid #e2ebf7;border-radius:19px;min-height:165px;background:linear-gradient(180deg,#fff,#f9fcff);box-shadow:0 5px 15px #174b9b08;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.role:hover{transform:translateY(-3px);border-color:#7aaef6;box-shadow:0 12px 24px #1a6be01b}
+.role[aria-pressed=true]{border:2px solid #2878eb;background:linear-gradient(160deg,#f2f8ff,#e8f2ff);box-shadow:0 8px 23px #1c6ae01b,inset 0 0 0 1px #ffffffb3}
+.role .emoji{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 12px;background:#edf5ff;border-radius:16px;font-size:27px}
+.role[aria-pressed=true] .emoji{background:#dcecff}
+.role strong{font-size:17px;color:#1b3e68}
+.role small{font-size:12px;color:#7488a1}
+.form{margin-top:33px;border-top:1px solid #edf2fa;padding-top:28px}
+.form h2{font-size:20px;color:#183a65}
+.muted{color:#7a8ca3}
+.field label{color:#315274;font-weight:500}
+.field input,.workspace-grid input,.workspace-grid select,.workspace-grid textarea{border:1.5px solid #dbe6f4;background:#fcfdff;box-shadow:0 1px 2px #1b4b8008;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.workspace-grid input:focus,.workspace-grid select:focus,.workspace-grid textarea:focus{border-color:#458bef;box-shadow:0 0 0 4px #2e83f21a;outline:none}
+.field input::placeholder,.workspace-grid input::placeholder{color:#a0afc0}
+.primary,.workspace-action{background:linear-gradient(115deg,#237cf1,#1258c9);box-shadow:0 9px 19px #206ad02e;border-radius:13px;transition:transform .2s,box-shadow .2s}
+.primary:hover,.workspace-action:hover:not(:disabled){background:linear-gradient(115deg,#176ee7,#104cae);transform:translateY(-1px);box-shadow:0 12px 25px #206ad038}
+.link{font-weight:500}
+.link:hover{text-decoration:underline}
+.notice{background:#f5f9ff;border:1px solid #dceafb;color:#567391;border-radius:14px}
+.foot{color:#90a3b9}
+.dashboard{max-width:970px}
+.dashhead h1{color:#153962;font-size:clamp(23px,3vw,32px)}
+.metric{border:1px solid #e1ebf7;border-radius:19px;box-shadow:0 8px 26px #1b60b00b;background:#fff;padding:26px}
+.metric b{font-size:32px;color:#1769d9}
+.metric span{color:#6e839b}
+.outline{border:1px solid #cfe0f7;background:#fff;color:#1767cb;font-weight:500}
+.outline:hover{background:#f1f7ff}
+.dashinfo{border:1px solid #e1ebf7;border-radius:19px;box-shadow:0 8px 28px #1b60b00a;padding:27px}
+.dashinfo h2{color:#1b406b}
+.menu button{background:linear-gradient(180deg,#fff,#f5faff);border:1px solid #dce9f8;color:#22558d;border-radius:13px;min-height:56px;padding:14px 17px;font-weight:500;transition:background .2s,border-color .2s,transform .2s}
+.menu button:hover{background:#eaf4ff;border-color:#9cc5f6;transform:translateY(-1px)}
+.data-table th{color:#365a83;background:#f4f8fe;font-weight:600}
+.data-table td{color:#496782}
+.data-table th,.data-table td{border-bottom:1px solid #e7eff9}
+.workspace-note{background:#f2f8ff;border:1px solid #e0ecfa;color:#587594}
+.slip-preview{background:linear-gradient(145deg,#f9fcff,#edf6ff);border-color:#aacbf0;color:#6185af}
+@media(max-width:620px){
+.top{height:72px;padding:0 17px}.brand{font-size:21px}
+.wrap{padding:32px 14px 40px}
+.intro h1{font-size:29px}
+.panel{padding:23px 17px;border-radius:21px;margin-top:25px}
+.roles{gap:8px}.role{min-height:139px;padding:13px 4px;border-radius:14px}
+.role .emoji{width:42px;height:42px;font-size:23px;border-radius:12px;margin-bottom:9px}
+.role strong{font-size:14px}.role small{font-size:10px}
+.form{padding-top:24px;margin-top:25px}
+.dashhead{align-items:flex-start}.dashhead .outline{font-size:12px;padding:9px 11px}
+.metric{padding:19px}.dashinfo{padding:18px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style></head>
 <body>
 <header class="top"><div class="brand">T2PROJECT<small>ระบบบริหารจัดการสมาชิก</small></div><span class="badge">ต้นแบบทดสอบหน้าจอ</span></header>
 <main class="wrap" id="loginScreen"><div class="intro"><h1>ยินดีต้อนรับสู่ T2PROJECT</h1><p>กรุณาเลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ</p></div>
