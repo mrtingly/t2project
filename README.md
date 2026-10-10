@@ -3,8 +3,8 @@
 Status: architecture baseline, not production-ready. No real member data or credentials in this repository.
 
 ## Architecture
-- Static responsive frontend hosted on GitHub Pages, Prompt font.
-- Google Apps Script API validates every authenticated request and room access.
+- Frontend target: responsive Apps Script HtmlService with Prompt font; GitHub contains source code, not a verified live deployment.
+- Google Apps Script backend must validate every authenticated request and room access; implementation is not yet verified end-to-end.
 - Google Sheets is the structured datastore; private Google Drive stores original receipts and ID images.
 - Roles: MEMBER, ADMIN (S001–S008 mapped to A+, A, B, C, D, E, F, G), OWNER.
 - Never store credentials, ID photos, national ID numbers, bank statements or private slip images in public GitHub or client-side storage.
@@ -62,7 +62,7 @@ CSV/XLSX import where supported; PDF only after testing actual bank-specific for
 - Test with synthetic data before production; do not claim OCR or reconciliation is perfect.
 
 ## Next implementation phases
-1. Create fresh spreadsheet + private Drive folders and securely configure Apps Script properties.
+1. Preserve the existing 14-table spreadsheet and live Apps Script pilot; audit configuration and make a verified backup before any migration.
 2. Implement backend authentication/authorization, member CRUD, slip uniqueness, allocations and audit.
 3. Build Admin-first member registration, initial name+ID entry with independent verification, one-time username/password setup and username/password-only subsequent login.
 4. Integrate OCR provider and statement parsers using sample files from each bank.
