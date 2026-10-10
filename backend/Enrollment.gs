@@ -92,7 +92,3 @@ function v3RedeemEnrollmentInvitation_(providerIdentity,invitationId,secret){
    return {member_id:String(invitation.data.member_id),linked:true};
  }finally{lock.releaseLock();}
 }
-/** All client-accessible handlers MUST first verify identity and resolve role from server-side records. */
-function v3ResolveActor_(){
- throw new Error("Identity provider verification not yet configured: fail closed");
-}
