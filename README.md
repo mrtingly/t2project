@@ -10,6 +10,7 @@ Status: architecture baseline, not production-ready. No real member data or cred
 - Never store credentials, ID photos, national ID numbers, bank statements or private slip images in public GitHub or client-side storage.
 
 ## Sheets / data dictionary
+Internal program tables and their calculation rules are intentionally omitted from this public documentation. Access to internal program data must be authorized server-side.
 | Sheet | Main columns |
 |---|---|
 | Rooms | room_id, room_name, admin_user_id |
@@ -19,8 +20,6 @@ Status: architecture baseline, not production-ready. No real member data or cred
 | Beneficiaries | beneficiary_id, member_id, name, national_id_encrypted, phone, percentage |
 | Slips | slip_id, room_id, payment_channel (BANK_TRANSFER / SEVEN_ELEVEN_COUNTER_SERVICE), original_payer_name, bank, paid_at, amount, reference, counter_service_receipt_number, terminal_or_branch, receiver, original_drive_id, fingerprint, created_by, status, verified_bank_entry_id, created_at |
 | SlipAllocations | allocation_id, slip_id, beneficiary_member_id, payer_member_id, allocation_type, amount, rights_count, period_yyyy_mm, note |
-| Programs | program_id, effective_from, effective_to, source_reference, amount_basis, claimed_monetary_outcome, fallback_flag, terms |
-| MemberProgramResults | result_id, allocation_id, program_id, program_contribution, admin_fee, claimed_result, calculation_status |
 | HardshipReports | report_id, member_id, room_id, period_yyyy_mm, reason, details, acknowledged_at, status |
 | Statements | statement_id, bank, statement_account, date_from, date_to, imported_by, source_drive_id, imported_at |
 | BankEntries | entry_id, statement_id, booked_at, amount, direction, reference, counterpart, fingerprint, matched_slip_id, status |
