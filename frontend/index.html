@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="th">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT V3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap">
+<style>body{font-family:Prompt,sans-serif;background:#f1f5fb;color:#15345a;margin:0}main{max-width:700px;margin:24px auto;padding:16px}header{background:#15418c;color:white;border-radius:18px;padding:24px}section{background:white;border-radius:18px;margin-top:16px;padding:24px}button{font:inherit;padding:14px;width:100%;margin:6px 0;border:0;border-radius:10px;background:#155bc5;color:white;cursor:pointer}</style>
+</head>
+<body><main><header><h1>T2PROJECT V3</h1><p>ระบบสมาชิก • Admin • Owner</p></header>
+<section><h2>เลือกช่องทางเข้าสู่ระบบ</h2><button type="button" data-mode="login">เข้าสู่ระบบ</button><button type="button" data-mode="first">สมาชิกเข้าครั้งแรก</button><button type="button" data-mode="recovery">เข้าระบบหลัง Admin ตรวจ KYC</button></section>
+<section id="notice" aria-live="polite">หน้าเว็บต้นแบบบน GitHub — ยังไม่เชื่อม Backend เพื่อป้องกันการใช้งานบัญชีจริงก่อนตรวจสอบ</section>
+</main><script>document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{document.getElementById('notice').textContent='เลือก '+button.textContent+' — อยู่ระหว่างเชื่อมระบบที่ผ่านการตรวจสอบ'}));</script></body></html>
