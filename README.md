@@ -35,12 +35,6 @@ Status: architecture baseline, not production-ready. No real member data or cred
 6. Member can review own allocations and original slips through authorized API.
 7. Owner imports statement and reconciles incoming entries. Never mark as bank-verified from slip/OCR alone; a bank entry can match at most one original slip. Edited critical fields invalidate prior reconciliation until checked again.
 
-## Current monthly rights (effective 2026-10-11)
-- 1 right = THB 350: THB 300 program contribution + THB 50 Admin expense.
-- Program claims 100 THB corresponds to 2,000,000 THB monetary outcome, so 300 THB corresponds to claimed 6,000,000 THB per right. These are unverified program claims, NOT guaranteed or bank-confirmed returns.
-- Historical promotions use date-specific original source rules; only monetary components. Where ambiguous, user-directed fallback is 100 THB : 2,000,000 THB, flagged as fallback.
-- Track payer, beneficiary, financial coverage and self-payment separately; avoid double counting.
-
 ## Account recovery after forgotten username/password
 - Member contacts their assigned room Admin. Admin performs and records KYC BEFORE approving recovery; name + national ID alone do not count as KYC.
 - Admin may approve recovery ONLY for a member in their own room, and must record actor, KYC method, timestamp and reason in AuditLog. Admin cannot view or set the member's password.
@@ -55,7 +49,7 @@ Banks: Bangkok Bank, Bank of Ayudhya, Siam Commercial Bank, Government Savings B
 CSV/XLSX import where supported; PDF only after testing actual bank-specific formats. Counter Service payments may settle later or in batches: retain the payment channel and receipt identity, and route batch/delayed deposits to Owner review instead of falsely declaring unmatched payments missing. Reconciliation states: matched, review, unmatched. Owner can view all rooms and resolve ambiguity.
 
 ## Printing
-- Member: print all or selected profile data, payment history, rights, monetary-program summary, and selected original slips.
+- Member: print all or selected profile data, payment history, allocated rights (if recorded), and selected original slips.
 - Slips: exactly 2 per portrait A4 sheet, each with image, timestamp, amount, rights, reference, payer, on-behalf-of member and notes where applicable.
 - Admin: no print menu.
 - Owner: print a selected room or all eight rooms, filtered by month.
