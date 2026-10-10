@@ -53,7 +53,7 @@ CSV/XLSX import where supported; PDF only after testing actual bank-specific for
 
 ## Security / release requirements
 - Authenticate server-side; check room membership on every endpoint, not just UI.
-- Require first-time member username/password setup and disable legacy ID-based login afterward.
+- Admin creates the member record first. Member enters first name, last name and 13-digit Thai national ID (no honorific/title/prefix) to locate their own profile. These identifiers alone are not sufficient authentication for access to private financial or identity records: require independent verification before revealing sensitive information; rate-limit lookups and avoid user enumeration.
 - Password hashing with unique salt and a suitable KDF; rate limiting and session expiry.
 - Sensitive identity data should not be put into a broadly shared Sheet without appropriate access controls and encryption/key management.
 - Audit edits and statement matching; use concurrency locks for receipt uniqueness and allocation consistency.
@@ -62,6 +62,6 @@ CSV/XLSX import where supported; PDF only after testing actual bank-specific for
 ## Next implementation phases
 1. Create fresh spreadsheet + private Drive folders and securely configure Apps Script properties.
 2. Implement backend authentication/authorization, member CRUD, slip uniqueness, allocations and audit.
-3. Build responsive frontend and first-login flow.
+3. Build responsive frontend with Admin-first registration and prefix-free member profile lookup, followed by independent verification before private profile access.
 4. Integrate OCR provider and statement parsers using sample files from each bank.
 5. Add A4 print styles and end-to-end tests.
