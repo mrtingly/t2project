@@ -53,7 +53,7 @@ CSV/XLSX import where supported; PDF only after testing actual bank-specific for
 
 ## Security / release requirements
 - Authenticate server-side; check room membership on every endpoint, not just UI.
-- Admin creates the member record first. Member enters first name, last name and 13-digit Thai national ID (no honorific/title/prefix) to locate their own profile. These identifiers alone are not sufficient authentication for access to private financial or identity records: require independent verification before revealing sensitive information; rate-limit lookups and avoid user enumeration.
+- Admin creates member record first (first name, last name, 13-digit Thai national ID; never a title/prefix). Initial entry uses those three fields to locate the record. After verification, member creates their own username/password. On successful credential setup, permanently disable name+ID initial entry for that member; subsequent logins use username/password only. Because name+ID are not secrets, protect initial entry with independent verification, rate limiting and anti-enumeration, and do not expose financial or identity records until verification succeeds.
 - Password hashing with unique salt and a suitable KDF; rate limiting and session expiry.
 - Sensitive identity data should not be put into a broadly shared Sheet without appropriate access controls and encryption/key management.
 - Audit edits and statement matching; use concurrency locks for receipt uniqueness and allocation consistency.
@@ -62,6 +62,6 @@ CSV/XLSX import where supported; PDF only after testing actual bank-specific for
 ## Next implementation phases
 1. Create fresh spreadsheet + private Drive folders and securely configure Apps Script properties.
 2. Implement backend authentication/authorization, member CRUD, slip uniqueness, allocations and audit.
-3. Build responsive frontend with Admin-first registration and prefix-free member profile lookup, followed by independent verification before private profile access.
+3. Build Admin-first member registration, initial name+ID entry with independent verification, one-time username/password setup and username/password-only subsequent login.
 4. Integrate OCR provider and statement parsers using sample files from each bank.
 5. Add A4 print styles and end-to-end tests.
