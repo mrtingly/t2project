@@ -41,6 +41,15 @@ Status: architecture baseline, not production-ready. No real member data or cred
 - Historical promotions use date-specific original source rules; only monetary components. Where ambiguous, user-directed fallback is 100 THB : 2,000,000 THB, flagged as fallback.
 - Track payer, beneficiary, financial coverage and self-payment separately; avoid double counting.
 
+## Account recovery after forgotten username/password
+- Member contacts their assigned room Admin. Admin performs and records KYC BEFORE approving recovery; name + national ID alone do not count as KYC.
+- Admin may approve recovery ONLY for a member in their own room, and must record actor, KYC method, timestamp and reason in AuditLog. Admin cannot view or set the member's password.
+- Approval creates a short-lived, one-use recovery authorization. It temporarily enables initial entry with prefix-free first name + last name + 13-digit national ID for THAT member only, with rate limiting and generic failure messages.
+- After successful temporary entry, permit ONLY username/password reset; do not reveal profile, financial data or original ID/slip images.
+- Require member to choose new credentials; store only a suitably salted KDF password hash, invalidate old sessions, consume recovery authorization and immediately disable name+ID entry again.
+- If authorization expires or attempts exceed limit, member must contact Admin for fresh KYC.
+- This is a required workflow, NOT yet a deployed or verified authentication implementation.
+
 ## Statement imports
 Banks: Bangkok Bank, Bank of Ayudhya, Siam Commercial Bank, Government Savings Bank, Kasikornbank.
 CSV/XLSX import where supported; PDF only after testing actual bank-specific formats. Counter Service payments may settle later or in batches: retain the payment channel and receipt identity, and route batch/delayed deposits to Owner review instead of falsely declaring unmatched payments missing. Reconciliation states: matched, review, unmatched. Owner can view all rooms and resolve ambiguity.
