@@ -10,6 +10,7 @@ const V3_ACTIONS=Object.freeze({
  VIEW_SLIP_METADATA:"VIEW_SLIP_METADATA",VIEW_ORIGINAL_SLIP:"VIEW_ORIGINAL_SLIP",
  CREATE_SLIP:"CREATE_SLIP",EDIT_SLIP:"EDIT_SLIP",
  VIEW_STATEMENT:"VIEW_STATEMENT",IMPORT_STATEMENT:"IMPORT_STATEMENT",
+ VIEW_INTERNAL_PROGRAM:"VIEW_INTERNAL_PROGRAM",MANAGE_INTERNAL_PROGRAM:"MANAGE_INTERNAL_PROGRAM",
  PRINT_DATA:"PRINT_DATA",VIEW_HARDSHIP:"VIEW_HARDSHIP"
 });
 /**
@@ -64,13 +65,18 @@ function testV3AccessPolicy() {
    if(!rejected)throw new Error("Expected deny: "+x);
  };
  allow(owner,V3_ACTIONS.IMPORT_STATEMENT,{});
+ allow(owner,V3_ACTIONS.VIEW_INTERNAL_PROGRAM,{});
+ allow(owner,V3_ACTIONS.MANAGE_INTERNAL_PROGRAM,{});
  allow(admin,V3_ACTIONS.CREATE_SLIP,{room_id:"R001"});
  deny(admin,V3_ACTIONS.CREATE_SLIP,{room_id:"R002"});
  deny(admin,V3_ACTIONS.VIEW_ORIGINAL_SLIP,{room_id:"R001"});
  deny(admin,V3_ACTIONS.PRINT_DATA,{room_id:"R001"});
+ deny(admin,V3_ACTIONS.VIEW_INTERNAL_PROGRAM,{room_id:"R001"});
+ deny(admin,V3_ACTIONS.MANAGE_INTERNAL_PROGRAM,{room_id:"R001"});
  allow(member,V3_ACTIONS.VIEW_ORIGINAL_SLIP,{member_id:"TEST001"});
  deny(member,V3_ACTIONS.VIEW_ORIGINAL_SLIP,{member_id:"TEST002"});
  deny(member,V3_ACTIONS.CREATE_SLIP,{member_id:"TEST001"});
+ deny(member,V3_ACTIONS.VIEW_INTERNAL_PROGRAM,{member_id:"TEST001"});
  deny({verified:false,status:"ACTIVE",role:"OWNER"},V3_ACTIONS.VIEW_MEMBER,{});
  return "PASS: synthetic authorization policy tests";
 }
