@@ -17,7 +17,7 @@ Status: architecture baseline, not production-ready. No real member data or cred
 | Members | member_id, room_id, first_name, last_name, national_id_encrypted, phone, email, address, map_location, bank_details, id_image_drive_id, created_by, status |
 | EmergencyContacts | contact_id, member_id, name, phone, relationship |
 | Beneficiaries | beneficiary_id, member_id, name, national_id_encrypted, phone, percentage |
-| Slips | slip_id, room_id, original_payer_name, bank, paid_at, amount, reference, receiver, original_drive_id, fingerprint, created_by, status, verified_bank_entry_id, created_at |
+| Slips | slip_id, room_id, payment_channel (BANK_TRANSFER / SEVEN_ELEVEN_COUNTER_SERVICE), original_payer_name, bank, paid_at, amount, reference, counter_service_receipt_number, terminal_or_branch, receiver, original_drive_id, fingerprint, created_by, status, verified_bank_entry_id, created_at |
 | SlipAllocations | allocation_id, slip_id, beneficiary_member_id, payer_member_id, allocation_type, amount, rights_count, period_yyyy_mm, note |
 | Programs | program_id, effective_from, effective_to, source_reference, amount_basis, claimed_monetary_outcome, fallback_flag, terms |
 | MemberProgramResults | result_id, allocation_id, program_id, program_contribution, admin_fee, claimed_result, calculation_status |
@@ -29,7 +29,7 @@ Status: architecture baseline, not production-ready. No real member data or cred
 ## Receipt flow
 1. Admin chooses one member, then uploads 1–5 slips.
 2. Compare exact identifiers and file fingerprints against existing slips and against this batch. Reject confirmed duplicates; send uncertain cases to review.
-3. OCR creates editable fields; Admin checks and corrects before saving.
+3. OCR supports both mobile banking slips and 7-Eleven / Counter Service receipts; it extracts date, time, amount, reference/receipt number, receiver and branch/terminal when present. Admin checks and corrects before saving. Never require a bank-style reference on a Counter Service receipt if it does not exist.
 4. One slip can be allocated to one or more members. Sum of allocations must not exceed actual receipt amount. Distinguish own payment, room support and payment on behalf of named member.
 5. Admin may correct mistaken member assignment and slip metadata; retain an automatic audit trail. Original image is immutable. Admin does not view original confirmed images.
 6. Member can review own allocations and original slips through authorized API.
@@ -43,7 +43,7 @@ Status: architecture baseline, not production-ready. No real member data or cred
 
 ## Statement imports
 Banks: Bangkok Bank, Bank of Ayudhya, Siam Commercial Bank, Government Savings Bank, Kasikornbank.
-CSV/XLSX import where supported; PDF only after testing actual bank-specific formats. Reconciliation states: matched, review, unmatched. Owner can view all rooms and resolve ambiguity.
+CSV/XLSX import where supported; PDF only after testing actual bank-specific formats. Counter Service payments may settle later or in batches: retain the payment channel and receipt identity, and route batch/delayed deposits to Owner review instead of falsely declaring unmatched payments missing. Reconciliation states: matched, review, unmatched. Owner can view all rooms and resolve ambiguity.
 
 ## Printing
 - Member: print all or selected profile data, payment history, rights, monetary-program summary, and selected original slips.
