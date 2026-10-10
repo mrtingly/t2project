@@ -71,7 +71,7 @@ body{background:radial-gradient(ellipse 650px 440px at 6% 8%,#dfeeff 0%,transpar
 .metric{padding:19px}.dashinfo{padding:18px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
-</style></head>
+.recovery-panel{max-width:760px}.recovery-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:24px}.recovery-steps span{padding:11px 7px;text-align:center;border-radius:12px;background:#f1f6fd;color:#8193a9;font-size:12px;font-weight:500}.recovery-steps span.active{background:#e3f0ff;color:#125dbb;border:1px solid #9dc7f8}.recovery-card{background:linear-gradient(145deg,#fff,#f9fcff);border:1px solid #e0ecfa;border-radius:18px;padding:23px}.recovery-card h2{margin:0 0 9px;color:#173e6c;font-size:20px}.recovery-card p{margin:0 0 15px;color:#617a95;font-size:14px}.recovery-card ul{margin:12px 0 0;padding-left:21px;color:#4f6b89;font-size:13px;line-height:2}.recovery-controls{display:flex;justify-content:space-between;gap:12px;margin-top:20px}.recovery-controls button{min-height:45px}.recovery-pill{display:inline-block;background:#e7f3ff;color:#1866bc;padding:5px 12px;border-radius:99px;font-size:12px;margin-bottom:13px}.recovery-input{display:block;width:100%;padding:12px 14px;border:1px solid #dbe6f4;border-radius:10px;background:#f6f9fd;color:#7890a8;margin:8px 0 12px;font:inherit}.recovery-input:disabled{cursor:not-allowed}.recovery-fake-button{display:block;width:100%;background:#d6e7fa;color:#5c82ad;padding:12px;border-radius:11px;text-align:center;font-weight:600;margin-top:13px}.recovery-note{font-size:12px;color:#718ba5;margin-top:12px}@media(max-width:620px){.recovery-steps{gap:4px}.recovery-steps span{font-size:10px;padding:10px 3px}.recovery-card{padding:17px}.recovery-controls{flex-direction:column-reverse}.recovery-controls button{width:100%}}</style></head>
 <body>
 <header class="top"><div class="brand">T2PROJECT<small>ระบบบริหารจัดการสมาชิก</small></div><span class="badge">ต้นแบบทดสอบหน้าจอ</span></header>
 <main class="wrap" id="loginScreen"><div class="intro"><h1>ยินดีต้อนรับสู่ T2PROJECT</h1><p>กรุณาเลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ</p></div>
@@ -87,7 +87,14 @@ body{background:radial-gradient(ellipse 650px 440px at 6% 8%,#dfeeff 0%,transpar
 <div class="links"><button class="link" type="button" id="firstEntry">เข้าใช้งานครั้งแรก</button><button class="link" type="button" id="forgot">ลืมชื่อผู้ใช้หรือรหัสผ่าน</button></div>
 <button class="outline" style="width:100%;margin-top:15px" type="button" id="demo">ทดลองดูหน้าแดชบอร์ด (ข้อมูลจำลอง)</button></form></section>
 <div class="notice"><strong>โหมดสาธิต:</strong> หน้าเว็บนี้เป็นต้นแบบสำหรับทดสอบรูปลักษณ์และการนำทางเท่านั้น บน GitHub ยังไม่เชื่อมระบบจริง และจะล็อกอินได้หลังติดตั้ง Apps Script โปรดอย่ากรอกรหัสผ่านหรือข้อมูลส่วนบุคคลจริง</div></main>
-<main class="wrap hidden" id="dashboardScreen"><div class="dashboard"><div class="dashhead"><div><div class="badge" style="display:inline-block">ข้อมูลจำลองเท่านั้น</div><h1 id="dashTitle">แดชบอร์ดสมาชิก</h1></div><button class="outline" id="back">← กลับหน้า Login</button></div><div class="cards" id="metrics"></div><div class="dashinfo"><h2>เมนูการใช้งาน</h2><p>ตัวอย่างหน้าจอแยกตามบทบาท ยังไม่มีการอ่านหรือบันทึกข้อมูลจริง</p><div class="menu" id="menu"></div></div><section class="dashinfo" style="margin-top:18px" id="workspace"><h2>พื้นที่ทำงาน</h2><p>เลือกเมนูด้านบนเพื่อดูหน้าจอและแบบฟอร์มตัวอย่าง</p></section></div></main>
+<main class="wrap hidden" id="recoveryScreen">
+<div class="intro"><h1>กู้คืนบัญชีสมาชิก</h1><p>ดำเนินการผ่านการตรวจสอบตัวตนโดยผู้ดูแลระบบ</p></div>
+<section class="panel recovery-panel" aria-label="ตัวอย่างกระบวนการกู้คืนบัญชี">
+<div class="recovery-steps" aria-label="ขั้นตอนกู้บัญชี"><span class="active" data-step="1">1. แจ้งเรื่อง</span><span data-step="2">2. ตรวจสอบตัวตน</span><span data-step="3">3. ตั้งรหัสใหม่</span></div>
+<div class="recovery-card" id="recoveryContent" aria-live="polite"></div>
+<div class="recovery-controls"><button type="button" class="outline" id="recoveryBack">← กลับหน้า Login</button><button type="button" class="outline" id="recoveryNext">ดูขั้นตอนถัดไป →</button></div>
+<div class="workspace-note">นี่เป็นตัวอย่างการออกแบบหน้าจอเท่านั้น ยังไม่มีการส่งคำร้อง ตรวจสอบตัวตน อนุมัติสิทธิ์ หรือเปลี่ยนรหัสผ่านจริง โปรดอย่ากรอกเลขบัตรประชาชนหรือรหัสผ่านจริง</div>
+</section></main><main class="wrap hidden" id="dashboardScreen"><div class="dashboard"><div class="dashhead"><div><div class="badge" style="display:inline-block">ข้อมูลจำลองเท่านั้น</div><h1 id="dashTitle">แดชบอร์ดสมาชิก</h1></div><button class="outline" id="back">← กลับหน้า Login</button></div><div class="cards" id="metrics"></div><div class="dashinfo"><h2>เมนูการใช้งาน</h2><p>ตัวอย่างหน้าจอแยกตามบทบาท ยังไม่มีการอ่านหรือบันทึกข้อมูลจริง</p><div class="menu" id="menu"></div></div><section class="dashinfo" style="margin-top:18px" id="workspace"><h2>พื้นที่ทำงาน</h2><p>เลือกเมนูด้านบนเพื่อดูหน้าจอและแบบฟอร์มตัวอย่าง</p></section></div></main>
 <footer class="foot">© T2PROJECT • ออกแบบสำหรับมือถือและคอมพิวเตอร์</footer>
 <script>
 "use strict";
@@ -132,7 +139,27 @@ function setRole(role){selected=role;document.querySelectorAll(".role").forEach(
 document.querySelectorAll(".role").forEach(el=>el.addEventListener("click",()=>setRole(el.dataset.role)));
 $("loginForm").addEventListener("submit",event=>{event.preventDefault();const username=$("username").value.trim(),password=$("password").value;$("password").value="";if(!(window.google&&google.script&&google.script.run)){$("message").textContent="หน้านี้เป็นต้นแบบ GitHub: การล็อกอินจริงใช้ได้เฉพาะหลังติดตั้ง Apps Script";return;}$("message").textContent="กำลังตรวจสอบข้อมูล...";google.script.run.withSuccessHandler(result=>{if(!result||!result.ok){$("message").textContent=result&&result.message||"ไม่สามารถเข้าสู่ระบบได้";return;}sessionStorage.setItem("t2_session",result.token);google.script.run.withSuccessHandler(info=>{if(!info||!info.ok||info.role!==selected){$("message").textContent="ไม่สามารถตรวจสอบสิทธิ์ได้";return;}$("demo").click();document.querySelector("#dashboardScreen .badge").textContent="ยืนยันตัวตนแล้ว • ระบบส่วนอื่นกำลังพัฒนา";}).withFailureHandler(()=>{$("message").textContent="ตรวจสอบสิทธิ์ไม่สำเร็จ";}).dashboard(result.token);}).withFailureHandler(()=>{$("message").textContent="เซิร์ฟเวอร์ไม่พร้อมใช้งาน";}).login({username,password,role:selected});});
 $("firstEntry").addEventListener("click",()=>{$("message").textContent="การสมัครครั้งแรกต้องได้รับการลงทะเบียนและยืนยันตัวตนโดย Admin ก่อน ยังไม่เปิดใช้งานในต้นแบบนี้";});
-$("forgot").addEventListener("click",()=>{$("message").textContent="การกู้บัญชีต้องได้รับการตรวจสอบตัวตนโดย Admin ก่อน ยังไม่เปิดใช้งานในต้นแบบนี้";});
+let recoveryStep=1;
+const recoveryViews=[
+{title:"แจ้งเรื่องลืมบัญชี",pill:"ขั้นตอนที่ 1 • สมาชิก",description:"สมาชิกติดต่อ Admin ผู้รับผิดชอบห้อง เพื่อขอเริ่มกระบวนการกู้คืนบัญชี",bullets:["ไม่ต้องส่งรหัสผ่านเดิมให้ Admin","แจ้งชื่อ–นามสกุลและช่องทางติดต่อผ่านช่องทางที่ปลอดภัย","คำร้องจะต้องได้รับการบันทึกและติดตามสถานะเมื่อมี Backend"],inputs:["ชื่อ–นามสกุล (ตัวอย่าง ไม่ต้องกรอกจริง)"]},
+{title:"รอ Admin ตรวจสอบตัวตน",pill:"ขั้นตอนที่ 2 • Admin",description:"Admin ต้องตรวจสอบตัวตนสมาชิก (KYC) และยืนยันว่าตรงกับข้อมูล Master ก่อนอนุมัติ",bullets:["ต้องมีการตรวจสอบตัวตนเพิ่มเติม ไม่ใช้เลขบัตรประชาชนอย่างเดียวเป็นหลักฐานยืนยันตัวตน","บันทึกผู้อนุมัติ เวลา และวิธีตรวจสอบ","สิทธิ์กู้บัญชีต้องใช้ได้ครั้งเดียว มีเวลาหมดอายุ และจำกัดการลอง"],inputs:[]},
+{title:"ตั้งชื่อผู้ใช้และรหัสผ่านใหม่",pill:"ขั้นตอนที่ 3 • สมาชิก",description:"หลังระบบยืนยันการอนุมัติและออกสิทธิ์กู้คืนที่ปลอดภัย สมาชิกจึงตั้งข้อมูลเข้าสู่ระบบใหม่ได้ด้วยตนเอง",bullets:["Admin ไม่เห็นและไม่สามารถตั้งรหัสผ่านแทนสมาชิก","ยกเลิกสิทธิ์ชั่วคราวและเซสชันเก่าหลังเปลี่ยนสำเร็จ","ต้องใช้ชื่อผู้ใช้และรหัสผ่านใหม่ในการเข้าสู่ระบบครั้งถัดไป"],inputs:["ชื่อผู้ใช้ใหม่ (ตัวอย่าง)","รหัสผ่านใหม่ (ตัวอย่าง)","ยืนยันรหัสผ่าน (ตัวอย่าง)"]}
+];
+function renderRecovery(){
+ const data=recoveryViews[recoveryStep-1],root=$("recoveryContent");root.replaceChildren();
+ const pill=document.createElement("span");pill.className="recovery-pill";pill.textContent=data.pill;root.append(pill);
+ const title=document.createElement("h2");title.textContent=data.title;root.append(title);
+ const p=document.createElement("p");p.textContent=data.description;root.append(p);
+ data.inputs.forEach(label=>{const field=document.createElement("input");field.className="recovery-input";field.placeholder=label;field.setAttribute("aria-label",label);field.disabled=true;root.append(field)});
+ const list=document.createElement("ul");data.bullets.forEach(t=>{const li=document.createElement("li");li.textContent=t;list.append(li)});root.append(list);
+ const note=document.createElement("div");note.className="recovery-note";note.textContent="สถานะ: สาธิตขั้นตอนเท่านั้น • ยังไม่สามารถส่งคำร้องหรือเปลี่ยนรหัสผ่าน";root.append(note);
+ document.querySelectorAll(".recovery-steps span").forEach((el,i)=>el.classList.toggle("active",i+1===recoveryStep));
+ $("recoveryNext").textContent=recoveryStep===3?"กลับไปขั้นตอนแรก":"ดูขั้นตอนถัดไป →";
+}
+$("forgot").addEventListener("click",()=>{recoveryStep=1;renderRecovery();$("loginScreen").classList.add("hidden");$("recoveryScreen").classList.remove("hidden");window.scrollTo(0,0)});
+$("recoveryNext").addEventListener("click",()=>{recoveryStep=recoveryStep===3?1:recoveryStep+1;renderRecovery()});
+$("recoveryBack").addEventListener("click",()=>{$("recoveryScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
+
 $("demo").addEventListener("click",()=>{const r=roles[selected];$("dashTitle").textContent="แดชบอร์ด"+r.name;$("metrics").replaceChildren(...r.metrics.map(([value,label])=>{const el=document.createElement("div");el.className="metric";const b=document.createElement("b");b.textContent=value;const s=document.createElement("span");s.textContent=label;el.append(b,s);return el}));$("menu").replaceChildren(...r.menu.map(label=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>showWorkspace(label));return b}));$("workspace").innerHTML="<h2>พื้นที่ทำงาน</h2><p>เลือกเมนูด้านบนเพื่อดูหน้าจอและแบบฟอร์มตัวอย่าง</p>";$("loginScreen").classList.add("hidden");$("dashboardScreen").classList.remove("hidden");window.scrollTo(0,0)});
 $("back").addEventListener("click",()=>{const token=sessionStorage.getItem("t2_session");if(token&&window.google&&google.script&&google.script.run)google.script.run.logout(token);sessionStorage.removeItem("t2_session");$("dashboardScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
 </script></body></html>
