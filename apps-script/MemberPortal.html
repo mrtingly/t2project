@@ -1,0 +1,46 @@
+<!doctype html><html lang="th"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT สมาชิก</title><link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{font:16px Prompt,sans-serif;background:#f2f6fb;color:#18304a;margin:0;padding:20px}main{max-width:520px;margin:35px auto;background:#fff;padding:26px;border-radius:20px;box-shadow:0 8px 30px #1d345315}label{display:block;margin:14px 0 5px}input,button{font:inherit;width:100%;padding:13px;border-radius:10px;box-sizing:border-box}input{border:1px solid #9eafc4}button{background:#1764b8;color:#fff;border:0;margin-top:20px}button:disabled{opacity:.5}#message{min-height:25px;color:#ad2a2a}dl{display:grid;grid-template-columns:1fr 1fr;gap:12px}dt{color:#5b6c7b}dd{margin:0;font-weight:600;overflow-wrap:anywhere}.hidden{display:none}</style></head>
+<body><main><h1>T2PROJECT</h1><p>ระบบสมาชิก</p>
+<section id="login"><form id="form"><label for="username">ชื่อผู้ใช้</label><input id="username" autocomplete="username" required>
+<label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password" required>
+<button id="submit" type="submit">เข้าสู่ระบบ</button></form></section>
+<section id="account" class="hidden"><h2>ข้อมูลของฉัน</h2><dl id="details"></dl><button id="logout" type="button">ออกจากระบบ</button></section>
+<p id="message" role="status" aria-live="polite"></p></main>
+<script>
+(function(){
+"use strict";
+let token=null;
+const el=id=>document.getElementById(id);
+function message(t){el("message").textContent=t}
+function reset(){token=null;el("password").value="";el("account").classList.add("hidden");el("login").classList.remove("hidden");el("details").replaceChildren()}
+function failure(){message("ไม่สามารถดำเนินการได้ กรุณาลองใหม่");el("submit").disabled=false;reset()}
+function display(data){
+ if(!data||!data.ok){failure();return}
+ const details=el("details");details.replaceChildren();
+ for(const [key,value] of [["ชื่อ-นามสกุล",data.profile.full_name],["ห้อง",data.profile.room_id],
+ ["โทรศัพท์",data.profile.phone],["อีเมล",data.profile.email],
+ ["จำนวนสลิป",data.summary.slip_count],["ยอดรวมสลิป",Number(data.summary.amount_total).toLocaleString("th-TH")]]){
+  const dt=document.createElement("dt"),dd=document.createElement("dd");
+  dt.textContent=key;dd.textContent=String(value);details.append(dt,dd);
+ }
+ el("login").classList.add("hidden");el("account").classList.remove("hidden");message("");
+}
+el("form").addEventListener("submit",event=>{
+ event.preventDefault();if(!window.google||!google.script||!google.script.run){message("โปรดเปิดหน้านี้จาก Google Apps Script");return}
+ el("submit").disabled=true;message("กำลังตรวจสอบ...");
+ const username=el("username").value,password=el("password").value;
+ google.script.run.withSuccessHandler(result=>{
+  el("password").value="";
+  if(!result||!result.ok){failure();return}
+  token=result.token;
+  google.script.run.withSuccessHandler(display).withFailureHandler(failure).t2PortalMe(token);
+ }).withFailureHandler(failure).t2PortalLogin(username,password);
+});
+el("logout").addEventListener("click",()=>{
+ const old=token;reset();message("ออกจากระบบแล้ว");
+ if(old)google.script.run.withFailureHandler(()=>{}).t2PortalLogout(old);
+});
+window.addEventListener("pagehide",()=>{const old=token;token=null;if(old&&window.google&&google.script)google.script.run.t2PortalLogout(old)});
+})();
+</script></body></html>
