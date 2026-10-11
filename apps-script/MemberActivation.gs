@@ -63,3 +63,10 @@ function t2ActivationCanTransition_(from,to){
  const allowed={unclaimed:["pending_admin"],pending_admin:["approved","unclaimed"],approved:["claimed","pending_admin"],claimed:[]};
  return Object.prototype.hasOwnProperty.call(allowed,String(from))&&allowed[String(from)].includes(String(to));
 }
+
+function t2ActivationTransitionTest(){
+ const checks=[["request",t2ActivationCanTransition_("unclaimed","pending_admin")],["approve",t2ActivationCanTransition_("pending_admin","approved")],["claim",t2ActivationCanTransition_("approved","claimed")],["no_reclaim",!t2ActivationCanTransition_("claimed","unclaimed")],["no_skip",!t2ActivationCanTransition_("unclaimed","claimed")],["invalid",!t2ActivationCanTransition_("unknown","claimed")]];
+ const result={ok:checks.every(c=>c[1]),results:checks.map(c=>({name:c[0],passed:c[1]}))};
+ if(!result.ok)throw Error("Activation transition policy failed");
+ return result;
+}
