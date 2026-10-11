@@ -156,7 +156,7 @@ function t2PortalSavePhoto(token,mimeType,base64){
  const actor=t2PortalContactsActor_(token);
  if(!["image/jpeg","image/png","image/webp"].includes(mimeType)||typeof base64!=="string"||base64.length>2800000)return {ok:false,error:"INVALID_PHOTO"};
  const bytes=Utilities.base64Decode(base64);
- if(bytes.length>2000000)return {ok:false,error:"PHOTO_TOO_LARGE"};
+ if(bytes.length>2000000||bytes.length<12)return {ok:false,error:"PHOTO_TOO_LARGE"};
  const signature=bytes.slice(0,12).map(x=>x&255);
  const jpg=signature[0]===255&&signature[1]===216&&signature[2]===255;
  const png=signature.slice(0,8).join(",")==="137,80,78,71,13,10,26,10";
@@ -180,7 +180,13 @@ function t2PortalReadPhoto(token){
  const sheet=t2Db_().getSheetByName("MemberPhotos");if(!sheet)return {ok:false,error:"PHOTO_SETUP_REQUIRED"};
  const row=t2Rows_("MemberPhotos").find(x=>String(x.member_id)===String(actor.member_id));
  if(!row||!row.file_id)return {ok:true,has_photo:false};
- const blob=DriveApp.getFileById(String(row.file_id)).getBlob();
+ const photoFile=DriveApp.getFileById(String(row.file_id));
+ const configuredFolder=t2PortalPhotoFolder_();
+ if(!photoFile.getParents().hasNext())return {ok:false,error:"PHOTO_NOT_IN_FOLDER"};
+ const parents=photoFile.getParents();let owned=false;
+ while(parents.hasNext()){if(parents.next().getId()===configuredFolder.getId()){owned=true;break}}
+ if(!owned)return {ok:false,error:"PHOTO_NOT_IN_FOLDER"};
+ const blob=photoFile.getBlob();
  if(blob.getBytes().length>2000000)return {ok:false,error:"PHOTO_TOO_LARGE"};
  return {ok:true,has_photo:true,mime_type:String(row.mime_type),base64:Utilities.base64Encode(blob.getBytes())};
 }
