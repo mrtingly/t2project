@@ -87,6 +87,7 @@ body{background:radial-gradient(ellipse 650px 440px at 6% 8%,#dfeeff 0%,transpar
 <button class="primary" type="submit">เข้าสู่ระบบ</button><div class="status" id="message" role="status" aria-live="polite"></div>
 <div class="links"><button class="link" type="button" id="firstEntry">เข้าใช้งานครั้งแรก</button><button class="link" type="button" id="forgot">ลืมชื่อผู้ใช้หรือรหัสผ่าน</button></div>
 <button class="outline" style="width:100%;margin-top:15px" type="button" id="demo">ทดลองดูหน้าแดชบอร์ด (ข้อมูลจำลอง)</button></form></section>
+<div class="notice" id="authReadiness" role="status" aria-live="polite"><strong>สถานะ Login:</strong> ยังไม่เปิดให้เข้าสู่ระบบจริง โปรดใช้เฉพาะข้อมูลจำลอง</div>
 <div class="notice"><strong>โหมดสาธิต:</strong> หน้าเว็บนี้เป็นต้นแบบสำหรับทดสอบรูปลักษณ์และการนำทางเท่านั้น บน GitHub ยังไม่เชื่อมระบบจริง และจะล็อกอินได้หลังติดตั้ง Apps Script โปรดอย่ากรอกรหัสผ่านหรือข้อมูลส่วนบุคคลจริง</div></main>
 <main class="wrap hidden" id="firstEntryScreen"><div class="intro"><h1>เปิดใช้งานบัญชีครั้งแรก</h1><p>สำหรับสมาชิกที่ Admin ลงทะเบียนข้อมูลไว้แล้ว</p></div><section class="panel recovery-panel"><div class="recovery-steps first-steps" aria-label="ขั้นตอนเปิดใช้งานครั้งแรก"><span class="active">1. ค้นหาสมาชิก</span><span>2. ตรวจสอบข้อมูล</span><span>3. ยืนยันตัวตน</span><span>4. ตั้งบัญชี</span><span>5. เริ่มใช้งาน</span></div><div class="recovery-card" id="firstEntryContent" aria-live="polite"></div><div class="recovery-controls"><button type="button" class="outline" id="firstEntryBack">← กลับหน้า Login</button><button type="button" class="outline" id="firstEntryNext">ดูขั้นตอนถัดไป →</button></div><div class="workspace-note">ต้นแบบ Frontend เท่านั้น: ไม่มีการส่งข้อมูลไปตรวจ Master, ส่ง OTP, ยืนยันตัวตน หรือสร้างบัญชีจริง โปรดอย่ากรอกเลขบัตรประชาชนและรหัสผ่านจริง</div></section></main><main class="wrap hidden" id="recoveryScreen">
 <div class="intro"><h1>กู้คืนบัญชีสมาชิก</h1><p>ดำเนินการผ่านการตรวจสอบตัวตนโดยผู้ดูแลระบบ</p></div>
@@ -413,6 +414,23 @@ $("forgot").addEventListener("click",()=>{recoveryStep=1;renderRecovery();$("log
 $("recoveryNext").addEventListener("click",()=>{recoveryStep=recoveryStep===3?1:recoveryStep+1;renderRecovery()});
 $("recoveryBack").addEventListener("click",()=>{$("recoveryScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
 
+async function updateAuthReadiness(){
+ const el=document.getElementById("authReadiness");
+ if(!el)return;
+ // Display only fixed public readiness states; never send user credentials.
+ if(!window.T2Api||typeof window.T2Api.authStatus!=="function"){
+  el.textContent="สถานะ Login: ยังไม่พร้อมใช้งานจริง (ไม่พบตัวเชื่อม API)";return;
+ }
+ try{
+  const status=await window.T2Api.authStatus();
+  el.textContent=status.loginEnabled===false
+   ?"สถานะ Login: ยังปิดใช้งานจริง กรุณาใช้เฉพาะโหมดสาธิต"
+   :"สถานะ Login: ยังไม่ยืนยันความพร้อม กรุณาอย่ากรอกรหัสผ่านจริง";
+ }catch(_){
+  el.textContent="สถานะ Login: ยังไม่สามารถยืนยันสถานะจากเซิร์ฟเวอร์ กรุณาอย่ากรอกรหัสผ่านจริง";
+ }
+}
+updateAuthReadiness();
 $("demo").addEventListener("click",()=>{const r=roles[selected];$("dashTitle").textContent="แดชบอร์ด"+r.name;$("metrics").replaceChildren(...r.metrics.map(([value,label])=>{const el=document.createElement("div");el.className="metric";const b=document.createElement("b");b.textContent=value;const s=document.createElement("span");s.textContent=label;el.append(b,s);return el}));$("menu").replaceChildren(...r.menu.map(label=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>navigateWorkspace(label));return b}));$("workspace").innerHTML="<h2>พื้นที่ทำงาน</h2><p>เลือกเมนูด้านบนเพื่อดูหน้าจอและแบบฟอร์มตัวอย่าง</p>";navigateWorkspace(selected==="member"?"ข้อมูลส่วนตัว":selected==="admin"?"ภาพรวม Admin":"ภาพรวม 8 ห้อง");$("loginScreen").classList.add("hidden");$("dashboardScreen").classList.remove("hidden");window.scrollTo(0,0)});
 $("back").addEventListener("click",()=>{const token=sessionStorage.getItem("t2_session");if(token&&window.google&&google.script&&google.script.run)google.script.run.logout(token);sessionStorage.removeItem("t2_session");$("dashboardScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
 </script><section id="printOutput" class="print-sheet" aria-hidden="true"></section></body></html>
