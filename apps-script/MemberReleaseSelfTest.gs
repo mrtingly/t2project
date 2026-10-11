@@ -8,6 +8,7 @@ function t2MemberReleaseSelfTest(){
   ["login",t2MemberLoginPolicyTest],
   ["throttle",t2MemberThrottlePolicyTest],
   ["room_access",t2RoomAccessRegressionTest],
+  ["staff_scope",t2StaffScopePolicyTest],
   ["session",t2SessionPolicyTest],
   ["token",t2SessionTokenTest]
  ];
