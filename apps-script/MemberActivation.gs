@@ -195,3 +195,10 @@ function t2AdminActivationSummary(token){
  const rows=t2ActivationRows_().filter(r=>allowed.has(String(r.member_id)));
  return {ok:true,counts:t2ActivationCounts_(rows)};
 }
+
+function t2ActivationCountsTest(){
+ const result=t2ActivationCounts_([{status:"pending_admin"},{status:"approved"},{status:"claimed"},{status:"rejected"},{status:"rejected"},{status:"unknown"}]);
+ const ok=result.pending_admin===1&&result.approved===1&&result.claimed===1&&result.rejected===2;
+ if(!ok)throw Error("Activation counts failed");
+ return {ok:ok,counts:result};
+}
