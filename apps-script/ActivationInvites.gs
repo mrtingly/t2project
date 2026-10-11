@@ -24,7 +24,7 @@ function t2InviteDigest_(ticket){
 }
 function t2InviteValid_(ticket){
  return typeof ticket==="string"&&/^[0-9a-f-]{72}$/.test(ticket)&&
-  ticket.charAt(8)==="-"&&ticket.charAt(44)==="-";
+  [8,13,18,23,44,49,54,59].every(i=>ticket.charAt(i)==="-");
 }
 function t2InviteEligible_(activation,ticketRow,now){
  if(!activation||String(activation.status)!=="approved")return false;
