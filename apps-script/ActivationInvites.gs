@@ -79,3 +79,19 @@ function t2InvitePolicyTest(){
  if(!report.ok)throw Error("Activation invite policy failed");
  return report;
 }
+
+/** Read-only invitation state for an approved request; never return ticket/hash. */
+function t2AdminInviteStatus(token,requestId){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ if(!/^ACT-[0-9a-f-]{36}$/i.test(String(requestId||"")))
+  return {ok:false,error:"INVALID_REQUEST_ID"};
+ const request=t2ActivationRows_().find(r=>String(r.request_id)===String(requestId));
+ if(!request)return {ok:false,error:"NOT_FOUND"};
+ const member=t2ActivationMember_(request.member_id);
+ if(!t2ActivationCanManage_(actor,member))return {ok:false,error:"NOT_ACCESSIBLE"};
+ const rows=t2Rows_("ActivationTickets").filter(r=>String(r.request_id)===String(requestId));
+ const latest=rows.length?rows[rows.length-1]:null;
+ if(!latest)return {ok:true,status:"not_issued"};
+ if(latest.consumed_at)return {ok:true,status:"consumed"};
+ return {ok:true,status:new Date(latest.expires_at).getTime()>Date.now()?"active":"expired"};
+}
