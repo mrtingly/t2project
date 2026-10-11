@@ -102,7 +102,7 @@ function t2Preflight(){
  */
 function t2AuthPreflight(){
  const result={ok:false,usersSchema:false,sessionsSchema:false,roomsSchema:false,
-  ownerCount:0,activeAdminCount:0,unassignedAdminCount:0,invalidRoleCount:0};
+  ownerCount:0,activeAdminCount:0,unassignedAdminCount:0,invalidRoleCount:0,duplicateUsernameCount:0,missingCredentialsCount:0};
  try{
   const expected={
    Users:["user_id","username","role","room_id","member_id","salt","password_hash","status","created_at"],
@@ -117,7 +117,12 @@ function t2AuthPreflight(){
   }
   if(!result.usersSchema||!result.sessionsSchema||!result.roomsSchema){result.error="Schema mismatch";console.log(JSON.stringify(result));return result}
   const rooms=new Set(t2Rows_("Rooms").filter(r=>r.status==="active").map(r=>String(r.room_id)));
+  const usernames=new Set();
   for(const u of t2Rows_("Users")){
+   const username=String(u.username||"").trim().toLowerCase();
+   if(username&&usernames.has(username))result.duplicateUsernameCount++;
+   if(username)usernames.add(username);
+   if(!username||!String(u.salt||"")||!String(u.password_hash||""))result.missingCredentialsCount++;
    if(!["owner","admin","member"].includes(String(u.role)))result.invalidRoleCount++;
    if(u.status!=="active")continue;
    if(u.role==="owner")result.ownerCount++;
@@ -126,7 +131,7 @@ function t2AuthPreflight(){
     if(!rooms.has(String(u.room_id)))result.unassignedAdminCount++;
    }
   }
-  result.ok=result.ownerCount===1&&result.invalidRoleCount===0&&result.unassignedAdminCount===0;
+  result.ok=result.ownerCount===1&&result.invalidRoleCount===0&&result.unassignedAdminCount===0&&result.duplicateUsernameCount===0&&result.missingCredentialsCount===0;
   console.log(JSON.stringify(result));
   return result;
  }catch(_){result.error="Configuration or permissions incomplete";console.log(JSON.stringify(result));return result}
