@@ -555,7 +555,7 @@ function t2SaveReceipt(token,p){
  const date=String(p.date||""),time=String(p.time||"");
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)||!Number.isFinite(Date.parse(date+"T"+time+":00")))throw Error("วันเวลาไม่ถูกต้อง");
  const amount=Number(p.amount),ref=String(p.ref||"");
- if(!Number.isFinite(amount)||amount<=0||amount>100000000||Math.round(amount*100)!==amount*100)throw Error("จำนวนเงินไม่ถูกต้อง");
+ if(!Number.isFinite(amount)||amount<=0||amount>100000000||Math.abs(Math.round(amount*100)-amount*100)>0.000001)throw Error("จำนวนเงินไม่ถูกต้อง");
  if(!/^\d{6}$/.test(ref))throw Error("รหัสท้ายสลิปต้องมี 6 หลัก");
  const sender=t2Text_(p.sender,120),receiver=t2Text_(p.receiver,120);
  const image=p.image||{};
@@ -600,6 +600,7 @@ function t2CreateSlip(token,payload){
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(dateText))return {ok:false,error:"INVALID_TRANSFER_DATE"};
  const transferDate=new Date(dateText+"+07:00");
  if(!Number.isFinite(transferDate.getTime()))return {ok:false,error:"INVALID_TRANSFER_DATE"};
+ if(Utilities.formatDate(transferDate,"Asia/Bangkok","yyyy-MM-dd'T'HH:mm")!==dateText.slice(0,16))return {ok:false,error:"INVALID_TRANSFER_DATE"};
  const lock=LockService.getScriptLock();
  if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
  try{
