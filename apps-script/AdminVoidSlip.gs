@@ -18,7 +18,7 @@ function t2AdminVoidSlip(token,slipId,reason){
   if(!member||!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
   if(String(row[statusCol])==="deleted")return {ok:false,error:"ALREADY_DELETED"};
   sh.getRange(matches[0]+1,statusCol+1).setValue("deleted");
-  t2Audit_("SLIP_VOID",String(actor.user_id),id+" reason="+why);
+  try{t2Audit_("SLIP_VOID",String(actor.user_id),id+" reason="+why)}catch(e){return {ok:false,error:"VOID_APPLIED_AUDIT_FAILED",slip_id:id,status:"deleted"}}
   return {ok:true,slip_id:id,status:"deleted"};
  }finally{lock.releaseLock()}
 }
