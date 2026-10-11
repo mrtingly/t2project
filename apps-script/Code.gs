@@ -594,7 +594,7 @@ function t2CreateSlip(token,payload){
  const dateText=String(p.transfer_at||"").trim();
  if(!/^[A-Za-z0-9-]{8,40}$/.test(memberId))return {ok:false,error:"INVALID_MEMBER"};
  if(!/^[0-9]{6}$/.test(ref))return {ok:false,error:"INVALID_REFERENCE"};
- if(!Number.isFinite(amount)||amount<=0||amount>1000000000||Math.round(amount*100)!==amount*100)return {ok:false,error:"INVALID_AMOUNT"};
+ if(!Number.isFinite(amount)||amount<=0||amount>1000000000||Math.abs(Math.round(amount*100)-amount*100)>0.000001)return {ok:false,error:"INVALID_AMOUNT"};
  if(!sender||sender.length>160||!receiver||receiver.length>160||note.length>1000)return {ok:false,error:"INVALID_DETAILS"};
  if([sender,receiver,note].some(x=>/^[=+\-@\t\r]/.test(x)))return {ok:false,error:"INVALID_SHEET_TEXT"};
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(dateText))return {ok:false,error:"INVALID_TRANSFER_DATE"};
@@ -630,6 +630,37 @@ function t2ListSlips(token,memberId,limit){
  return {ok:true,member:{member_id:id,full_name:String(member.full_name),room_id:String(member.room_id)},total:slips.length,slips:slips.slice(0,max).map(s=>({slip_id:String(s.slip_id),transfer_at:new Date(s.transfer_at).toISOString(),amount:Number(s.amount),reference_last6:String(s.reference_last6),sender:String(s.sender),receiver:String(s.receiver),status:String(s.status)}))};
 }
 /** Room-scoped financial summary. Pending receipts are not confirmed bank payments. */
+/** Owner/admin receipt export, scoped before filtering; no public route. */
+function t2ReceiptReport(token,filters){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const f=filters||{};
+ const room=actor.role==="admin"?String(actor.room_id):String(f.room_id||"").trim();
+ if(actor.role==="admin"&&f.room_id&&String(f.room_id)!==room)return {ok:false,error:"ROOM_NOT_ACCESSIBLE"};
+ const from=String(f.from||"").trim(),to=String(f.to||"").trim();
+ if(from&&!/^\d{4}-\d{2}-\d{2}$/.test(from))return {ok:false,error:"INVALID_DATE"};
+ if(to&&!/^\d{4}-\d{2}-\d{2}$/.test(to))return {ok:false,error:"INVALID_DATE"};
+ if(from&&to&&from>to)return {ok:false,error:"INVALID_RANGE"};
+ if(room&&!t2Rows_("Rooms").some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
+ const members=t2Rows_("Members").filter(m=>t2CanReadMember_(actor,m)&&(!room||String(m.room_id)===room));
+ const names=new Map(members.map(m=>[String(m.member_id),String(m.full_name)]));
+ const memberFilter=String(f.member_id||"").trim();
+ if(memberFilter&&!names.has(memberFilter))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
+ const slips=t2Rows_("Slips").filter(s=>{
+  if(!names.has(String(s.member_id))||String(s.status)==="deleted")return false;
+  if(room&&String(s.room_id)!==room)return false;
+  if(memberFilter&&String(s.member_id)!==memberFilter)return false;
+  const day=Utilities.formatDate(new Date(s.transfer_at),"Asia/Bangkok","yyyy-MM-dd");
+  return (!from||day>=from)&&(!to||day<=to);
+ });
+ slips.sort((a,b)=>new Date(b.transfer_at).getTime()-new Date(a.transfer_at).getTime());
+ const rows=slips.slice(0,1000).map(s=>({
+  slip_id:String(s.slip_id),member_id:String(s.member_id),member_name:names.get(String(s.member_id)),
+  room_id:String(s.room_id),transfer_at:Utilities.formatDate(new Date(s.transfer_at),"Asia/Bangkok","yyyy-MM-dd HH:mm:ss"),
+  sender:String(s.sender),receiver:String(s.receiver),reference_last6:String(s.reference_last6),
+  amount:Number(s.amount),status:String(s.status)
+ }));
+ return {ok:true,total:slips.length,truncated:slips.length>rows.length,rows:rows};
+}
 function t2ReceiptSummary(token,roomId){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const requested=String(roomId||"").trim();
