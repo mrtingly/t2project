@@ -1,5 +1,5 @@
 /**
- * Read-only release gate. Run from the Apps Script editor after deploying all files.
+ * Read-only release gate. Run from the Apps Script editor before publishing a production deployment.
  * Never returns credentials, member records or session tokens.
  */
 function t2ReleaseGate(){
@@ -13,7 +13,8 @@ function t2ReleaseGate(){
   const auth=t2AuthPreflight();
   add("authentication_schema",!!auth.ok,auth.ok?"Schema checked":"Authentication requires review");
  }catch(e){add("authentication_schema",false,"Auth check unavailable")}
- add("member_login_implementation",typeof t2MemberLogin==="function","Member login must be independently reviewed");
+ add("member_login_implementation",typeof t2MemberLogin==="function","Implementation existence only; security review still required");
+ add("member_login_review",false,"Member identity and session issuance require independent security review");
  add("owner_admin_login",false,"Legacy login deliberately disabled; identity provider not integrated");
  add("admin_dashboard_route",false,"Admin preview not yet routed behind authenticated login");
  add("owner_dashboard_route",false,"Owner preview not yet routed behind authenticated login");
