@@ -28,6 +28,7 @@ function t2EmailAuthCooldownKey_(email) {
 function t2EmailAuthRequest_(email) {
   const address = String(email || "").trim().toLowerCase();
   const generic = {ok:true,message:"หากบัญชีได้รับอนุญาต ระบบจะส่งรหัสยืนยันไปยังอีเมล"};
+  // Account existence is not disclosed to the caller.
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254) {
     return generic;
   }
