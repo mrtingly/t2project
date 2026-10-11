@@ -1,48 +1,30 @@
-# T2PROJECT — GitHub Pages/API migration plan (development only)
+# T2PROJECT — No-billing migration gate
 
-Status: DESIGN ONLY. No production API or deployment changes have been made.
+**Decision 2026-10-11:** No Google Cloud Run, no new paid hosting, no banking API, no OCR. Preserve existing Sheets, Drive, Apps Script, GitHub and Owner data.
 
-## Existing state (verified 2026-10-11)
-- GitHub Pages frontend: `index.html`, with mirror `apps-script/index.html`.
-- Apps Script backend: `apps-script/Code.gs`; `doGet()` serves the Apps Script HTML.
-- The frontend still calls `google.script.run` (7 occurrences), which only works in Apps Script-served HTML.
-- The backend has `login(payload)`, `dashboard(token)`, `logout(token)`, and member/receipt functions; it has **no `doPost` HTTP API**.
-- Data is in private Google Sheets and Google Drive. Preserve all existing rows, files, users and properties.
-- Owner bootstrap was completed. Do not run bootstrap again.
+## Verified existing code
+- `index.html` and `apps-script/index.html` contain 7 occurrences of `google.script.run`.
+- The Apps Script backend `apps-script/Code.gs` exposes functions to HtmlService but no conventional HTTP `doPost` API.
+- Existing Github Pages HTML cannot call `google.script.run` directly.
+- GitHub Pages is public static hosting, not an authenticated backend.
 
-## Architecture decision
-GitHub Pages remains a **static, public frontend only**. It cannot safely store service credentials, Apps Script secrets, password hashes, or act as an authenticated server.
+## Critical security gate
+Do **not** replace `google.script.run` with a simple cross-origin `fetch` to Apps Script and assume it will work: Apps Script does not provide the normal configurable CORS/preflight response surface expected by credentialed JSON APIs. Do **not** work around this by sending passwords, national IDs, or session tokens in GET URLs, JSONP, query parameters, hidden public sheets, or client-side secrets. CORS is not authentication.
 
-Use a separately hosted HTTPS API gateway/backend that:
-1. explicitly allows CORS only from the production GitHub Pages origin (and a separately configured development origin), with proper preflight OPTIONS support;
-2. authenticates each request server-side, authorizes role and room/member scope on **every** operation, and rejects requests by default;
-3. handles sessions with secure HttpOnly, Secure, SameSite cookies (subject to browser cross-site-cookie constraints), or a reviewed token design that never places tokens in URLs; protects against CSRF where cookies are used;
-4. rate-limits login by account **and** source, provides audit logging, size limits, validation, and safe error messages;
-5. accesses Google Sheets/Drive using server-held Google credentials and least privilege; never publishes the database or slip folder;
-6. returns only data permitted to the caller; never returns national IDs or slip images to unrelated users.
+## Feasible no-new-billing options, not yet selected
+A. **Apps Script HtmlService app with access set to Anyone**: same existing backend and Google Sheets/Drive; frontend hosted by Apps Script, not GitHub Pages. Requires careful security review and test with non-Google browser session. This does not satisfy GitHub-as-primary-host requirement.
 
-**Hosting choice is NOT YET finalized.** Candidates include a Google Cloud Run/Functions service using a service account with scoped Sheets/Drive access, or another reviewed API host. Hosting/permissions and any associated cost require owner approval. Apps Script may remain for internal administrative operations; it should not be exposed as an unauthenticated JSONP or GET-with-password proxy.
+B. **GitHub Pages as public landing/static shell; authenticated app on Apps Script**: GitHub is the entry URL but protected workflow navigates to Apps Script-hosted app. This can avoid a separate API and billing, but authenticated app is not served entirely from GitHub. Requires confirmation of Apps Script deployment access and test of sign-in.
 
-## Why not direct browser -> Apps Script?
-- `google.script.run` is available only in Apps Script HTML Service, not GitHub Pages.
-- Apps Script web apps do not provide a conventional configurable CORS + OPTIONS preflight implementation for a robust browser API.
-- Avoid JSONP, public anonymous `doGet` write operations, embedding API keys in the frontend, or sending credentials/session tokens via query strings.
-- Changing the Apps Script deployment to “Anyone” would permit opening the page, but is not a complete security solution.
+C. **GitHub Pages + external API service**: keeps all app pages on GitHub, but needs a compatible HTTPS backend with secure auth/CORS and Sheets/Drive access. A reliable secure *free* service cannot be assumed without checking limits, privacy and availability. Do not proceed without explicit selection and review.
 
-## Migration stages and acceptance gates
-- [x] Create immutable recovery point: `backup-before-github-api-migration-20261011`.
-- [x] Create isolated work branch: `feature/github-api-architecture-20261011`.
-- [x] Document architecture and constraints (this file).
-- [ ] Decide API host, identity/auth strategy, costs and secret management; obtain approval before provisioning.
-- [ ] Build API contract and isolated test backend with mock users/data.
-- [ ] Add browser API adapter; replace `google.script.run` usage in development branch only.
-- [ ] Integrate least-privilege Google Sheets/Drive access in a separate test dataset.
-- [ ] Verify Owner/Admin/Member authorization, IDOR prevention, logout/expiry, CSRF/CORS, receipt duplicate checks and uploads.
-- [ ] Independent security review and privacy checks before real personal/financial data.
-- [ ] Deploy reviewed frontend to GitHub Pages and migrate in a controlled manner.
+## Next acceptance gate
+Choose A, B, or C based on requirements. Until then, do not deploy auth/financial endpoints or claim GitHub Pages login is functional. Do not change `main` or live data.
 
-## Safety and rollback
-- Do not modify `main` until tests and approval.
-- Do not delete/overwrite any Sheets tabs, Drive files, existing Owner or live sessions.
-- Do not put Script Properties, credentials, national IDs, or real receipts in GitHub.
-- Roll back the frontend to the saved branch/commit if necessary. Backend/data rollback must be planned separately.
+## Changes in this development branch
+- Removed the experimental `api/` Cloud Run scaffold to honor the no-billing decision.
+- Kept the existing GitHub Pages frontend and Apps Script backend unchanged.
+- Maintained backup branch `backup-before-github-api-migration-20261011`.
+
+## Manual receipt policy
+Admin enters and verifies each slip manually with the bank app; Sheets stores slip metadata and Drive stores the slip image. No OCR or bank API is needed.
