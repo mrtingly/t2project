@@ -443,6 +443,32 @@ function t2Rooms(token){
  const scoped=actor.role==="owner"?records:records.filter(r=>String(r.room_id)===String(actor.room_id));
  return {ok:true,rooms:scoped.map(r=>({room_id:String(r.room_id||""),name:String(r.name||r.room_name||r.room_id||"")}))};
 }
+/** Authenticated, server-scoped manual member registration. Not exposed through public doPost. */
+function t2CreateMember(token,payload){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const p=payload||{};
+ const name=String(p.full_name||"").trim().replace(/\\s+/g," ");
+ const id=String(p.id_number||"").trim();
+ const phone=String(p.phone||"").trim();
+ const email=String(p.email||"").trim().toLowerCase();
+ const room=actor.role==="admin"?String(actor.room_id||""):String(p.room_id||"");
+ if(name.length<3||name.length>160||/[<>\\x00-\\x1f]/.test(name))return {ok:false,error:"INVALID_NAME"};
+ if(!/^\\d{13}$/.test(id))return {ok:false,error:"INVALID_ID_NUMBER"};
+ if(phone&&!/^0\\d{8,9}$/.test(phone))return {ok:false,error:"INVALID_PHONE"};
+ if(email&&(email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)))return {ok:false,error:"INVALID_EMAIL"};
+ if(!room||!t2Rows_("Rooms").some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
+ const lock=LockService.getScriptLock();
+ if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
+ try{
+  const rows=t2Rows_("Members");
+  const normalize=n=>String(n||"").trim().replace(/^(นาย|นางสาว|นาง)\\s*/,"").replace(/\\s+/g," ").toLocaleLowerCase("th");
+  if(rows.some(m=>String(m.id_number)===id||normalize(m.full_name)===normalize(name)))return {ok:false,error:"MEMBER_EXISTS"};
+  const memberId="M"+Utilities.getUuid().replace(/-/g,"").slice(0,16).toUpperCase();
+  t2Sheet_("Members").appendRow([memberId,name,id,room,phone,email,"active",new Date()]);
+  t2Audit_("MEMBER_CREATED",actor.user_id,memberId);
+  return {ok:true,member:{member_id:memberId,full_name:name,room_id:room}};
+ }finally{lock.releaseLock()}
+}
 function t2FindMembers(token,query){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const term=String(query||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th");
