@@ -406,6 +406,7 @@ function t2RequireRole_(token,roles){
  const actor=t2Actor_(token);
  if(!roles.includes(String(actor.role)))throw Error("Forbidden");
  if(actor.role==="admin"&&!String(actor.room_id||""))throw Error("Admin room not assigned");
+ if(actor.role==="admin"&&!t2Rows_("Rooms").some(r=>String(r.room_id)===String(actor.room_id)&&String(r.status)==="active"))throw Error("Admin room inactive");
  if(actor.role==="member"&&!String(actor.member_id||""))throw Error("Member identity not assigned");
  return actor;
 }
