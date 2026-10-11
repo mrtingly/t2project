@@ -145,3 +145,38 @@ function t2AdminActivationQueue(token){
   room_id:String(visible.get(String(r.member_id)).room_id),status:"pending_admin"
  }))};
 }
+
+/** Reject an unclaimed request without deleting its audit history.
+ * A rejected request is terminal; any retry requires a reviewed recovery process.
+ */
+function t2AdminRejectMemberActivation(token,requestId){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const lock=LockService.getScriptLock();if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
+ try{
+  const sh=t2Sheet_("MemberActivations"),data=sh.getDataRange().getValues();
+  const idx=data.findIndex((r,i)=>i>0&&String(r[0])===String(requestId));
+  if(idx<1)return {ok:false,error:"REQUEST_NOT_FOUND"};
+  const r=data[idx],member=t2ActivationMember_(r[1]);
+  if(!t2ActivationCanManage_(actor,member))return {ok:false,error:"NOT_ACCESSIBLE"};
+  if(String(r[2])!=="pending_admin")return {ok:false,error:"NOT_PENDING"};
+  sh.getRange(idx+1,3).setValue("rejected");
+  sh.getRange(idx+1,5,1,2).setValues([[String(actor.user_id),new Date()]]);
+  t2Audit_("ACTIVATION_REJECTED",actor.user_id,String(r[1]));
+  return {ok:true,status:"rejected"};
+ }finally{lock.releaseLock()}
+}
+/** Pure tests: no Sheets writes, no personal data. */
+function t2ActivationScopeTest(){
+ const m={member_id:"M1",room_id:"A",status:"active"};
+ const checks=[
+  ["owner",t2ActivationCanManage_({role:"owner"},m)],
+  ["assigned_admin",t2ActivationCanManage_({role:"admin",room_id:"A"},m)],
+  ["other_admin_blocked",!t2ActivationCanManage_({role:"admin",room_id:"B"},m)],
+  ["unassigned_admin_blocked",!t2ActivationCanManage_({role:"admin"},m)],
+  ["member_blocked",!t2ActivationCanManage_({role:"member",room_id:"A"},m)],
+  ["suspended_blocked",!t2ActivationCanManage_({role:"owner"},Object.assign({},m,{status:"suspended"}))]
+ ];
+ const report={ok:checks.every(x=>x[1]),results:checks.map(x=>({name:x[0],passed:x[1]}))};
+ if(!report.ok)throw Error("Activation scope policy failed");
+ return report;
+}
