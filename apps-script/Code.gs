@@ -408,6 +408,7 @@ function t2RequireRole_(token,roles){
  if(actor.role==="admin"&&!String(actor.room_id||""))throw Error("Admin room not assigned");
  if(actor.role==="admin"&&!t2Rows_("Rooms").some(r=>String(r.room_id)===String(actor.room_id)&&String(r.status)==="active"))throw Error("Admin room inactive");
  if(actor.role==="member"&&!String(actor.member_id||""))throw Error("Member identity not assigned");
+ if(actor.role==="member"&&t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active").length!==1)throw Error("Member identity inactive or ambiguous");
  return actor;
 }
 /** Pure authorization policy, shared by server-side record endpoints. */
