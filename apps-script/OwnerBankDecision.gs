@@ -15,7 +15,18 @@ function t2OwnerReviewBankRequest(token,requestId,decision){
   if(String(values[index][statusCol])!=="pending")return {ok:false,error:"ALREADY_REVIEWED"};
   const audit=t2Db_().getSheetByName("MemberBankAudit");
   if(!audit)return {ok:false,error:"AUDIT_SETUP_REQUIRED"};
-  audit.appendRow([new Date(),requestId,String(values[index][headers.indexOf("member_id")]),decision,String(actor.member_id||actor.user_id||"owner")]);
+  const memberIdCol=headers.indexOf("member_id");
+  if(memberIdCol<0)return {ok:false,error:"INVALID_SCHEMA"};
+  const memberId=String(values[index][memberIdCol]);
+  const reviewer=String(actor.member_id||actor.user_id||"owner");
+  const auditRows=audit.getDataRange().getValues();
+  const existing=auditRows.find((r,i)=>i>0&&String(r[1])===requestId);
+  if(existing){
+   if(String(existing[3])!==decision)return {ok:false,error:"AUDIT_CONFLICT"};
+  }else{
+   audit.appendRow([new Date(),requestId,memberId,decision,reviewer]);
+   SpreadsheetApp.flush();
+  }
   sh.getRange(index+1,statusCol+1).setValue(decision);
   return {ok:true,status:decision};
  }finally{lock.releaseLock()}
