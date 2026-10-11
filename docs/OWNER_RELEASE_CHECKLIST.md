@@ -30,3 +30,14 @@ Development branch only. **NOT production-ready.** Do not copy only selected fil
 - MemberBankRequests.gs / MemberModulesSetup.gs
 
 Do not call these modules production-ready merely because they exist in GitHub.
+
+## Implementation progress
+- [x] Admin member creation and scoped search
+- [x] Receipt entry, scoped reporting and pending/verified-status separation
+- [x] Reject duplicate member IDs in reporting and receipt void operations
+- [x] Record receipt void status before writing audit entry
+- [ ] Review and enable secure authentication for all three roles
+- [ ] Implement returns from approved promotion documents
+- [ ] Complete synthetic end-to-end tests and financial reconciliation
+- [ ] Validate mobile accessibility and printing
+- [ ] Stage, accept and deploy production
