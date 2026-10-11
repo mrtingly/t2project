@@ -185,7 +185,7 @@ function t2Actor_(token){
  return actor;
 }
 function dashboard(token){
- const actor=t2Actor_(token);
+ const actor=t2RequireRole_(token,["owner","admin","member"]);
  return {ok:true,role:actor.role,room_id:actor.role==="admin"?actor.room_id:null,member_id:actor.role==="member"?actor.member_id:null,mode:"authenticated",message:"เข้าสู่ระบบสำเร็จ ระบบข้อมูลสมาชิกและสลิปกำลังพัฒนา"};
 }
 function logout(token){
@@ -229,6 +229,33 @@ function t2RequireRole_(token,roles){
  if(actor.role==="member"&&!String(actor.member_id||""))throw Error("Member identity not assigned");
  return actor;
 }
+/** Pure authorization policy, shared by server-side record endpoints. */
+function t2CanReadMember_(actor,member){
+ if(!actor||!member||String(member.status)!=="active")return false;
+ if(actor.role==="owner")return true;
+ if(actor.role==="admin")return !!actor.room_id&&String(actor.room_id)===String(member.room_id);
+ if(actor.role==="member")return !!actor.member_id&&String(actor.member_id)===String(member.member_id);
+ return false;
+}
+/** Run in the Apps Script editor: does not read or change any personal data. */
+function t2AuthorizationPolicyTest(){
+ const member={member_id:"M1",room_id:"R001",status:"active"};
+ const cases=[
+  ["owner_all",t2CanReadMember_({role:"owner"},member),true],
+  ["admin_same_room",t2CanReadMember_({role:"admin",room_id:"R001"},member),true],
+  ["admin_other_room",t2CanReadMember_({role:"admin",room_id:"R002"},member),false],
+  ["admin_no_room",t2CanReadMember_({role:"admin"},member),false],
+  ["member_self",t2CanReadMember_({role:"member",member_id:"M1"},member),true],
+  ["member_other",t2CanReadMember_({role:"member",member_id:"M2"},member),false],
+  ["unknown_role",t2CanReadMember_({role:"guest"},member),false],
+  ["inactive_member",t2CanReadMember_({role:"owner"},Object.assign({},member,{status:"inactive"})),false]
+ ];
+ const results=cases.map(c=>({test:c[0],passed:c[1]===c[2]}));
+ const report={ok:results.every(r=>r.passed),results};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Authorization policy test failed");
+ return report;
+}
 function t2Rooms(token){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const sh=t2Sheet_("Rooms");const values=sh.getDataRange().getValues();
@@ -242,7 +269,7 @@ function t2FindMembers(token,query){
  const term=String(query||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th");
  if(term.length<2||term.length>100)return {ok:false,message:"กรุณาระบุชื่ออย่างน้อย 2 ตัวอักษร"};
  const rows=t2Rows_("Members");
- const allowed=actor.role==="owner"?rows:rows.filter(m=>String(m.room_id)===String(actor.room_id));
+ const allowed=rows.filter(m=>t2CanReadMember_(actor,m));
  const matches=allowed.filter(m=>String(m.full_name||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th").includes(term)).slice(0,20);
  t2Audit_("MEMBER_SEARCH",actor.user_id,"results="+matches.length);
  return {ok:true,members:matches.map(m=>({member_id:String(m.member_id),full_name:String(m.full_name),room_id:String(m.room_id),status:String(m.status)}))};
