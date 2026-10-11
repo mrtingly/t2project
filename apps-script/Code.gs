@@ -452,7 +452,7 @@ function t2CreateMember(token,payload){
  const phone=String(p.phone||"").trim();
  const email=String(p.email||"").trim().toLowerCase();
  const room=actor.role==="admin"?String(actor.room_id||""):String(p.room_id||"");
- if(name.length<3||name.length>160||/[<>\x00-\x1f]/.test(name))return {ok:false,error:"INVALID_NAME"};
+ if(name.length<3||name.length>160||/[<>\x00-\x1f]/.test(name)||/^[=+@\-]/.test(name))return {ok:false,error:"INVALID_NAME"};
  if(!/^\d{13}$/.test(id))return {ok:false,error:"INVALID_ID_NUMBER"};
  if(phone&&!/^0\d{8,9}$/.test(phone))return {ok:false,error:"INVALID_PHONE"};
  if(email&&(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return {ok:false,error:"INVALID_EMAIL"};
