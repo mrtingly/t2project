@@ -6,6 +6,7 @@ function t2MemberReleaseSelfTest(){
   ["account",t2MemberAccountPolicyTest],
   ["password",t2PasswordKdfTest],
   ["login",t2MemberLoginPolicyTest],
+  ["throttle",t2MemberThrottlePolicyTest],
   ["session",t2SessionPolicyTest],
   ["token",t2SessionTokenTest]
  ];
