@@ -759,7 +759,8 @@ function t2MemberReceiptHistory(token,limit){
  const actor=t2RequireRole_(token,["member"]);
  const id=String(actor.member_id||"");
  if(!id)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
- const member=t2Rows_("Members").find(m=>String(m.member_id)===id&&String(m.status)==="active");
+ const active=t2Rows_("Members").filter(m=>String(m.member_id)===id&&String(m.status)==="active");
+ const member=active.length===1?active[0]:null;
  if(!member)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
  const max=Math.max(1,Math.min(200,Math.floor(Number(limit)||50)));
  const rows=t2Rows_("Slips").filter(s=>String(s.member_id)===id&&String(s.room_id)===String(member.room_id)&&String(s.status)!=="deleted");
