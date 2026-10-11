@@ -92,7 +92,7 @@ function login(payload){
  const expires=new Date(Date.now()+30*60*1000);
  t2Sheet_("Sessions").appendRow([tokenHash,user.user_id,expires,""]);
  t2Audit_("LOGIN",user.user_id,role);
- return {ok:true,token,role,displayName:role==="owner"?"Owner":role==="admin"?"Admin":"Member",expiresAt:expires.toISOString()};
+ return {ok:true,token,role,displayName:role==="owner"?"Owner":role==="admin"?"Admin":"Member",expiresAt:expires.toISOString(),dashboard:{ok:true,role,room_id:role==="admin"?user.room_id:null,member_id:role==="member"?user.member_id:null}};
 }
 function t2Actor_(token){
  if(typeof token!=="string"||token.length<50)throw Error("Unauthorized");
