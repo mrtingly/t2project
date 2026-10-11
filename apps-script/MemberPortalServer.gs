@@ -21,7 +21,7 @@ function t2PortalMe(token){
  const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
  if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
  const slips=t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&
-  String(s.room_id)===String(member.room_id));
+  String(s.room_id)===String(member.room_id)&&String(s.status)!=="deleted");
  return {ok:true,profile:{
   full_name:String(member.full_name||""),room_id:String(member.room_id||""),
   phone:String(member.phone||""),email:String(member.email||"")
