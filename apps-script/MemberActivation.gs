@@ -53,3 +53,8 @@ function t2MemberActivationPolicyTest(){
  if(!report.ok)throw Error("Member activation policy failed");
  return report;
 }
+
+function t2MemberActivationStatus_(status){
+ const allowed=["unclaimed","pending_admin","approved","claimed"];
+ return allowed.includes(String(status))?String(status):"invalid";
+}
