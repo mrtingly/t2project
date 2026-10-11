@@ -313,13 +313,33 @@ function t2LegacyLoginGateTest(){
  if(!report.ok)throw Error("Legacy login safety gate failed");
  return report;
 }
+/** Central session policy: only current token format and unrevoked, unexpired sessions. */
+function t2SessionActive_(session,now){
+ if(!session||session.revoked_at)return false;
+ const expiry=new Date(session.expires_at).getTime();
+ return Number.isFinite(expiry)&&expiry>now;
+}
+/** Pure policy test: no database reads, credentials, or session creation. */
+function t2SessionPolicyTest(){
+ const now=Date.now();
+ const checks=[
+  ["valid",t2SessionActive_({expires_at:new Date(now+60000),revoked_at:""},now)===true],
+  ["expired",t2SessionActive_({expires_at:new Date(now-1),revoked_at:""},now)===false],
+  ["boundary",t2SessionActive_({expires_at:new Date(now),revoked_at:""},now)===false],
+  ["revoked",t2SessionActive_({expires_at:new Date(now+60000),revoked_at:new Date(now-1000)},now)===false],
+  ["invalid_date",t2SessionActive_({expires_at:"invalid",revoked_at:""},now)===false],
+  ["missing",t2SessionActive_(null,now)===false]
+ ];
+ const report={ok:checks.every(c=>c[1]),results:checks.map(c=>({test:c[0],passed:c[1]}))};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Session policy test failed");
+ return report;
+}
 function t2Actor_(token){
  if(typeof token!=="string"||token.length<50)throw Error("Unauthorized");
  const hash=t2SessionHash_(token);
  const sessions=t2Rows_("Sessions");
- let session=sessions.find(s=>s.token_hash===hash&&!s.revoked_at&&new Date(s.expires_at).getTime()>Date.now());
- // Compatibility for sessions created before the optimization.
- if(!session){const legacy=t2Hash_(token,"SESSION");session=sessions.find(s=>s.token_hash===legacy&&!s.revoked_at&&new Date(s.expires_at).getTime()>Date.now())}
+ const session=sessions.find(s=>s.token_hash===hash&&t2SessionActive_(s,Date.now()));
  if(!session)throw Error("Session expired");
  const actor=t2Rows_("Users").find(u=>u.user_id===session.user_id&&u.status==="active");
  if(!actor)throw Error("Unauthorized");
