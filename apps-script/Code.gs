@@ -107,3 +107,70 @@ function logout(token){
  try{const hash=t2Hash_(token,"SESSION");const sh=t2Sheet_("Sessions");const vals=sh.getDataRange().getValues();for(let i=1;i<vals.length;i++)if(vals[i][0]===hash&&!vals[i][3])sh.getRange(i+1,4).setValue(new Date())}catch(_){}
  return {ok:true};
 }
+
+/**
+ * V3 foundation: additive installation only. Never overwrite existing tables.
+ * Member records are private; every endpoint checks session and server-side scope.
+ */
+const T2_V3_SCHEMAS_={
+ Members:["member_id","full_name","id_number","room_id","phone","email","status","created_at"],
+ Slips:["slip_id","member_id","room_id","transfer_at","amount","reference_last6","sender","receiver","status","drive_file_id","created_by","created_at"],
+ Announcements:["post_id","title","body","category","room_id","pinned","created_by","created_at","status"],
+ Comments:["comment_id","post_id","member_id","body","created_at","status"],
+ Conversations:["conversation_id","member_id","updated_at"],
+ Messages:["message_id","conversation_id","sender_user_id","body","created_at","read_at"]
+};
+function t2InstallV3(){
+ const actorProperties=PropertiesService.getScriptProperties();
+ if(!actorProperties.getProperty("T2_DB_ID"))throw Error("Set T2_DB_ID in Script Properties first");
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{
+  const db=t2Db_();const created=[];
+  for(const name of Object.keys(T2_V3_SCHEMAS_)){
+   const headers=T2_V3_SCHEMAS_[name];let sh=db.getSheetByName(name);
+   if(!sh){sh=db.insertSheet(name);sh.getRange(1,1,1,headers.length).setValues([headers]);sh.setFrozenRows(1);created.push(name)}
+   else{
+    const actual=sh.getLastColumn()?sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(String):[];
+    if(headers.some((h,i)=>actual[i]!==h))throw Error("Existing sheet incompatible, not modified: "+name);
+   }
+  }
+  return {ok:true,created:created,existing:Object.keys(T2_V3_SCHEMAS_).filter(n=>!created.includes(n))};
+ }finally{lock.releaseLock()}
+}
+function t2RequireRole_(token,roles){
+ const actor=t2Actor_(token);
+ if(!roles.includes(String(actor.role)))throw Error("Forbidden");
+ if(actor.role==="admin"&&!String(actor.room_id||""))throw Error("Admin room not assigned");
+ if(actor.role==="member"&&!String(actor.member_id||""))throw Error("Member identity not assigned");
+ return actor;
+}
+function t2Rooms(token){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const sh=t2Sheet_("Rooms");const values=sh.getDataRange().getValues();
+ const headers=values.shift().map(String);
+ const records=values.map(row=>Object.fromEntries(headers.map((key,i)=>[key,row[i]])));
+ const scoped=actor.role==="owner"?records:records.filter(r=>String(r.room_id)===String(actor.room_id));
+ return {ok:true,rooms:scoped.map(r=>({room_id:String(r.room_id||""),name:String(r.name||r.room_name||r.room_id||"")}))};
+}
+function t2FindMembers(token,query){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const term=String(query||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th");
+ if(term.length<2||term.length>100)return {ok:false,message:"กรุณาระบุชื่ออย่างน้อย 2 ตัวอักษร"};
+ const rows=t2Rows_("Members");
+ const allowed=actor.role==="owner"?rows:rows.filter(m=>String(m.room_id)===String(actor.room_id));
+ const matches=allowed.filter(m=>String(m.full_name||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th").includes(term)).slice(0,20);
+ t2Audit_("MEMBER_SEARCH",actor.user_id,"results="+matches.length);
+ return {ok:true,members:matches.map(m=>({member_id:String(m.member_id),full_name:String(m.full_name),room_id:String(m.room_id),status:String(m.status)}))};
+}
+function t2MyAccount(token){
+ const actor=t2RequireRole_(token,["member"]);
+ const row=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ if(!row||String(row.status)!=="active")throw Error("Member not available");
+ return {ok:true,profile:{member_id:String(row.member_id),full_name:String(row.full_name),room_id:String(row.room_id),phone:String(row.phone||""),email:String(row.email||"")}};
+}
+function t2V3Preflight(){
+ const base=t2Preflight();const missing=[];
+ try{const db=t2Db_();for(const name of Object.keys(T2_V3_SCHEMAS_))if(!db.getSheetByName(name))missing.push(name)}
+ catch(e){return {ok:false,missing:Object.keys(T2_V3_SCHEMAS_),baseReady:base.readyForLogin}}
+ return {ok:base.readyForLogin&&missing.length===0,missing:missing,baseReady:base.readyForLogin};
+}
