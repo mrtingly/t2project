@@ -31,3 +31,5 @@ function t2PortalLogout(token){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
  return logout(token);
 }
+
+// Member slip pagination is planned after data consistency verification.
