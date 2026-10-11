@@ -303,6 +303,16 @@ function login(payload){
  t2Audit_("LOGIN",user.user_id,role);
  return {ok:true,token,role,displayName:role==="owner"?"Owner":role==="admin"?"Admin":"Member",expiresAt:expires.toISOString(),dashboard:{ok:true,role,room_id:role==="admin"?user.room_id:null,member_id:role==="member"?user.member_id:null}};
 }
+/** No-write regression check for the legacy authentication safety gate. */
+function t2LegacyLoginGateTest(){
+ const enabled=PropertiesService.getScriptProperties().getProperty("T2_LEGACY_LOGIN_ENABLED");
+ if(enabled==="true")throw Error("Legacy login must remain disabled");
+ const result=login({username:"testuser",password:"dummy",role:"owner"});
+ const report={ok:result.ok===false&&result.message==="ระบบเข้าสู่ระบบจริงยังไม่เปิดใช้งาน",legacyLoginEnabled:false};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Legacy login safety gate failed");
+ return report;
+}
 function t2Actor_(token){
  if(typeof token!=="string"||token.length<50)throw Error("Unauthorized");
  const hash=t2SessionHash_(token);
