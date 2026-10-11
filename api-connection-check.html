@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT | ตรวจการเชื่อมต่อ API</title>
+<style>body{font:16px system-ui,sans-serif;background:#f4f7fb;color:#18314a;margin:0;padding:24px}main{max-width:680px;margin:auto;background:white;padding:24px;border-radius:18px}button{padding:12px 20px;border:0;border-radius:10px;background:#155cbd;color:white;font:inherit}li{margin:12px 0}.ok{color:#147447}.fail{color:#ae2727}small{color:#536476}</style></head>
+<body><main><h1>ตรวจการเชื่อมต่อ T2PROJECT</h1>
+<p>หน้านี้ทดสอบเฉพาะการเชื่อมต่อสาธารณะ ไม่ส่ง Username, Password, Token หรือข้อมูลสมาชิก</p>
+<button id="check">ตรวจสอบอีกครั้ง</button><ol id="results" aria-live="polite"></ol>
+<p><small>ผลทดสอบนี้ไม่ได้รับรองว่า Login หรือสิทธิ์เข้าถึงข้อมูลสมาชิกพร้อมใช้งานจริง</small></p>
+<p><a href="./index.html">กลับหน้าหลัก</a></p></main>
+<script src="./t2-api.js"></script>
+<script>
+const results=document.getElementById("results"),button=document.getElementById("check");
+async function run(){
+ button.disabled=true;results.replaceChildren();
+ for(const [name,fn,check] of [
+  ["ตรวจสุขภาพ API",()=>T2Api.health(),x=>x&&typeof x==="object"],
+  ["ตรวจการส่งข้อมูลแบบ POST",()=>T2Api.transportProbe(),x=>x&&x.probe==="post-ok"],
+  ["ตรวจสถานะ Login",()=>T2Api.authStatus(),x=>x&&x.authEnabled===false&&x.loginEnabled===false]
+ ]){
+  const li=document.createElement("li");li.textContent=name+" — กำลังตรวจ...";results.append(li);
+  try{const value=await fn();const ok=check(value);li.className=ok?"ok":"fail";li.textContent=name+(ok?" — ผ่าน":" — ผลไม่ตรงที่คาด")}
+  catch(_){li.className="fail";li.textContent=name+" — ไม่สามารถเชื่อมต่อหรืออ่านผลได้"}
+ }
+ button.disabled=false;
+}
+button.addEventListener("click",run);run();
+</script></body></html>
