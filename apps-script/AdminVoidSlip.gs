@@ -14,6 +14,7 @@ function t2AdminVoidSlip(token,slipId,reason){
   for(let i=1;i<values.length;i++)if(String(values[i][idCol])===id)matches.push(i);
   if(matches.length!==1)return {ok:false,error:"SLIP_NOT_FOUND_OR_AMBIGUOUS"};
   const row=values[matches[0]],member=t2Rows_("Members").find(m=>String(m.member_id)===String(row[memberCol])&&String(m.room_id)===String(row[roomCol])&&String(m.status)==="active");
+  if(t2Rows_("Members").filter(m=>String(m.member_id)===String(row[memberCol])&&String(m.room_id)===String(row[roomCol])&&String(m.status)==="active").length!==1)return {ok:false,error:"AMBIGUOUS_MEMBER"};
   if(!member||!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
   if(String(row[statusCol])==="deleted")return {ok:false,error:"ALREADY_DELETED"};
   sh.getRange(matches[0]+1,statusCol+1).setValue("deleted");
