@@ -648,6 +648,8 @@ function t2ReceiptReport(token,filters){
  if(memberFilter&&!names.has(memberFilter))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
  const slips=t2Rows_("Slips").filter(s=>{
   if(!names.has(String(s.member_id))||String(s.status)==="deleted")return false;
+  const member=members.find(m=>String(m.member_id)===String(s.member_id)&&String(m.room_id)===String(s.room_id));
+  if(!member)return false;
   if(room&&String(s.room_id)!==room)return false;
   if(memberFilter&&String(s.member_id)!==memberFilter)return false;
   const day=Utilities.formatDate(new Date(s.transfer_at),"Asia/Bangkok","yyyy-MM-dd");
