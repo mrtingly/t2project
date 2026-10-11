@@ -743,7 +743,7 @@ function t2MemberOverview(token){
  const actor=t2RequireRole_(token,["member"]);
  const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
  if(!member)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
- const slips=t2Rows_("Slips").filter(r=>String(r.member_id)===String(member.member_id)&&String(r.status)!=="deleted");
+ const slips=t2Rows_("Slips").filter(r=>String(r.member_id)===String(member.member_id)&&String(r.room_id)===String(member.room_id)&&String(r.status)!=="deleted");
  let pendingCents=0,verifiedCents=0;
  for(const slip of slips){
   const cents=Math.round(Number(slip.amount)*100);
