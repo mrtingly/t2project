@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT - API transport check</title><style>body{font:16px system-ui,sans-serif;max-width:720px;margin:3rem auto;padding:1rem;line-height:1.6}pre{white-space:pre-wrap;background:#f2f4f7;padding:1rem;border-radius:8px}button{padding:12px 18px;font:inherit}</style>
+</head>
+<body><h1>ทดสอบการเชื่อมต่อ GitHub → Apps Script</h1>
+<p>ทดสอบเฉพาะสถานะ API สาธารณะ ไม่ส่งรหัสผ่าน โทเค็น หรือข้อมูลสมาชิก และยังไม่ใช่การทดสอบ Login</p>
+<button id="run">ทดสอบการเชื่อมต่อ</button><p id="endpoint" style="overflow-wrap:anywhere"></p><pre id="result">ยังไม่ได้ทดสอบ</pre>
+<script>
+const endpoint=document.getElementById('endpoint');
+const configured="https://script.google.com/macros/s/AKfycbxEg-6mVTEpMIhowbYVK7ja8XJv0QkRKPYSSoJIts6hfK9t-vQLkGQ9vfc7iG2GOu7Ajg/exec";
+endpoint.textContent='ปลายทางที่กำหนด: '+(configured||'ยังไม่ได้ตั้งค่า');
+document.getElementById('run').onclick=async()=>{
+ const out=document.getElementById('result');out.textContent='กำลังทดสอบ...';
+ const url=configured;
+ if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){out.textContent='ยังไม่ตั้ง URL Apps Script';return;}
+ const probe=url+'?action=health';
+ try{
+  const response=await fetch(probe,{method:'GET',redirect:'follow',credentials:'omit',cache:'no-store'});
+  const body=await response.text();
+  let data;try{data=JSON.parse(body)}catch(_){throw Error('ไม่ใช่ JSON API (อาจยังไม่ได้ Deploy โค้ด probe)')}
+  if(!response.ok||data.service!=='t2project'||data.probe!=='ok'||data.mode!=='public-health-only'||data.version!==2)throw Error('API response ไม่ตรงที่คาด');
+  out.textContent='ผ่าน: API เวอร์ชัน 2 ตอบกลับตรงตามสัญญา (ยังไม่ใช่การทดสอบ Login/POST)';
+ }catch(err){out.textContent='ยังไม่ผ่าน: '+err.message+'\nสาเหตุที่เป็นไปได้: CORS, redirect, deployment เก่า, สิทธิ์เข้าถึง URL หรือยังไม่เผยแพร่เวอร์ชัน 2\nอย่าแก้ด้วยการส่งรหัสผ่านใน URL';}
+};
+</script></body></html>
