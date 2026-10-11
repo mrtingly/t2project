@@ -1,2 +1,2 @@
 // Public Apps Script deployment URL only. No credentials or secrets.
-window.T2_APP_URL = "https://script.google.com/macros/s/AKfycbyCX9_tNUSgGFH4wiUulKwc06PgIQnCDmlO1osoL8MU0y2RzdsLL0z-E1MXskZ1nYDPgw/exec";
+window.T2_APP_URL = "https://script.google.com/macros/s/AKfycbxEg-6mVTEpMIhowbYVK7ja8XJv0QkRKPYSSoJIts6hfK9t-vQLkGQ9vfc7iG2GOu7Ajg/exec";
