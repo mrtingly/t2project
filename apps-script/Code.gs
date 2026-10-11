@@ -32,6 +32,13 @@ function doPost(e){
     e.postData.type==="text/plain"&&body.length===18){
   return t2Json_({service:"t2project",probe:"post-ok",version:2,mode:"public-transport-only"});
  }
+ if(p.action==="auth_status"){
+  // Public capability discovery: fixed response, no secrets or user data.
+  // Does not depend on a caller-supplied flag or Script Properties.
+  if(body===""&&e&&e.postData&&e.postData.type==="text/plain")
+   return t2Json_({service:"t2project",version:2,authEnabled:false,loginEnabled:false,mode:"auth-closed"});
+  return t2Json_({ok:false,error:"INVALID_REQUEST"});
+ }
  return t2Json_({ok:false,error:"API_POST_NOT_ENABLED"});
 }
 
@@ -144,6 +151,16 @@ function t2AuthApiGateTest(){
  const report={ok:checks.every(c=>c[1]),results:checks.map(c=>({test:c[0],passed:c[1]}))};
  console.log(JSON.stringify(report));
  if(!report.ok)throw Error("Auth API gate test failed");
+ return report;
+}
+
+/** Public auth status smoke test: safe for the Apps Script editor. */
+function t2AuthStatusTest(){
+ const result=JSON.parse(doPost({parameter:{action:"auth_status"},postData:{contents:"",type:"text/plain"}}).getContent());
+ const blocked=JSON.parse(doPost({parameter:{action:"login"},postData:{contents:"{}",type:"text/plain"}}).getContent());
+ const report={ok:result.authEnabled===false&&result.loginEnabled===false&&result.mode==="auth-closed"&&blocked.error==="API_POST_NOT_ENABLED",authStatus:result,loginBlocked:blocked.error==="API_POST_NOT_ENABLED"};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Auth status test failed");
  return report;
 }
 
