@@ -12,6 +12,7 @@
 const results=document.getElementById("results"),button=document.getElementById("check");
 async function run(){
  button.disabled=true;results.replaceChildren();
+ if(!window.T2Api){const li=document.createElement("li");li.className="fail";li.textContent="ไม่พบตัวเชื่อม API";results.append(li);button.disabled=false;return;}
  for(const [name,fn,check] of [
   ["ตรวจสุขภาพ API",()=>T2Api.health(),x=>x&&typeof x==="object"],
   ["ตรวจการส่งข้อมูลแบบ POST",()=>T2Api.transportProbe(),x=>x&&x.probe==="post-ok"],
@@ -21,6 +22,7 @@ async function run(){
   try{const value=await fn();const ok=check(value);li.className=ok?"ok":"fail";li.textContent=name+(ok?" — ผ่าน":" — ผลไม่ตรงที่คาด")}
   catch(_){li.className="fail";li.textContent=name+" — ไม่สามารถเชื่อมต่อหรืออ่านผลได้"}
  }
+ const summary=document.createElement("li");summary.textContent="Login จริง: ยังปิดใช้งานเพื่อความปลอดภัย";results.append(summary);
  button.disabled=false;
 }
 button.addEventListener("click",run);run();
