@@ -596,7 +596,7 @@ function t2CreateSlip(token,payload){
  if(!/^[0-9]{6}$/.test(ref))return {ok:false,error:"INVALID_REFERENCE"};
  if(!Number.isFinite(amount)||amount<=0||amount>1000000000||Math.abs(Math.round(amount*100)-amount*100)>0.000001)return {ok:false,error:"INVALID_AMOUNT"};
  if(!sender||sender.length>160||!receiver||receiver.length>160||note.length>1000)return {ok:false,error:"INVALID_DETAILS"};
- if([sender,receiver,note].some(x=>/^[=+\-@\t\r]/.test(x)))return {ok:false,error:"INVALID_SHEET_TEXT"};
+ if([sender,receiver,note].some(x=>/^[=+\-@\t\r]/.test(x)||/[\x00-\x1f]/.test(x)))return {ok:false,error:"INVALID_SHEET_TEXT"};
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(dateText))return {ok:false,error:"INVALID_TRANSFER_DATE"};
  const transferDate=new Date(dateText+"+07:00");
  if(!Number.isFinite(transferDate.getTime()))return {ok:false,error:"INVALID_TRANSFER_DATE"};
@@ -621,7 +621,7 @@ function t2CreateSlip(token,payload){
 function t2ListSlips(token,memberId,limit){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const id=String(memberId||"").trim();
- const max=Math.max(1,Math.min(200,Number(limit)||50));
+ const max=Math.max(1,Math.min(200,Math.floor(Number(limit)||50)));
  const members=t2Rows_("Members");
  const member=members.find(m=>String(m.member_id)===id&&t2CanReadMember_(actor,m));
  if(!member)return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
