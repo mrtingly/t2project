@@ -11,7 +11,9 @@ function t2OwnerReviewBankRequest(token,requestId,decision){
   const headers=values[0].map(String);
   const idCol=headers.indexOf("request_id"),statusCol=headers.indexOf("status");
   if(idCol<0||statusCol<0)return {ok:false,error:"INVALID_SCHEMA"};
-  const index=values.findIndex((row,i)=>i>0&&String(row[idCol])===requestId);
+  const matching=values.reduce((acc,row,i)=>i>0&&String(row[idCol])===requestId?acc.concat(i):acc,[]);
+  if(matching.length>1)return {ok:false,error:"DUPLICATE_REQUEST_ID"};
+  const index=matching.length?matching[0]:-1;
   if(index<0)return {ok:false,error:"NOT_FOUND"};
   if(String(values[index][statusCol])!=="pending")return {ok:false,error:"ALREADY_REVIEWED"};
   const audit=t2Db_().getSheetByName("MemberBankAudit");
