@@ -482,8 +482,9 @@ function t2FindMembers(token,query){
 }
 function t2MyAccount(token){
  const actor=t2RequireRole_(token,["member"]);
- const row=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
- if(!row||String(row.status)!=="active")throw Error("Member not available");
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)throw Error("Member not available or ambiguous");
+ const row=matches[0];
  return {ok:true,profile:{member_id:String(row.member_id),full_name:String(row.full_name),room_id:String(row.room_id),phone:String(row.phone||""),email:String(row.email||"")}};
 }
 function t2V3Preflight(){
