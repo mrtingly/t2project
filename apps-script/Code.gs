@@ -675,6 +675,33 @@ function t2ReconciliationQueue(token,limit){
   status:"pending_verification"
  }))};
 }
+/** Owner dashboard rollup by room. No personal identifiers are returned. */
+function t2OwnerRoomDashboard(token){
+ t2RequireRole_(token,["owner"]);
+ const rooms=t2Rows_("Rooms").map(r=>({room_id:String(r.room_id),name:String(r.name||r.room_name||r.room_id)}));
+ const members=t2Rows_("Members").filter(m=>String(m.status)==="active");
+ const slips=t2Rows_("Slips").filter(s=>String(s.status)!=="deleted");
+ const result=rooms.map(room=>{
+  const ids=new Set(members.filter(m=>String(m.room_id)===room.room_id).map(m=>String(m.member_id)));
+  const summary={room_id:room.room_id,name:room.name,member_count:ids.size,receipt_count:0,pending_amount:0,verified_amount:0,pending_count:0,verified_count:0};
+  let pending=0,verified=0;
+  for(const slip of slips){
+   if(!ids.has(String(slip.member_id))||String(slip.room_id)!==room.room_id)continue;
+   summary.receipt_count++;
+   const cents=Math.round(Number(slip.amount)*100);
+   if(!Number.isSafeInteger(cents)||cents<0)continue;
+   if(String(slip.status)==="pending_verification"){summary.pending_count++;pending+=cents}
+   if(String(slip.status)==="verified"){summary.verified_count++;verified+=cents}
+  }
+  summary.pending_amount=pending/100;
+  summary.verified_amount=verified/100;
+  return summary;
+ });
+ return {ok:true,rooms:result,totals:result.reduce((a,r)=>{
+  for(const k of ["member_count","receipt_count","pending_count","verified_count","pending_amount","verified_amount"])a[k]+=r[k];
+  return a;
+ },{member_count:0,receipt_count:0,pending_count:0,verified_count:0,pending_amount:0,verified_amount:0})};
+}
 function t2ReceiptSummary(token,roomId){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const requested=String(roomId||"").trim();
