@@ -20,8 +20,7 @@ function t2MemberLogin(username,password){
  const member=t2ActivationMember_(account.member_id);
  if(!t2MemberLoginPolicy_(account,member))
   return {ok:false,error:"INVALID_CREDENTIALS"};
- // A second throttle gate after the expensive KDF prevents a concurrent
- // request from bypassing the cooldown and creating excessive sessions.
+ // Session is issued only after the password and member status checks pass.
  const token=Utilities.getUuid()+Utilities.getUuid();
  const expires=new Date(Date.now()+60*60*1000);
  t2Sheet_("Sessions").appendRow([t2SessionHash_(token),String(account.user_id),expires,""]);
