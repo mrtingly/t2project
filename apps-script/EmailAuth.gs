@@ -116,3 +116,18 @@ function t2EmailAuthConfirm_(email,code) {
     lock.releaseLock();
   }
 }
+
+/** Pure security regression checks; no mail, Sheets, or real accounts. */
+function t2EmailAuthPolicyTest(){
+ const now=1700000000000;
+ const checks=[
+  ["fresh",t2EmailAuthRemainingSeconds_(now,now)===300],
+  ["after_one_second",t2EmailAuthRemainingSeconds_(now,now+1000)===299],
+  ["near_expiry",t2EmailAuthRemainingSeconds_(now,now+299000)===1],
+  ["expired",t2EmailAuthRemainingSeconds_(now,now+300000)===0],
+  ["long_expired",t2EmailAuthRemainingSeconds_(now,now+999000)===0]
+ ];
+ const result={ok:checks.every(x=>x[1]),results:checks.map(x=>({test:x[0],passed:x[1]}))};
+ if(!result.ok)throw Error("Email OTP expiry policy failed");
+ return result;
+}
