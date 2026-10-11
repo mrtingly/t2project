@@ -18,7 +18,7 @@ function t2OwnerReviewBankRequest(token,requestId,decision){
   const memberIdCol=headers.indexOf("member_id");
   if(memberIdCol<0)return {ok:false,error:"INVALID_SCHEMA"};
   const memberId=String(values[index][memberIdCol]);
-  const reviewer=String(actor.member_id||actor.user_id||"owner");
+  const reviewer=String(actor.user_id||actor.admin_id||actor.member_id||"owner");
   const auditRows=audit.getDataRange().getValues();
   const existing=auditRows.find((r,i)=>i>0&&String(r[1])===requestId);
   if(existing){
