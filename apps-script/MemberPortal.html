@@ -14,7 +14,7 @@ let token=null;
 const el=id=>document.getElementById(id);
 function message(t){el("message").textContent=t}
 function reset(){token=null;el("password").value="";el("account").classList.add("hidden");el("login").classList.remove("hidden");el("details").replaceChildren()}
-function failure(){message("ไม่สามารถดำเนินการได้ กรุณาลองใหม่");el("submit").disabled=false;reset()}
+function failure(error){const code=error&&typeof error==="object"?(error.error||error.message||""):"";const safe={"PORTAL_DISABLED":"ระบบสมาชิกยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแล","INVALID_CREDENTIALS":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","RATE_LIMITED":"ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่","FORBIDDEN":"บัญชีนี้ไม่มีสิทธิ์ดูข้อมูลสมาชิก","UNAUTHORIZED":"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"};message(safe[code]||"เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบบัญชีหรือแจ้งผู้ดูแล");el("submit").disabled=false;reset()}
 function display(data){
  if(!data||!data.ok){failure();return}
  const details=el("details");details.replaceChildren();
@@ -32,7 +32,7 @@ el("form").addEventListener("submit",event=>{
  const username=el("username").value,password=el("password").value;
  google.script.run.withSuccessHandler(result=>{
   el("password").value="";
-  if(!result||!result.ok){failure();return}
+  if(!result||!result.ok){failure(result);return}
   token=result.token;
   google.script.run.withSuccessHandler(display).withFailureHandler(failure).t2PortalMe(token);
  }).withFailureHandler(failure).t2PortalLogin(username,password);
