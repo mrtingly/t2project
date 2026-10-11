@@ -11,14 +11,15 @@
  */
 const T2_={users:"Users",audit:"AuditLog",sessions:"Sessions"};
 function doGet(e){
- // Public transport probe: no credentials, database access, or user data.
- if(e&&e.parameter&&e.parameter.t2_probe==="1"){
-  return ContentService.createTextOutput(JSON.stringify({service:"t2project",probe:"ok",version:1})).setMimeType(ContentService.MimeType.JSON);
+ // Backend/API only. Never serve HTML or expose personal data.
+ if(e && e.parameter && e.parameter.t2_probe === "1"){
+  return ContentService.createTextOutput(JSON.stringify({service:"t2project",probe:"ok",version:2}))
+   .setMimeType(ContentService.MimeType.JSON);
  }
- return HtmlService.createHtmlOutputFromFile("index")
-  .setTitle("T2PROJECT — เข้าสู่ระบบ")
-  .addMetaTag("viewport","width=device-width, initial-scale=1");
+ return ContentService.createTextOutput(JSON.stringify({ok:false,error:"API endpoint: unsupported request"}))
+  .setMimeType(ContentService.MimeType.JSON);
 }
+
 function t2Db_(){
  const id=PropertiesService.getScriptProperties().getProperty("T2_DB_ID");
  if(!id)throw Error("Database is not configured");
