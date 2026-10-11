@@ -115,7 +115,7 @@ function t2AuthPreflight(){
    const actual=sh&&sh.getLastRow()>0?sh.getRange(1,1,1,expected[name].length).getValues()[0].map(String):[];
    result[name.toLowerCase()+"Schema"]=expected[name].every((h,i)=>actual[i]===h);
   }
-  if(!result.usersSchema||!result.sessionsSchema||!result.roomsSchema){result.error="Schema mismatch";return result}
+  if(!result.usersSchema||!result.sessionsSchema||!result.roomsSchema){result.error="Schema mismatch";console.log(JSON.stringify(result));return result}
   const rooms=new Set(t2Rows_("Rooms").filter(r=>r.status==="active").map(r=>String(r.room_id)));
   for(const u of t2Rows_("Users")){
    if(!["owner","admin","member"].includes(String(u.role)))result.invalidRoleCount++;
@@ -127,8 +127,9 @@ function t2AuthPreflight(){
    }
   }
   result.ok=result.ownerCount===1&&result.invalidRoleCount===0&&result.unassignedAdminCount===0;
+  console.log(JSON.stringify(result));
   return result;
- }catch(_){result.error="Configuration or permissions incomplete";return result}
+ }catch(_){result.error="Configuration or permissions incomplete";console.log(JSON.stringify(result));return result}
 }
 function t2LockKey_(username){return "T2_FAIL_"+Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,username.toLowerCase())).slice(0,32)}
 function login(payload){
