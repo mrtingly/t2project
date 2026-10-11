@@ -23,8 +23,15 @@ function doGet(e){
  return t2Json_({ok:false,error:"UNSUPPORTED_PUBLIC_ENDPOINT"});
 }
 function doPost(e){
- // Fail closed: authentication and authorized POST routing must be reviewed
- // before accepting any member data, passwords, tokens, or writes.
+ // Only a public, fixed-shape connectivity probe is accepted.
+ // Never log or echo POST bodies; never accept credentials until CORS and
+ // the production authentication design have been independently verified.
+ const p=(e&&e.parameter)||{};
+ const body=e&&e.postData&&typeof e.postData.contents==="string"?e.postData.contents:"";
+ if(p.action==="transport_probe"&&body==="T2_PUBLIC_PROBE_V1"&&
+    e.postData.type==="text/plain"&&body.length===18){
+  return t2Json_({service:"t2project",probe:"post-ok",version:2,mode:"public-transport-only"});
+ }
  return t2Json_({ok:false,error:"API_POST_NOT_ENABLED"});
 }
 
