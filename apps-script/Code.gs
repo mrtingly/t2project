@@ -174,3 +174,57 @@ function t2V3Preflight(){
  catch(e){return {ok:false,missing:Object.keys(T2_V3_SCHEMAS_),baseReady:base.readyForLogin}}
  return {ok:base.readyForLogin&&missing.length===0,missing:missing,baseReady:base.readyForLogin};
 }
+
+/** Authenticated feed and private messaging. All writes are text-only and audited. */
+function t2Append_(name,values){const sh=t2Sheet_(name);sh.appendRow(values)}
+function t2Text_(v,max){const t=String(v||"").trim();if(!t||t.length>max)throw Error("Invalid text length");return t}
+function t2Feed_(token){
+ const actor=t2RequireRole_(token,["owner","admin","member"]);
+ const posts=t2Rows_("Announcements").filter(p=>String(p.status)==="published"&&(actor.role==="owner"||String(p.room_id)==="all"||String(p.room_id)===(actor.role==="admin"?String(actor.room_id):t2MemberRoom_(actor))));
+ const comments=t2Rows_("Comments").filter(c=>String(c.status)==="visible");
+ return {ok:true,posts:posts.slice(-100).reverse().map(p=>({id:String(p.post_id),title:String(p.title),body:String(p.body),category:String(p.category),room:String(p.room_id),pinned:String(p.pinned)==="true",created:String(p.created_at),comments:comments.filter(c=>String(c.post_id)===String(p.post_id)).slice(-50).map(c=>({id:String(c.comment_id),author:"สมาชิก",text:String(c.body)}))}))};
+}
+function t2MemberRoom_(actor){
+ const m=t2Rows_("Members").find(row=>String(row.member_id)===String(actor.member_id)&&String(row.status)==="active");
+ if(!m)throw Error("Member unavailable");
+ return String(m.room_id);
+}
+function t2Publish_(token,payload){
+ const actor=t2RequireRole_(token,["owner"]);const p=payload||{};
+ const title=t2Text_(p.title,160),body=t2Text_(p.body,4000),category=String(p.category||"ข่าวสาร"),room=String(p.room||"all");
+ if(!["ข่าวสาร","ประกาศ","กิจกรรม","สำคัญ"].includes(category))throw Error("Invalid category");
+ if(room!=="all"&&!t2Rows_("Rooms").some(r=>String(r.room_id)===room))throw Error("Invalid room");
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{const id=Utilities.getUuid();t2Append_("Announcements",[id,title,body,category,room,!!p.pinned,actor.user_id,new Date(),"published"]);t2Audit_("PUBLISH",actor.user_id,id);return {ok:true,id}}
+ finally{lock.releaseLock()}
+}
+function t2Comment_(token,postId,body){
+ const actor=t2RequireRole_(token,["member"]);const id=t2Text_(postId,80),message=t2Text_(body,1000);
+ const visible=t2Feed_(token).posts.some(p=>p.id===id);if(!visible)throw Error("Post unavailable");
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{const commentId=Utilities.getUuid();t2Append_("Comments",[commentId,id,actor.member_id,message,new Date(),"visible"]);t2Audit_("COMMENT",actor.user_id,id);return {ok:true,id:commentId}}
+ finally{lock.releaseLock()}
+}
+function t2MyMessages_(token){
+ const actor=t2RequireRole_(token,["member","owner"]);
+ if(actor.role==="owner")return {ok:true,conversations:t2Rows_("Conversations").slice(-100).map(c=>({id:String(c.conversation_id),member_id:String(c.member_id),updated:String(c.updated_at)}))};
+ const conv=t2Rows_("Conversations").find(c=>String(c.member_id)===String(actor.member_id));
+ if(!conv)return {ok:true,conversation_id:null,messages:[]};
+ return {ok:true,conversation_id:String(conv.conversation_id),messages:t2Rows_("Messages").filter(m=>String(m.conversation_id)===String(conv.conversation_id)).slice(-100).map(m=>({sender:String(m.sender_user_id)===String(actor.user_id)?"me":"owner",text:String(m.body),created:String(m.created_at)}))};
+}
+function t2SendMessage_(token,body,conversationId){
+ const actor=t2RequireRole_(token,["member","owner"]);const message=t2Text_(body,2000);
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{
+  const conversations=t2Rows_("Conversations");let id;
+  if(actor.role==="member"){
+   const existing=conversations.find(c=>String(c.member_id)===String(actor.member_id));id=existing?String(existing.conversation_id):Utilities.getUuid();
+   if(!existing)t2Append_("Conversations",[id,actor.member_id,new Date()]);
+  }else{
+   id=t2Text_(conversationId,80);
+   if(!conversations.some(c=>String(c.conversation_id)===id))throw Error("Conversation unavailable");
+  }
+  t2Append_("Messages",[Utilities.getUuid(),id,actor.user_id,message,new Date(),""]);
+  t2Audit_("MESSAGE",actor.user_id,id);return {ok:true,conversation_id:id};
+ }finally{lock.releaseLock()}
+}
