@@ -35,6 +35,24 @@ function doPost(e){
  return t2Json_({ok:false,error:"API_POST_NOT_ENABLED"});
 }
 
+/**
+ * Safe public API security smoke test. Run from the Apps Script editor.
+ * Does not touch the database, create sessions, or accept credentials.
+ */
+function t2PublicApiSecurityTest(){
+ const cases=[
+  {name:"health",actual:JSON.parse(doGet({parameter:{action:"health"}}).getContent()),expect:"ok"},
+  {name:"private_get_denied",actual:JSON.parse(doGet({parameter:{action:"dashboard",token:"fake"}}).getContent()),expect:"UNSUPPORTED_PUBLIC_ENDPOINT"},
+  {name:"login_post_denied",actual:JSON.parse(doPost({parameter:{action:"login"},postData:{contents:'{"username":"test","password":"test"}',type:"text/plain"}}).getContent()),expect:"API_POST_NOT_ENABLED"},
+  {name:"unknown_post_denied",actual:JSON.parse(doPost({parameter:{action:"unknown"},postData:{contents:"",type:"text/plain"}}).getContent()),expect:"API_POST_NOT_ENABLED"},
+  {name:"probe_post_allowed",actual:JSON.parse(doPost({parameter:{action:"transport_probe"},postData:{contents:"T2_PUBLIC_PROBE_V1",type:"text/plain"}}).getContent()),expect:"post-ok"}
+ ];
+ const results=cases.map(c=>({test:c.name,passed:c.actual.probe===c.expect||c.actual.error===c.expect}));
+ const report={ok:results.every(x=>x.passed),results};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Public API security smoke test failed");
+ return report;
+}
 function t2Db_(){
  const id=PropertiesService.getScriptProperties().getProperty("T2_DB_ID");
  if(!id)throw Error("Database is not configured");
