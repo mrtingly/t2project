@@ -11,8 +11,8 @@
 <button class="role" type="button" data-role="member" aria-pressed="true"><span aria-hidden="true">👤</span><strong>Member</strong><small>สมาชิก</small></button>
 <button class="role" type="button" data-role="admin" aria-pressed="false"><span aria-hidden="true">🛡️</span><strong>Admin</strong><small>ผู้ดูแล</small></button>
 <button class="role" type="button" data-role="owner" aria-pressed="false"><span aria-hidden="true">👑</span><strong>Owner</strong><small>เจ้าของระบบ</small></button>
-</div><div class="entry"><h2 id="roleTitle">เข้าสู่ระบบสมาชิก</h2><p id="roleDesc">เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่ผู้ดูแลสร้างให้</p>
-<a class="primary" id="memberLink" href="https://script.google.com/macros/s/AKfycbwW8PkiO1pk7bDt5Zsl-8vlPqktH-jvemZrqJ-6wBEz1k70uBOZaNUtbkPevG6gd_vYVw/exec?action=member_portal">เข้าสู่ระบบสมาชิก →</a>
+</div><div class="entry"><h2 id="roleTitle">เข้าสู่ระบบสมาชิก</h2><p id="roleDesc">สมาชิกใหม่ตรวจสอบข้อมูลกับ Master และยืนยันตัวตนก่อนตั้ง Username / Password</p>
+<div id="firstUse" class="status" style="text-align:left"><strong>สมาชิกเข้าใช้งานครั้งแรก</strong><br>1. กรอกชื่อ–นามสกุลและเลขบัตรประชาชนในขั้นตอนตรวจสอบตัวตนที่ปลอดภัย<br>2. เจ้าหน้าที่ตรวจสอบและอนุมัติสิทธิ์ก่อนเปิดโปรไฟล์<br>3. ตั้ง Username และ Password ของตนเอง<br><small>ขั้นตอนเปิดใช้งานครั้งแรกยังไม่ได้เชื่อมกับระบบจริงบนหน้า GitHub นี้ โปรดอย่ากรอกเลขบัตรประชาชนลงในหน้าเว็บที่ยังไม่ได้ยืนยันตัวตน</small></div><a class="primary" id="memberLink" href="https://script.google.com/macros/s/AKfycbwW8PkiO1pk7bDt5Zsl-8vlPqktH-jvemZrqJ-6wBEz1k70uBOZaNUtbkPevG6gd_vYVw/exec?action=member_portal">สมาชิกที่ตั้งรหัสผ่านแล้ว — เข้าสู่ระบบ →</a>
 <div class="status hidden" id="notReady" role="status">ยังไม่สามารถเข้าสู่ระบบบทบาทนี้ผ่านหน้าเว็บได้ เนื่องจากระบบยืนยันตัวตนฝั่งเซิร์ฟเวอร์ยังไม่ได้เปิดใช้งานสำหรับบทบาทนี้ ระบบจะไม่ขอรับรหัสผ่านจนกว่าจะเชื่อมต่ออย่างปลอดภัย</div>
 </div></section></main><footer>© T2PROJECT</footer>
 <script>
@@ -23,7 +23,8 @@ document.querySelectorAll("[data-role]").forEach(button=>button.addEventListener
  document.querySelectorAll("[data-role]").forEach(b=>b.setAttribute("aria-pressed",String(b===button)));
  document.getElementById("roleTitle").textContent="เข้าสู่ระบบ"+names[role];
  const member=role==="member";
- document.getElementById("roleDesc").textContent=member?"เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่ผู้ดูแลสร้างให้":"";
+ document.getElementById("roleDesc").textContent=member?"ครั้งแรกตรวจสอบตัวตนและตั้งบัญชี จากนั้นใช้ Username และ Password":"";
+ document.getElementById("firstUse").classList.toggle("hidden",!member);
  document.getElementById("memberLink").classList.toggle("hidden",!member);
  document.getElementById("notReady").classList.toggle("hidden",member);
 }));
