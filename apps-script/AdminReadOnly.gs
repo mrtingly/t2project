@@ -2,18 +2,23 @@
 function t2AdminSummary(token){
  const actor=t2RequireRole_(token,["admin","owner"]);
  const room=String(actor.room_id||"");
- const members=t2Rows_("Members").filter(m=>actor.role==="owner"||String(m.room_id)===room);
- const allowed=new Set(members.filter(m=>String(m.status)==="active").map(m=>String(m.member_id)+"|"+String(m.room_id)));
- let slipCount=0,totalAmount=0,invalid=0;
+ const members=t2Rows_("Members").filter(m=>String(m.status)==="active"&&(actor.role==="owner"||String(m.room_id)===room));
+ const memberCounts=new Map();
+ members.forEach(m=>{const id=String(m.member_id||"");memberCounts.set(id,(memberCounts.get(id)||0)+1)});
+ const allowed=new Set(members.filter(m=>memberCounts.get(String(m.member_id))===1).map(m=>String(m.member_id)+"|"+String(m.room_id)));
+ let slipCount=0,totalAmount=0,invalid=0,pendingCount=0,pendingAmount=0,otherCount=0;
  t2Rows_("Slips").forEach(s=>{
-  if(String(s.status)==="deleted")return;
+  const status=String(s.status||"");
+  if(status==="deleted")return;
   if(actor.role!=="owner"&&String(s.room_id)!==room)return;
-  if(!allowed.has(String(s.member_id)+"|"+String(s.room_id))){invalid++;return;}
+  if(!allowed.has(String(s.member_id)+"|"+String(s.room_id))){invalid++;return}
   const raw=String(s.amount==null?"":s.amount).trim(),amount=Number(raw);
-  if(!raw||!Number.isFinite(amount)||amount<=0){invalid++;return;}
-  slipCount++;totalAmount+=amount;
+  if(!raw||!Number.isFinite(amount)||amount<=0){invalid++;return}
+  if(status==="verified"){slipCount++;totalAmount+=amount}
+  else if(status==="pending_verification"){pendingCount++;pendingAmount+=amount}
+  else otherCount++;
  });
- return {ok:true,scope:actor.role==="owner"?"all":room,member_count:members.length,slip_count:slipCount,amount_total:totalAmount,unverified_or_invalid:invalid,bank_verified:false};
+ return {ok:true,scope:actor.role==="owner"?"all":room,member_count:members.length,slip_count:slipCount,amount_total:totalAmount,pending_count:pendingCount,pending_amount:pendingAmount,other_count:otherCount,unverified_or_invalid:invalid,bank_verified:false};
 }
 /** Scoped member search. Never returns national IDs or contact information. */
 function t2AdminFindMembers(token,query){
