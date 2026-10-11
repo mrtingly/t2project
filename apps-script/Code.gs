@@ -691,8 +691,10 @@ function t2OwnerRoomDashboard(token){
  const rooms=t2Rows_("Rooms").map(r=>({room_id:String(r.room_id),name:String(r.name||r.room_name||r.room_id)}));
  const members=t2Rows_("Members").filter(m=>String(m.status)==="active");
  const slips=t2Rows_("Slips").filter(s=>String(s.status)!=="deleted");
+ const counts=new Map();
+ members.forEach(m=>counts.set(String(m.member_id),(counts.get(String(m.member_id))||0)+1));
  const result=rooms.map(room=>{
-  const ids=new Set(members.filter(m=>String(m.room_id)===room.room_id).map(m=>String(m.member_id)));
+  const ids=new Set(members.filter(m=>String(m.room_id)===room.room_id&&counts.get(String(m.member_id))===1).map(m=>String(m.member_id)));
   const summary={room_id:room.room_id,name:room.name,member_count:ids.size,receipt_count:0,pending_amount:0,verified_amount:0,pending_count:0,verified_count:0};
   let pending=0,verified=0;
   for(const slip of slips){
