@@ -52,3 +52,40 @@ function t2PortalSlipPage(token,page){
  }));
  return {ok:true,page:n,total:all.length,items:items};
 }
+
+/** One-time additive setup. Does not alter existing member rows. */
+function t2InstallMemberProfileExtra(){
+ const db=t2Db_();
+ let sheet=db.getSheetByName("MemberProfileExtra");
+ if(!sheet){sheet=db.insertSheet("MemberProfileExtra");sheet.appendRow(["member_id","address","map_url","updated_at"])}
+ return "MemberProfileExtra ready";
+}
+function t2PortalProfileExtra(token){
+ if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
+ const actor=t2RequireRole_(token,["member"]);
+ const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
+ const sheet=t2Db_().getSheetByName("MemberProfileExtra");
+ if(!sheet)return {ok:true,address:"",map_url:"",setup_required:true};
+ const row=t2Rows_("MemberProfileExtra").find(x=>String(x.member_id)===String(actor.member_id));
+ return {ok:true,address:String(row&&row.address||""),map_url:String(row&&row.map_url||"")};
+}
+function t2PortalSaveProfileExtra(token,address,mapUrl){
+ if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
+ const actor=t2RequireRole_(token,["member"]);
+ const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
+ if(typeof address!=="string"||address.length>1000||typeof mapUrl!=="string"||mapUrl.length>500)return {ok:false,error:"INVALID_INPUT"};
+ const url=mapUrl.trim();
+ if(url&&(!/^https:\/\/www\.google\.com\/maps\//.test(url)&&!/^https:\/\/maps\.app\.goo\.gl\//.test(url)))return {ok:false,error:"INVALID_MAP_URL"};
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{
+  const sheet=t2Db_().getSheetByName("MemberProfileExtra");
+  if(!sheet)return {ok:false,error:"PROFILE_SETUP_REQUIRED"};
+  const values=sheet.getDataRange().getValues();
+  const index=values.findIndex((r,i)=>i>0&&String(r[0])===String(actor.member_id));
+  const data=[String(actor.member_id),address.trim(),url,new Date()];
+  if(index<0)sheet.appendRow(data);else sheet.getRange(index+1,1,1,4).setValues([data]);
+  return {ok:true};
+ }finally{lock.releaseLock()}
+}
