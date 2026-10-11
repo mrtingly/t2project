@@ -32,6 +32,9 @@ function t2EmailAuthRequest_(email) {
     return generic;
   }
   const cache = CacheService.getScriptCache();
+  const requestLock = LockService.getScriptLock();
+  if (!requestLock.tryLock(10000)) return generic;
+  try {
   if (cache.get(t2EmailAuthCooldownKey_(address))) return generic;
   // No public disclosure of whether an email exists in the Users table.
   const users = t2Rows_("Users");
@@ -59,6 +62,7 @@ function t2EmailAuthRequest_(email) {
     return {ok:false,error:"DELIVERY_UNAVAILABLE"};
   }
   return generic;
+  } finally { requestLock.releaseLock(); }
 }
 function t2EmailAuthConfirm_(email,code) {
   const address = String(email || "").trim().toLowerCase();
