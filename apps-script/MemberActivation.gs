@@ -55,12 +55,12 @@ function t2MemberActivationPolicyTest(){
 }
 
 function t2MemberActivationStatus_(status){
- const allowed=["unclaimed","pending_admin","approved","claimed"];
+ const allowed=["unclaimed","pending_admin","approved","claimed","rejected"];
  return allowed.includes(String(status))?String(status):"invalid";
 }
 
 function t2ActivationCanTransition_(from,to){
- const allowed={unclaimed:["pending_admin"],pending_admin:["approved","unclaimed"],approved:["claimed","pending_admin"],claimed:[]};
+ const allowed={unclaimed:["pending_admin"],pending_admin:["approved","unclaimed"],approved:["claimed","pending_admin"],claimed:[],rejected:[]};
  return Object.prototype.hasOwnProperty.call(allowed,String(from))&&allowed[String(from)].includes(String(to));
 }
 
