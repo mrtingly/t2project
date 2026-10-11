@@ -77,6 +77,37 @@ function t2AuthEnvelopeTest(){
 }
 
 /**
+ * Authenticated POST request preparation, with server-side kill switch.
+ * Parsing is only attempted when the private feature flag is enabled.
+ * Public doPost remains probe-only until a separate deployment review.
+ */
+function t2PrepareAuthPost_(raw){
+ if(PropertiesService.getScriptProperties().getProperty("T2_AUTH_API_ENABLED")!=="true")
+  return {ok:false,error:"AUTH_API_DISABLED"};
+ const parsed=t2ValidateAuthEnvelope_(raw);
+ if(!parsed.ok)return {ok:false,error:parsed.error};
+ // No login dispatch until password hashing and abuse controls are reviewed.
+ if(parsed.action==="login")return {ok:false,error:"LOGIN_NOT_ENABLED"};
+ return t2AuthApiDispatch_(parsed.action,parsed.payload);
+}
+/** Test the disabled public boundary without changing script properties. */
+function t2AuthPostBoundaryTest(){
+ const enabled=PropertiesService.getScriptProperties().getProperty("T2_AUTH_API_ENABLED")==="true";
+ if(enabled)throw Error("Disable T2_AUTH_API_ENABLED before testing");
+ const request=JSON.stringify({action:"login",payload:{username:"testowner",password:"dummy",role:"owner"}});
+ const checks=[
+  ["disabled_login",t2PrepareAuthPost_(request).error==="AUTH_API_DISABLED"],
+  ["disabled_dashboard",t2PrepareAuthPost_(JSON.stringify({action:"dashboard",payload:{token:"x".repeat(64)}})).error==="AUTH_API_DISABLED"],
+  ["disabled_bad_json",t2PrepareAuthPost_("{").error==="AUTH_API_DISABLED"],
+  ["public_post_still_denied",JSON.parse(doPost({parameter:{action:"login"},postData:{contents:request,type:"text/plain"}}).getContent()).error==="API_POST_NOT_ENABLED"]
+ ];
+ const result={ok:checks.every(x=>x[1]),results:checks.map(x=>({test:x[0],passed:x[1]}))};
+ console.log(JSON.stringify(result));
+ if(!result.ok)throw Error("Auth POST boundary test failed");
+ return result;
+}
+
+/**
  * Auth API router foundation. Deliberately disabled for all public requests.
  * The server ignores caller-provided flags: only Script Properties can enable it.
  * Do not enable until credential hashing, abuse controls, and deployment security
