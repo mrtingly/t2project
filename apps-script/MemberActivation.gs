@@ -153,6 +153,7 @@ function t2AdminActivationQueue(token){
  */
 function t2AdminRejectMemberActivation(token,requestId){
  const actor=t2RequireRole_(token,["owner","admin"]);
+ if(!/^ACT-[0-9a-f-]{36}$/i.test(String(requestId||"")))return {ok:false,error:"INVALID_REQUEST_ID"};
  const lock=LockService.getScriptLock();if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
  try{
   const sh=t2Sheet_("MemberActivations"),data=sh.getDataRange().getValues();
