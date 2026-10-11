@@ -27,7 +27,7 @@ function t2PortalMe(token){
  return {ok:true,profile:{
   full_name:String(member.full_name||""),room_id:String(member.room_id||""),
   phone:String(member.phone||""),email:String(member.email||"")
- },summary:{slip_count:slips.length,amount_total:slips.reduce((n,s)=>n+(Number(s.amount)||0),0)}};
+ },summary:{slip_count:slips.length,amount_total:slips.reduce((n,s)=>n+(Number(s.amount)||0),0),bank_verified:false}};
 }
 function t2PortalLogout(token){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
