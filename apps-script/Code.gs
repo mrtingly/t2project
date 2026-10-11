@@ -314,6 +314,29 @@ function t2LegacyLoginGateTest(){
  return report;
 }
 /** Central session policy: only current token format and unrevoked, unexpired sessions. */
+function t2ValidSessionToken_(token){
+ return typeof token==="string"&&/^[a-f0-9-]{72}$/.test(token)&&
+  token.charAt(8)==="-"&&token.charAt(13)==="-"&&token.charAt(18)==="-"&&
+  token.charAt(23)==="-"&&token.charAt(44)==="-"&&token.charAt(49)==="-"&&
+  token.charAt(54)==="-"&&token.charAt(59)==="-";
+}
+/** Token-format checks only; no database access or session creation. */
+function t2SessionTokenTest(){
+ const uuid="12345678-1234-1234-1234-123456789abc";
+ const valid=uuid+uuid;
+ const checks=[
+  ["valid",t2ValidSessionToken_(valid)],
+  ["short",!t2ValidSessionToken_("abc")],
+  ["non_string",!t2ValidSessionToken_(null)],
+  ["invalid_character",!t2ValidSessionToken_(valid.replace("a","z"))],
+  ["extra_character",!t2ValidSessionToken_(valid+"0")],
+  ["wrong_separator",!t2ValidSessionToken_(valid.replace("-","0"))]
+ ];
+ const report={ok:checks.every(x=>x[1]),results:checks.map(x=>({test:x[0],passed:x[1]}))};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Session token test failed");
+ return report;
+}
 function t2SessionActive_(session,now){
  if(!session||session.revoked_at)return false;
  const expiry=new Date(session.expires_at).getTime();
@@ -336,7 +359,7 @@ function t2SessionPolicyTest(){
  return report;
 }
 function t2Actor_(token){
- if(typeof token!=="string"||token.length<50)throw Error("Unauthorized");
+ if(!t2ValidSessionToken_(token))throw Error("Unauthorized");
  const hash=t2SessionHash_(token);
  const sessions=t2Rows_("Sessions");
  const session=sessions.find(s=>s.token_hash===hash&&t2SessionActive_(s,Date.now()));
@@ -350,8 +373,19 @@ function dashboard(token){
  return {ok:true,role:actor.role,room_id:actor.role==="admin"?actor.room_id:null,member_id:actor.role==="member"?actor.member_id:null,mode:"authenticated",message:"เข้าสู่ระบบสำเร็จ ระบบข้อมูลสมาชิกและสลิปกำลังพัฒนา"};
 }
 function logout(token){
- try{const hash=t2SessionHash_(token);const sh=t2Sheet_("Sessions");const vals=sh.getDataRange().getValues();let found=false;for(let i=1;i<vals.length;i++)if(vals[i][0]===hash&&!vals[i][3]){sh.getRange(i+1,4).setValue(new Date());found=true}if(!found){const legacy=t2Hash_(token,"SESSION");for(let i=1;i<vals.length;i++)if(vals[i][0]===legacy&&!vals[i][3])sh.getRange(i+1,4).setValue(new Date())}}catch(_){}
- return {ok:true};
+ if(!t2ValidSessionToken_(token))return {ok:false,error:"UNAUTHORIZED"};
+ try{
+  const hash=t2SessionHash_(token);
+  const sh=t2Sheet_("Sessions");
+  const vals=sh.getDataRange().getValues();
+  for(let i=1;i<vals.length;i++){
+   if(vals[i][0]===hash&&!vals[i][3]){
+    sh.getRange(i+1,4).setValue(new Date());
+    break;
+   }
+  }
+  return {ok:true};
+ }catch(_){return {ok:false,error:"LOGOUT_FAILED"}}
 }
 
 /**
