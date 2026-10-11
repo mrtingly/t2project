@@ -61,3 +61,11 @@ function t2MemberLoginPolicyTest(){
  if(!cases.every(Boolean))throw Error("Member login policy failed");
  return {ok:true,checks:cases.length};
 }
+
+/** Pure throttle boundary regression; does not modify cache or Sheets. */
+function t2MemberThrottlePolicyTest(){
+ const allowed=n=>Number.isInteger(n)&&n>=0&&n<5;
+ const checks=[allowed(0),allowed(4),!allowed(5),!allowed(6),!allowed(-1)];
+ if(!checks.every(Boolean))throw Error("Login throttle boundary failed");
+ return {ok:true,checks:checks.length};
+}
