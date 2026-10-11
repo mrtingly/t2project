@@ -5,7 +5,7 @@
 <section id="login"><form id="form"><label for="username">ชื่อผู้ใช้</label><input id="username" autocomplete="username" required>
 <label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password" required>
 <button id="submit" type="submit">เข้าสู่ระบบ</button></form></section>
-<section id="account" class="hidden"><h2>โปรไฟล์สมาชิก</h2><p>ข้อมูลส่วนตัวและสรุปการลงทุนของฉัน</p><h3>ข้อมูลสมาชิก</h3><dl id="details"></dl><h3>ข้อมูลเพิ่มเติม</h3><div class="profile-grid"><section class="profile-card"><h4>รูปโปรไฟล์</h4><p>ยังไม่มีรูปภาพ</p></section><section class="profile-card"><h4>ที่อยู่และแผนที่</h4><p>ยังไม่ได้เชื่อมข้อมูล</p></section><section class="profile-card"><h4>บัญชีธนาคาร</h4><p>ยังไม่ได้เชื่อมข้อมูล</p></section><section class="profile-card"><h4>ผู้ติดต่อฉุกเฉิน</h4><p>ต้องมีอย่างน้อย 2 คน — ยังไม่ได้เชื่อมข้อมูล</p></section><section class="profile-card"><h4>ผู้รับผลประโยชน์</h4><p>ยังไม่ได้เชื่อมข้อมูลและสัดส่วนผลประโยชน์</p></section></div><h3>สรุปการลงทุนและผลตอบแทน</h3><div class="profile-grid"><section class="profile-card"><h4>ยอดเงินลงทุนที่เชื่อมแล้ว</h4><strong id="investedAmount">—</strong></section><section class="profile-card"><h4>จำนวนสลิปที่เชื่อมแล้ว</h4><strong id="investedSlips">—</strong></section><section class="profile-card"><h4>ผลตอบแทนตามโปรโมชัน</h4><p>ยังไม่คำนวณ เนื่องจากยังไม่ได้เชื่อมตารางโปรโมชัน</p></section></div><h3>รายการสลิปของฉัน</h3><p id="slipStatus">ยังไม่ได้โหลดรายการ</p><div id="slipList"></div><button id="nextSlips" type="button" class="hidden">ดูรายการถัดไป</button><button id="loadSlips" type="button">แสดงรายการสลิป</button><button id="print" type="button" style="background:#426477">พิมพ์ข้อมูลของฉัน</button><button id="logout" type="button">ออกจากระบบ</button></section>
+<section id="account" class="hidden"><h2>โปรไฟล์สมาชิก</h2><p>ข้อมูลส่วนตัวและสรุปการลงทุนของฉัน</p><h3>ข้อมูลสมาชิก</h3><dl id="details"></dl><h3>ข้อมูลเพิ่มเติม</h3><div class="profile-grid"><section class="profile-card"><h4>รูปโปรไฟล์</h4><p>ยังไม่มีรูปภาพ</p></section><section class="profile-card"><h4>ที่อยู่และแผนที่</h4><label for="address">ที่อยู่</label><textarea id="address" rows="3" maxlength="1000" style="width:100%;box-sizing:border-box"></textarea><label for="mapUrl">ลิงก์ Google Maps</label><input id="mapUrl" type="url" placeholder="https://www.google.com/maps/..." maxlength="500"><button id="saveAddress" type="button">บันทึกที่อยู่</button><p id="addressStatus" role="status"></p></section><section class="profile-card"><h4>บัญชีธนาคาร</h4><p>ยังไม่ได้เชื่อมข้อมูล</p></section><section class="profile-card"><h4>ผู้ติดต่อฉุกเฉิน</h4><p>ต้องมีอย่างน้อย 2 คน — ยังไม่ได้เชื่อมข้อมูล</p></section><section class="profile-card"><h4>ผู้รับผลประโยชน์</h4><p>ยังไม่ได้เชื่อมข้อมูลและสัดส่วนผลประโยชน์</p></section></div><h3>สรุปการลงทุนและผลตอบแทน</h3><div class="profile-grid"><section class="profile-card"><h4>ยอดเงินลงทุนที่เชื่อมแล้ว</h4><strong id="investedAmount">—</strong></section><section class="profile-card"><h4>จำนวนสลิปที่เชื่อมแล้ว</h4><strong id="investedSlips">—</strong></section><section class="profile-card"><h4>ผลตอบแทนตามโปรโมชัน</h4><p>ยังไม่คำนวณ เนื่องจากยังไม่ได้เชื่อมตารางโปรโมชัน</p></section></div><h3>รายการสลิปของฉัน</h3><p id="slipStatus">ยังไม่ได้โหลดรายการ</p><div id="slipList"></div><button id="nextSlips" type="button" class="hidden">ดูรายการถัดไป</button><button id="loadSlips" type="button">แสดงรายการสลิป</button><button id="print" type="button" style="background:#426477">พิมพ์ข้อมูลของฉัน</button><button id="logout" type="button">ออกจากระบบ</button></section>
 <p id="message" role="status" aria-live="polite"></p></main>
 <script>
 (function(){
@@ -13,7 +13,7 @@
 let token=null;let slipPage=1;let slipRequest=0;let loginRequest=0;
 const el=id=>document.getElementById(id);
 function message(t){el("message").textContent=t}
-function reset(){loginRequest+=1;slipRequest+=1;token=null;el("password").value="";el("account").classList.add("hidden");el("login").classList.remove("hidden");el("details").replaceChildren();el("slipList").replaceChildren();el("nextSlips").classList.add("hidden");el("slipStatus").textContent="ยังไม่ได้โหลดรายการ";slipPage=1}
+function reset(){loginRequest+=1;slipRequest+=1;token=null;el("password").value="";el("account").classList.add("hidden");el("login").classList.remove("hidden");el("details").replaceChildren();el("address").value="";el("mapUrl").value="";el("addressStatus").textContent="";el("saveAddress").disabled=false;el("slipList").replaceChildren();el("nextSlips").classList.add("hidden");el("slipStatus").textContent="ยังไม่ได้โหลดรายการ";slipPage=1}
 function failure(error){const code=error&&typeof error==="object"?(error.error||error.message||""):"";const safe={"PORTAL_DISABLED":"ระบบสมาชิกยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแล","INVALID_CREDENTIALS":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","RATE_LIMITED":"ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่","FORBIDDEN":"บัญชีนี้ไม่มีสิทธิ์ดูข้อมูลสมาชิก","UNAUTHORIZED":"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"};message(safe[code]||"เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบบัญชีหรือแจ้งผู้ดูแล");el("submit").disabled=false;reset()}
 function display(data){
  if(!data||!data.ok){failure();return}
@@ -26,7 +26,7 @@ function display(data){
   const dt=document.createElement("dt"),dd=document.createElement("dd");
   dt.textContent=key;dd.textContent=String(value);details.append(dt,dd);
  }
- el("login").classList.add("hidden");el("account").classList.remove("hidden");message("");slipPage=1;fetchSlips();
+ el("login").classList.add("hidden");el("account").classList.remove("hidden");message("");slipPage=1;fetchSlips();loadExtra();
 }
 el("form").addEventListener("submit",event=>{
  event.preventDefault();if(!window.google||!google.script||!google.script.run){message("โปรดเปิดหน้านี้จาก Google Apps Script");return}
@@ -62,6 +62,31 @@ function fetchSlips(){
 }
 el("loadSlips").addEventListener("click",()=>{slipPage=1;fetchSlips()});
 el("nextSlips").addEventListener("click",()=>{slipPage+=1;el("nextSlips").disabled=true;fetchSlips()});
+function loadExtra(){
+ const current=token;
+ google.script.run.withSuccessHandler(result=>{
+  if(token!==current)return;
+  if(!result||!result.ok)return;
+  el("address").value=result.address||"";
+  el("mapUrl").value=result.map_url||"";
+  if(result.setup_required)el("addressStatus").textContent="ผู้ดูแลต้องเตรียมชีตข้อมูลเพิ่มเติมก่อน";
+ }).withFailureHandler(()=>{if(token===current)el("addressStatus").textContent="ไม่สามารถโหลดข้อมูลที่อยู่ได้"}).t2PortalProfileExtra(current);
+}
+el("saveAddress").addEventListener("click",()=>{
+ if(!token)return;
+ const current=token;
+ el("saveAddress").disabled=true;
+ el("addressStatus").textContent="กำลังบันทึก...";
+ google.script.run.withSuccessHandler(result=>{
+  if(token!==current)return;
+  el("saveAddress").disabled=false;
+  el("addressStatus").textContent=result&&result.ok?"บันทึกที่อยู่แล้ว":"บันทึกไม่สำเร็จ กรุณาตรวจสอบลิงก์หรือแจ้งผู้ดูแล";
+ }).withFailureHandler(()=>{
+  if(token!==current)return;
+  el("saveAddress").disabled=false;
+  el("addressStatus").textContent="เกิดข้อผิดพลาดในการบันทึก";
+ }).t2PortalSaveProfileExtra(current,el("address").value,el("mapUrl").value);
+});
 el("print").addEventListener("click",()=>window.print());
 el("logout").addEventListener("click",()=>{
  const old=token;reset();message("ออกจากระบบแล้ว");
