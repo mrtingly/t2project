@@ -442,6 +442,14 @@ async function updateAuthReadiness(){
  }
 }
 updateAuthReadiness();
+const apiCheckLink=document.createElement("a");
+apiCheckLink.href="./api-connection-check.html";
+apiCheckLink.textContent="ตรวจสอบการเชื่อมต่อ API (ไม่ใช้รหัสผ่าน)";
+apiCheckLink.style.display="inline-block";
+apiCheckLink.style.marginTop="12px";
+apiCheckLink.style.fontWeight="600";
+const authNotice=document.getElementById("authReadiness");
+if(authNotice)authNotice.insertAdjacentElement("afterend",apiCheckLink);
 $("demo").addEventListener("click",()=>{const r=roles[selected];$("dashTitle").textContent="แดชบอร์ด"+r.name;$("metrics").replaceChildren(...r.metrics.map(([value,label])=>{const el=document.createElement("div");el.className="metric";const b=document.createElement("b");b.textContent=value;const s=document.createElement("span");s.textContent=label;el.append(b,s);return el}));$("menu").replaceChildren(...r.menu.map(label=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",()=>navigateWorkspace(label));return b}));$("workspace").innerHTML="<h2>พื้นที่ทำงาน</h2><p>เลือกเมนูด้านบนเพื่อดูหน้าจอและแบบฟอร์มตัวอย่าง</p>";navigateWorkspace(selected==="member"?"ข้อมูลส่วนตัว":selected==="admin"?"ภาพรวม Admin":"ภาพรวม 8 ห้อง");$("loginScreen").classList.add("hidden");$("dashboardScreen").classList.remove("hidden");window.scrollTo(0,0)});
 $("back").addEventListener("click",()=>{const token=sessionStorage.getItem("t2_session");if(token&&window.google&&google.script&&google.script.run)google.script.run.logout(token);sessionStorage.removeItem("t2_session");$("dashboardScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
 </script><section id="printOutput" class="print-sheet" aria-hidden="true"></section></body></html>
