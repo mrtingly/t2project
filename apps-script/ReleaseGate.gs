@@ -15,6 +15,7 @@ function t2ReleaseGate(){
  }catch(e){add("authentication_schema",false,"Auth check unavailable")}
  try{const owner=t2OwnerReleasePreflight();add("member_and_bank_schemas",owner.ok,owner.ok?"Required columns present":"Missing required columns")}catch(e){add("member_and_bank_schemas",false,"Owner preflight unavailable")}
  add("member_login_implementation",typeof t2MemberLogin==="function","Implementation existence only; security review still required");
+ add("password_kdf_review",false,"T2PROJECT username/password chosen; legacy iterated SHA-256 is not a production password KDF");
  add("member_login_review",false,"Member identity and session issuance require independent security review");
  add("owner_admin_login",false,"Legacy login deliberately disabled; identity provider not integrated");
  add("admin_dashboard_route",false,"Admin preview not yet routed behind authenticated login");
