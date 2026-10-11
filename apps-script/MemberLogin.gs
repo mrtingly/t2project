@@ -9,7 +9,7 @@ function t2MemberLogin(username,password){
  // Never disclose account existence. Enforce a short server-side cooldown
  // before expensive password verification to limit repeated guessing.
  const throttle=t2MemberLoginThrottle_(name);
- if(!throttle.ok)return {ok:false,error:"TRY_AGAIN_LATER"};
+ if(!throttle.ok)return {ok:false,error:"INVALID_CREDENTIALS"};
  const users=t2Rows_("Users");
  const account=users.find(u=>String(u.username||"").toLowerCase()===name&&
   String(u.role)==="member"&&String(u.status)==="active");
