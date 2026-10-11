@@ -13,7 +13,7 @@ function t2OwnerMemberSlips(token,memberId,offset,limit){
  const size=Number.isFinite(n)?Math.max(1,Math.min(100,Math.floor(n))):25;
  const slips=t2Rows_("Slips").filter(s=>String(s.member_id||"").trim()===id&&String(s.room_id||"")===room&&String(s.status)!=="deleted");
  const items=slips.slice(start,start+size).map(s=>({
-  slip_id:String(s.slip_id||""),date:s.date instanceof Date?s.date.toISOString():String(s.date||s.transfer_date||""),amount:String(s.amount==null?"":s.amount),status:String(s.status||"")
+  slip_id:String(s.slip_id||""),date:s.transfer_at instanceof Date?Utilities.formatDate(s.transfer_at,Session.getScriptTimeZone(),"dd/MM/yyyy HH:mm"):String(s.transfer_at||""),amount:String(s.amount==null?"":s.amount),status:String(s.status||"")
  }));
  return {ok:true,member_id:id,full_name:String(members[0].full_name||""),total:slips.length,offset:start,items:items};
 }
