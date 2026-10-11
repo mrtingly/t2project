@@ -44,6 +44,16 @@ function t2PasswordKdfTest(){
  const salt="12345678-1234-1234-1234-123456789abc12345678-1234-1234-1234-123456789abc";
  const record="pbkdf2-sha256:1000:"+salt;
  const hash=t2Pbkdf2_("CorrectHorse9Battery",salt,1000);
+ // Independently published PBKDF2-HMAC-SHA256 vector:
+ // password="password", salt="salt", iterations=1, dkLen=32.
+ // t2Pbkdf2_ enforces >=1000 iterations, so use the internal
+ // HMAC primitive to check the first PBKDF2 block at iteration 1.
+ const key=Utilities.newBlob("password").getBytes();
+ const block=Utilities.newBlob("salt").getBytes().concat([0,0,0,1]);
+ const first=Utilities.computeHmacSha256Signature(block,key).map(v=>v&255);
+ const vector=first.map(v=>("0"+v.toString(16)).slice(-2)).join("");
+ if(vector!=="120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b")
+  throw Error("PBKDF2 known-answer vector failed");
  const ok=t2PasswordVerify_("CorrectHorse9Battery",record,hash)&&
   !t2PasswordVerify_("WrongHorse9Battery",record,hash)&&
   !t2PasswordVerify_("CorrectHorse9Battery","legacy",hash);
