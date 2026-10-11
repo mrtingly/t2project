@@ -11,11 +11,12 @@ function t2Pbkdf2_(password,salt,iterations){
  if(typeof password!=="string"||typeof salt!=="string"||
     !Number.isInteger(iterations)||iterations<1000||iterations>1000000)
   throw Error("Invalid KDF parameters");
- const block=Utilities.newBlob(salt).getBytes().map(v=>v&255).concat([0,0,0,1]);
- let u=Utilities.computeHmacSha256Signature(block,password).map(v=>v&255);
+ const key=Utilities.newBlob(password).getBytes();
+ const block=Utilities.newBlob(salt).getBytes().concat([0,0,0,1]);
+ let u=Utilities.computeHmacSha256Signature(block,key).map(v=>v&255);
  const out=u.slice();
  for(let i=1;i<iterations;i++){
-  u=Utilities.computeHmacSha256Signature(u,password).map(v=>v&255);
+  u=Utilities.computeHmacSha256Signature(u,key).map(v=>v&255);
   t2BytesXor_(out,u);
  }
  return Utilities.base64EncodeWebSafe(out);
