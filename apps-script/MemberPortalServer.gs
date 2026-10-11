@@ -13,6 +13,7 @@ function t2MemberPortalPage_(){
 }
 function t2PortalLogin(username,password){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
+ if(typeof t2MemberLogin!=="function")return {ok:false,error:"MEMBER_AUTH_NOT_CONFIGURED"};
  return t2MemberLogin(username,password);
 }
 function t2PortalMe(token){
