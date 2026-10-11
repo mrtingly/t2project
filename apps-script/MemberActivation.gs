@@ -252,3 +252,21 @@ function t2ActivationRoomSummary(token){
   room_id:room_id,counts:result[room_id]
  }))};
 }
+
+/** One place to run all pure activation policy checks; no Sheets writes. */
+function t2ActivationRegressionSuite(){
+ const tests=[
+  ["approval",t2MemberActivationPolicyTest],
+  ["transition",t2ActivationTransitionTest],
+  ["scope",t2ActivationScopeTest],
+  ["counts",t2ActivationCountsTest],
+  ["history",t2ActivationHistoryFilterTest]
+ ];
+ const results=tests.map(pair=>{
+  try{const outcome=pair[1]();return {name:pair[0],ok:outcome.ok===true}}
+  catch(error){return {name:pair[0],ok:false,error:String(error.message||error)}}
+ });
+ const report={ok:results.every(r=>r.ok),results:results};
+ if(!report.ok)throw Error("Activation regression suite failed: "+JSON.stringify(results));
+ return report;
+}
