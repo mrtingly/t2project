@@ -16,5 +16,7 @@ function t2MemberReleaseSelfTest(){
   try{const r=pair[1]();results.push({name:pair[0],ok:r.ok===true})}
   catch(e){results.push({name:pair[0],ok:false,error:String(e.message||e)})}
  }
- return {ok:results.every(r=>r.ok),results:results};
+ const report={ok:results.every(r=>r.ok),results:results};
+ console.log(JSON.stringify(report));
+ return report;
 }
