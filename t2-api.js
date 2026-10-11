@@ -53,5 +53,24 @@
   function login() {
     return Promise.reject(new Error("Login API is not enabled"));
   }
-  root.T2Api = Object.freeze({ health, transportProbe, authStatus, login });
+  // Read-only capability report. Never attempts login or sends credentials.
+  async function readiness() {
+    const results = {};
+    for (const [name, check] of [["health", health], ["post", transportProbe], ["auth", authStatus]]) {
+      try {
+        const data = await check();
+        results[name] = { ok: name === "health" ? data.probe === "ok"
+          : name === "post" ? data.probe === "post-ok"
+          : data.authEnabled === false && data.loginEnabled === false };
+      } catch (_) {
+        results[name] = { ok: false, error: "UNAVAILABLE" };
+      }
+    }
+    return Object.freeze({
+      results,
+      transportReady: results.health.ok && results.post.ok,
+      loginReady: false
+    });
+  }
+  root.T2Api = Object.freeze({ health, transportProbe, authStatus, login, readiness });
 })(window);
