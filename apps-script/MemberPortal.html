@@ -5,7 +5,7 @@
 <section id="login"><form id="form"><label for="username">ชื่อผู้ใช้</label><input id="username" autocomplete="username" required>
 <label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password" required>
 <button id="submit" type="submit">เข้าสู่ระบบ</button></form></section>
-<section id="account" class="hidden"><h2>ข้อมูลของฉัน</h2><dl id="details"></dl><button id="print" type="button" style="background:#426477">พิมพ์ข้อมูลของฉัน</button><button id="logout" type="button">ออกจากระบบ</button></section>
+<section id="account" class="hidden"><h2>ข้อมูลของฉัน</h2><dl id="details"></dl><h3>รายการสลิปของฉัน</h3><p id="slipStatus">ยังไม่ได้โหลดรายการ</p><div id="slipList"></div><button id="loadSlips" type="button">แสดงรายการสลิป</button><button id="print" type="button" style="background:#426477">พิมพ์ข้อมูลของฉัน</button><button id="logout" type="button">ออกจากระบบ</button></section>
 <p id="message" role="status" aria-live="polite"></p></main>
 <script>
 (function(){
@@ -36,6 +36,20 @@ el("form").addEventListener("submit",event=>{
   token=result.token;
   google.script.run.withSuccessHandler(display).withFailureHandler(failure).t2PortalMe(token);
  }).withFailureHandler(failure).t2PortalLogin(username,password);
+});
+el("loadSlips").addEventListener("click",()=>{
+ if(!token)return;
+ el("slipStatus").textContent="กำลังโหลดรายการ...";
+ google.script.run.withSuccessHandler(result=>{
+  if(!result||!result.ok){el("slipStatus").textContent="ไม่สามารถโหลดรายการได้";return}
+  const list=el("slipList");list.replaceChildren();
+  for(const slip of result.items){
+   const item=document.createElement("p");
+   item.textContent=slip.date+" | "+Number(slip.amount).toLocaleString("th-TH")+" บาท | "+slip.ref;
+   list.append(item);
+  }
+  el("slipStatus").textContent="ทั้งหมด "+result.total+" รายการ (แสดงสูงสุด 20 รายการ)";
+ }).withFailureHandler(()=>{el("slipStatus").textContent="โหลดรายการไม่สำเร็จ"}).t2PortalSlipPage(token,1);
 });
 el("print").addEventListener("click",()=>window.print());
 el("logout").addEventListener("click",()=>{
