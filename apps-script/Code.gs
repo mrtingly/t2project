@@ -719,9 +719,10 @@ function t2ReceiptSummary(token,roomId){
  const room=actor.role==="admin"?String(actor.room_id):requested;
  const rooms=t2Rows_("Rooms");
  if(room&&!rooms.some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
- const members=t2Rows_("Members").filter(m=>String(m.status)==="active"&&(!room||String(m.room_id)===room));
+ const activeMembers=t2Rows_("Members").filter(m=>String(m.status)==="active");
+ const members=activeMembers.filter(m=>!room||String(m.room_id)===room);
  const memberCounts=new Map();
- members.forEach(m=>memberCounts.set(String(m.member_id),(memberCounts.get(String(m.member_id))||0)+1));
+ activeMembers.forEach(m=>memberCounts.set(String(m.member_id),(memberCounts.get(String(m.member_id))||0)+1));
  const allowed=new Set(members.filter(m=>memberCounts.get(String(m.member_id))===1).map(m=>String(m.member_id)+"|"+String(m.room_id)));
  const slips=t2Rows_("Slips").filter(s=>allowed.has(String(s.member_id)+"|"+String(s.room_id))&&String(s.status)!=="deleted"&&(!room||String(s.room_id)===room));
  const summary={ok:true,room_id:room||"all",member_count:members.length,receipt_count:slips.length,pending_count:0,verified_count:0,pending_amount:0,verified_amount:0,other_count:0};
