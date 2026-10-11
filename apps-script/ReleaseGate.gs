@@ -6,8 +6,8 @@ function t2ReleaseGate(){
  const checks=[];
  function add(name,pass,detail){checks.push({name:name,pass:!!pass,detail:String(detail||"")})}
  try{
-  const base=t2V3Preflight();
-  add("database_and_core_sheets",base.ok,base.ok?"Ready":"Database or schema incomplete");
+  const base=t2Preflight();
+  add("database_and_core_sheets",base.databaseConfigured&&base.requiredTables,base.databaseConfigured&&base.requiredTables?"Ready":"Database or schema incomplete");
  }catch(e){add("database_and_core_sheets",false,"Database unavailable")}
  try{
   const auth=t2AuthPreflight();
