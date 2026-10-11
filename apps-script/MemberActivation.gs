@@ -182,3 +182,9 @@ function t2ActivationScopeTest(){
  if(!report.ok)throw Error("Activation scope policy failed");
  return report;
 }
+
+function t2ActivationCounts_(rows){
+ const counts={pending_admin:0,approved:0,claimed:0,rejected:0};
+ for(const r of rows||[]){const status=String(r.status||"");if(Object.prototype.hasOwnProperty.call(counts,status))counts[status]++;}
+ return counts;
+}
