@@ -285,6 +285,8 @@ function t2AuthPreflight(){
 }
 function t2LockKey_(username){return "T2_FAIL_"+Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,username.toLowerCase())).slice(0,32)}
 function login(payload){
+ if(PropertiesService.getScriptProperties().getProperty("T2_LEGACY_LOGIN_ENABLED")!=="true")
+  return {ok:false,message:"ระบบเข้าสู่ระบบจริงยังไม่เปิดใช้งาน"};
  if(!payload||typeof payload!=="object")return {ok:false,message:"ข้อมูลไม่ถูกต้อง"};
  const username=String(payload.username||"").trim(), password=String(payload.password||""), role=String(payload.role||"");
  if(!/^[a-zA-Z0-9._@-]{4,80}$/.test(username)||!["member","admin","owner"].includes(role)||!password||password.length>256)return {ok:false,message:"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"};
