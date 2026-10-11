@@ -741,8 +741,9 @@ function t2ReceiptSummary(token,roomId){
 /** Member dashboard: self-only financial totals, without bank-confirmation assumptions. */
 function t2MemberOverview(token){
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
- if(!member)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  const slips=t2Rows_("Slips").filter(r=>String(r.member_id)===String(member.member_id)&&String(r.room_id)===String(member.room_id)&&String(r.status)!=="deleted");
  let pendingCents=0,verifiedCents=0;
  for(const slip of slips){
