@@ -18,7 +18,9 @@ function t2PortalLogin(username,password){
 function t2PortalMe(token){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
  const slips=t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&
   String(s.room_id)===String(member.room_id)&&String(s.status)!=="deleted");
@@ -37,7 +39,9 @@ function t2PortalLogout(token){
 function t2PortalSlipPage(token,page){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
  const n=Number(page);
  if(!Number.isInteger(n)||n<1||n>100000)return {ok:false,error:"INVALID_PAGE"};
@@ -63,7 +67,9 @@ function t2InstallMemberProfileExtra(){
 function t2PortalProfileExtra(token){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
  const sheet=t2Db_().getSheetByName("MemberProfileExtra");
  if(!sheet)return {ok:true,address:"",map_url:"",setup_required:true};
@@ -73,7 +79,9 @@ function t2PortalProfileExtra(token){
 function t2PortalSaveProfileExtra(token,address,mapUrl){
  if(!t2MemberPortalEnabled_())return {ok:false,error:"PORTAL_DISABLED"};
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  if(!t2CanReadMember_(actor,member))return {ok:false,error:"FORBIDDEN"};
  if(typeof address!=="string"||address.length>1000||typeof mapUrl!=="string"||mapUrl.length>500)return {ok:false,error:"INVALID_INPUT"};
  const url=mapUrl.trim();
@@ -100,7 +108,9 @@ function t2InstallMemberContacts(){
 function t2PortalContactsActor_(token){
  if(!t2MemberPortalEnabled_())throw Error("PORTAL_DISABLED");
  const actor=t2RequireRole_(token,["member"]);
- const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id));
+ const matches=t2Rows_("Members").filter(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_AVAILABLE_OR_AMBIGUOUS"};
+ const member=matches[0];
  if(!t2CanReadMember_(actor,member))throw Error("FORBIDDEN");
  return actor;
 }
