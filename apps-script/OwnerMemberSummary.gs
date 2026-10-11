@@ -8,7 +8,6 @@ function t2OwnerMemberSummary(token,limit){
  const summary=new Map();
  let total_amount=0,total_slips=0;
  let unmatched_slips=0,invalid_amount_slips=0,duplicate_member_ids=0,duplicate_slip_ids=0;
- const seenSlipIds=new Set();
  const slipIdCounts=new Map();
  slips.forEach(s=>{if(String(s.status)!=="deleted"){const id=String(s.slip_id||"").trim();if(id)slipIdCounts.set(id,(slipIdCounts.get(id)||0)+1);}});
  const duplicateIds=new Set();
@@ -25,7 +24,6 @@ function t2OwnerMemberSummary(token,limit){
   if(String(s.status)==="deleted")return;
   const slipId=String(s.slip_id||"").trim();
   if(slipId&&(slipIdCounts.get(slipId)||0)>1){duplicate_slip_ids++;return;}
-  if(slipId)seenSlipIds.add(slipId);
   const entry=summary.get(String(s.member_id));
   if(!entry||duplicateIds.has(String(s.member_id))||entry.room_id!==String(s.room_id)){unmatched_slips++;return;}
   const rawAmount=String(s.amount==null?"":s.amount).trim();
