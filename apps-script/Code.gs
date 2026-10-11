@@ -628,6 +628,34 @@ function t2ListSlips(token,memberId,limit){
  slips.sort((a,b)=>new Date(b.transfer_at).getTime()-new Date(a.transfer_at).getTime());
  return {ok:true,member:{member_id:id,full_name:String(member.full_name),room_id:String(member.room_id)},total:slips.length,slips:slips.slice(0,max).map(s=>({slip_id:String(s.slip_id),transfer_at:new Date(s.transfer_at).toISOString(),amount:Number(s.amount),reference_last6:String(s.reference_last6),sender:String(s.sender),receiver:String(s.receiver),status:String(s.status)}))};
 }
+/** Room-scoped financial summary. Pending receipts are not confirmed bank payments. */
+function t2ReceiptSummary(token,roomId){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const requested=String(roomId||"").trim();
+ if(actor.role==="admin"&&requested&&requested!==String(actor.room_id))return {ok:false,error:"ROOM_NOT_ACCESSIBLE"};
+ const room=actor.role==="admin"?String(actor.room_id):requested;
+ const rooms=t2Rows_("Rooms");
+ if(room&&!rooms.some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
+ const members=t2Rows_("Members").filter(m=>String(m.status)==="active"&&(!room||String(m.room_id)===room));
+ const allowed=new Set(members.map(m=>String(m.member_id)));
+ const slips=t2Rows_("Slips").filter(s=>allowed.has(String(s.member_id))&&String(s.status)!=="deleted"&&(!room||String(s.room_id)===room));
+ const summary={ok:true,room_id:room||"all",member_count:members.length,receipt_count:slips.length,pending_count:0,verified_count:0,pending_amount:0,verified_amount:0,other_count:0};
+ for(const slip of slips){
+  const cents=Math.round(Number(slip.amount)*100);
+  if(!Number.isSafeInteger(cents)||cents<0)continue;
+  const status=String(slip.status);
+  if(status==="pending_verification"){
+   summary.pending_count++;
+   summary.pending_amount+=cents;
+  }else if(status==="verified"){
+   summary.verified_count++;
+   summary.verified_amount+=cents;
+  }else summary.other_count++;
+ }
+ summary.pending_amount=summary.pending_amount/100;
+ summary.verified_amount=summary.verified_amount/100;
+ return summary;
+}
 function t2MemberSlips(token){
  const actor=t2RequireRole_(token,["member"]);return {ok:true,slips:t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&String(s.status)!=="deleted").slice(-200).map(s=>({transfer_at:String(s.transfer_at),amount:Number(s.amount),reference_last6:String(s.reference_last6),status:String(s.status)}))};
 }
