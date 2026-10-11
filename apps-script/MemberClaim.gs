@@ -25,6 +25,8 @@ function t2ClaimMemberAccount(invite,username,password){
   const users=t2Rows_("Users");
   const policy=t2MemberAccountPolicy_(normalized,password,users,member,activation);
   if(!policy.ok)return policy;
+  if(!/^M[A-F0-9]{16}$/.test(String(member.member_id))||!String(member.room_id||""))
+   return {ok:false,error:"INVALID_MEMBER_RECORD"};
   const credential=t2PasswordCreate_(password);
   const userId=Utilities.getUuid();
   // Claim marker is set before account creation; retry is blocked if an append fails.
