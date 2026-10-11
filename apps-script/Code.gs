@@ -447,21 +447,21 @@ function t2Rooms(token){
 function t2CreateMember(token,payload){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const p=payload||{};
- const name=String(p.full_name||"").trim().replace(/\\s+/g," ");
+ const name=String(p.full_name||"").trim().replace(/\s+/g," ");
  const id=String(p.id_number||"").trim();
  const phone=String(p.phone||"").trim();
  const email=String(p.email||"").trim().toLowerCase();
  const room=actor.role==="admin"?String(actor.room_id||""):String(p.room_id||"");
- if(name.length<3||name.length>160||/[<>\\x00-\\x1f]/.test(name))return {ok:false,error:"INVALID_NAME"};
- if(!/^\\d{13}$/.test(id))return {ok:false,error:"INVALID_ID_NUMBER"};
- if(phone&&!/^0\\d{8,9}$/.test(phone))return {ok:false,error:"INVALID_PHONE"};
- if(email&&(email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)))return {ok:false,error:"INVALID_EMAIL"};
+ if(name.length<3||name.length>160||/[<>\x00-\x1f]/.test(name))return {ok:false,error:"INVALID_NAME"};
+ if(!/^\d{13}$/.test(id))return {ok:false,error:"INVALID_ID_NUMBER"};
+ if(phone&&!/^0\d{8,9}$/.test(phone))return {ok:false,error:"INVALID_PHONE"};
+ if(email&&(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return {ok:false,error:"INVALID_EMAIL"};
  if(!room||!t2Rows_("Rooms").some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
  const lock=LockService.getScriptLock();
  if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
  try{
   const rows=t2Rows_("Members");
-  const normalize=n=>String(n||"").trim().replace(/^(นาย|นางสาว|นาง)\\s*/,"").replace(/\\s+/g," ").toLocaleLowerCase("th");
+  const normalize=n=>String(n||"").trim().replace(/^(นาย|นางสาว|นาง)\s*/,"").replace(/\s+/g," ").toLocaleLowerCase("th");
   if(rows.some(m=>String(m.id_number)===id||normalize(m.full_name)===normalize(name)))return {ok:false,error:"MEMBER_EXISTS"};
   const memberId="M"+Utilities.getUuid().replace(/-/g,"").slice(0,16).toUpperCase();
   t2Sheet_("Members").appendRow([memberId,name,id,room,phone,email,"active",new Date()]);
@@ -579,6 +579,41 @@ function t2SaveReceipt(token,p){
   }catch(e){file.setTrashed(true);throw e}
   t2Audit_("RECEIPT_CREATE",actor.user_id,id);
   return {ok:true,slip_id:id,message:"บันทึกใบเสร็จแล้ว รอการยืนยันกับธนาคาร"};
+ }finally{lock.releaseLock()}
+}
+/** Manual receipt metadata entry; no file uploads or public routes are enabled. */
+function t2CreateSlip(token,payload){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const p=payload||{};
+ const memberId=String(p.member_id||"").trim();
+ const ref=String(p.reference_last6||"").trim();
+ const sender=String(p.sender||"").trim();
+ const receiver=String(p.receiver||"").trim();
+ const note=String(p.note||"").trim();
+ const amount=Number(p.amount);
+ const dateText=String(p.transfer_at||"").trim();
+ if(!/^[A-Za-z0-9-]{8,40}$/.test(memberId))return {ok:false,error:"INVALID_MEMBER"};
+ if(!/^[0-9]{6}$/.test(ref))return {ok:false,error:"INVALID_REFERENCE"};
+ if(!Number.isFinite(amount)||amount<=0||amount>1000000000||Math.round(amount*100)!==amount*100)return {ok:false,error:"INVALID_AMOUNT"};
+ if(!sender||sender.length>160||!receiver||receiver.length>160||note.length>1000)return {ok:false,error:"INVALID_DETAILS"};
+ if([sender,receiver,note].some(x=>/^[=+\-@\t\r]/.test(x)))return {ok:false,error:"INVALID_SHEET_TEXT"};
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(dateText))return {ok:false,error:"INVALID_TRANSFER_DATE"};
+ const transferDate=new Date(dateText+"+07:00");
+ if(!Number.isFinite(transferDate.getTime()))return {ok:false,error:"INVALID_TRANSFER_DATE"};
+ const lock=LockService.getScriptLock();
+ if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
+ try{
+  const member=t2Rows_("Members").find(m=>String(m.member_id)===memberId&&String(m.status)==="active");
+  if(!member||!t2CanReadMember_(actor,member))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
+  const dup=t2Rows_("Slips").some(r=>String(r.status)!=="deleted"&&
+   String(r.reference_last6)===ref&&new Date(r.transfer_at).getTime()===transferDate.getTime()&&
+   String(r.sender).trim().toLocaleLowerCase("th")===sender.toLocaleLowerCase("th")&&
+   String(r.receiver).trim().toLocaleLowerCase("th")===receiver.toLocaleLowerCase("th"));
+  if(dup)return {ok:false,error:"DUPLICATE_SLIP"};
+  const slipId="S"+Utilities.getUuid().replace(/-/g,"").slice(0,16).toUpperCase();
+  t2Sheet_("Slips").appendRow([slipId,memberId,String(member.room_id),transferDate,amount,ref,sender,receiver,"pending_verification","",actor.user_id,new Date()]);
+  t2Audit_("SLIP_CREATED",actor.user_id,slipId);
+  return {ok:true,slip:{slip_id:slipId,member_id:memberId,amount:amount,status:"pending_verification"}};
  }finally{lock.releaseLock()}
 }
 function t2MemberSlips(token){
