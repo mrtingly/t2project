@@ -53,7 +53,7 @@ function fetchSlips(){
    item.textContent=slip.date+" | "+Number(slip.amount).toLocaleString("th-TH")+" บาท | "+slip.ref;
    list.append(item);
   }
-  el("slipStatus").textContent="ทั้งหมด "+result.total+" รายการ";
+  el("slipStatus").textContent=result.total===0?"ยังไม่พบสลิปที่เชื่อมกับบัญชีนี้":"ทั้งหมด "+result.total+" รายการ";
   el("nextSlips").classList.toggle("hidden",requestedPage*20>=result.total);
   el("nextSlips").disabled=false;
  }).withFailureHandler(()=>{if(request!==slipRequest||currentToken!==token)return;el("slipStatus").textContent="โหลดรายการไม่สำเร็จ";el("nextSlips").disabled=false;slipPage=Math.max(1,requestedPage-1)}).t2PortalSlipPage(token,requestedPage);
