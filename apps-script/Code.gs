@@ -350,9 +350,9 @@ function t2Actor_(token){
  const activeSessions=sessions.filter(s=>s.token_hash===hash&&t2SessionActive_(s,Date.now()));
  if(activeSessions.length!==1)throw Error("Session expired or ambiguous");
  const session=activeSessions[0];
- const actor=t2Rows_("Users").find(u=>u.user_id===session.user_id&&u.status==="active");
- if(!actor)throw Error("Unauthorized");
- return actor;
+ const actors=t2Rows_("Users").filter(u=>u.user_id===session.user_id&&u.status==="active");
+ if(actors.length!==1)throw Error("Unauthorized or ambiguous account");
+ return actors[0];
 }
 function dashboard(token){
  const actor=t2RequireRole_(token,["owner","admin","member"]);
