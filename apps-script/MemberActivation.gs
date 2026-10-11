@@ -230,3 +230,25 @@ function t2ActivationHistoryFilterTest(){
  if(!ok)throw Error("Activation history status policy failed");
  return {ok:true,allowed_statuses:statuses};
 }
+
+/** Summary by room for Owner; Admin is restricted to their own room. */
+function t2ActivationRoomSummary(token){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const members=t2Rows_("Members").filter(m=>t2ActivationCanManage_(actor,m));
+ const roomOf=new Map(members.map(m=>[String(m.member_id),String(m.room_id)]));
+ const result={};
+ for(const m of members){
+  const room=String(m.room_id);
+  if(!Object.prototype.hasOwnProperty.call(result,room))
+   result[room]={members:0,pending_admin:0,approved:0,claimed:0,rejected:0};
+  result[room].members++;
+ }
+ for(const r of t2ActivationRows_()){
+  const room=roomOf.get(String(r.member_id));
+  if(room&&Object.prototype.hasOwnProperty.call(result[room],String(r.status)))
+   result[room][String(r.status)]++;
+ }
+ return {ok:true,rooms:Object.keys(result).sort().map(room_id=>({
+  room_id:room_id,counts:result[room_id]
+ }))};
+}
