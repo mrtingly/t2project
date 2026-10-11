@@ -643,7 +643,9 @@ function t2ReceiptReport(token,filters){
  if(from&&to&&from>to)return {ok:false,error:"INVALID_RANGE"};
  if(room&&!t2Rows_("Rooms").some(r=>String(r.room_id)===room))return {ok:false,error:"INVALID_ROOM"};
  const members=t2Rows_("Members").filter(m=>t2CanReadMember_(actor,m)&&(!room||String(m.room_id)===room));
- const names=new Map(members.map(m=>[String(m.member_id),String(m.full_name)]));
+ const counts=new Map();
+ members.forEach(m=>counts.set(String(m.member_id),(counts.get(String(m.member_id))||0)+1));
+ const names=new Map(members.filter(m=>counts.get(String(m.member_id))===1).map(m=>[String(m.member_id),String(m.full_name)]));
  const memberFilter=String(f.member_id||"").trim();
  if(memberFilter&&!names.has(memberFilter))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
  const slips=t2Rows_("Slips").filter(s=>{
