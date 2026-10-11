@@ -5,12 +5,15 @@ function t2InstallMemberModules(){
  results.push(t2InstallMemberContacts());
  results.push(t2InstallMemberPhotos());
  results.push(t2InstallMemberBankRequests());
+ const db=t2Db_();
+ if(!db.getSheetByName("MemberBankAudit"))db.insertSheet("MemberBankAudit").appendRow(["reviewed_at","request_id","member_id","decision","reviewer_id"]);
+ results.push("MemberBankAudit ready");
  return {ok:true,modules:results};
 }
 /** Read-only configuration check. Does not expose private folder identifiers. */
 function t2MemberModulesStatus(){
  const db=t2Db_();
- const names=["MemberProfileExtra","MemberEmergencyContacts","MemberBeneficiaries","MemberPhotos","MemberBankRequests"];
+ const names=["MemberProfileExtra","MemberEmergencyContacts","MemberBeneficiaries","MemberPhotos","MemberBankRequests","MemberBankAudit"];
  const sheets=names.map(name=>({name:name,ready:!!db.getSheetByName(name)}));
  const photoFolderConfigured=!!PropertiesService.getScriptProperties().getProperty("T2_MEMBER_PHOTO_FOLDER_ID");
  return {ok:true,sheets:sheets,photo_folder_configured:photoFolderConfigured};
