@@ -89,6 +89,40 @@ function t2Preflight(){
  }catch(e){result.error="Configuration or permissions incomplete"}
  return result;
 }
+/**
+ * Run from the Apps Script editor only. Read-only role/security preflight.
+ * No personal details, passwords, or session tokens are returned.
+ */
+function t2AuthPreflight(){
+ const result={ok:false,usersSchema:false,sessionsSchema:false,roomsSchema:false,
+  ownerCount:0,activeAdminCount:0,unassignedAdminCount:0,invalidRoleCount:0};
+ try{
+  const expected={
+   Users:["user_id","username","role","room_id","member_id","salt","password_hash","status","created_at"],
+   Sessions:["token_hash","user_id","expires_at","revoked_at"],
+   Rooms:["room_id","room_name","status"]
+  };
+  const db=t2Db_();
+  for(const name of Object.keys(expected)){
+   const sh=db.getSheetByName(name);
+   const actual=sh&&sh.getLastRow()>0?sh.getRange(1,1,1,expected[name].length).getValues()[0].map(String):[];
+   result[name.toLowerCase()+"Schema"]=expected[name].every((h,i)=>actual[i]===h);
+  }
+  if(!result.usersSchema||!result.sessionsSchema||!result.roomsSchema){result.error="Schema mismatch";return result}
+  const rooms=new Set(t2Rows_("Rooms").filter(r=>r.status==="active").map(r=>String(r.room_id)));
+  for(const u of t2Rows_("Users")){
+   if(!["owner","admin","member"].includes(String(u.role)))result.invalidRoleCount++;
+   if(u.status!=="active")continue;
+   if(u.role==="owner")result.ownerCount++;
+   if(u.role==="admin"){
+    result.activeAdminCount++;
+    if(!rooms.has(String(u.room_id)))result.unassignedAdminCount++;
+   }
+  }
+  result.ok=result.ownerCount===1&&result.invalidRoleCount===0&&result.unassignedAdminCount===0;
+  return result;
+ }catch(_){result.error="Configuration or permissions incomplete";return result}
+}
 function t2LockKey_(username){return "T2_FAIL_"+Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,username.toLowerCase())).slice(0,32)}
 function login(payload){
  if(!payload||typeof payload!=="object")return {ok:false,message:"ข้อมูลไม่ถูกต้อง"};
