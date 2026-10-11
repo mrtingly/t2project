@@ -4,8 +4,11 @@
 <script src="./t2-config.js"></script></head>
 <body><h1>ทดสอบการเชื่อมต่อ GitHub → Apps Script</h1>
 <p>ทดสอบเฉพาะสถานะ API สาธารณะ ไม่ส่งรหัสผ่าน โทเค็น หรือข้อมูลสมาชิก และยังไม่ใช่การทดสอบ Login</p>
-<button id="run">ทดสอบการเชื่อมต่อ</button><pre id="result">ยังไม่ได้ทดสอบ</pre>
+<button id="run">ทดสอบการเชื่อมต่อ</button><p id="endpoint" style="overflow-wrap:anywhere"></p><pre id="result">ยังไม่ได้ทดสอบ</pre>
 <script>
+const endpoint=document.getElementById('endpoint');
+const configured=String(window.T2_APP_URL||'');
+endpoint.textContent='ปลายทางที่กำหนด: '+(configured||'ยังไม่ได้ตั้งค่า');
 document.getElementById('run').onclick=async()=>{
  const out=document.getElementById('result');out.textContent='กำลังทดสอบ...';
  const url=String(window.T2_APP_URL||'');
@@ -15,8 +18,8 @@ document.getElementById('run').onclick=async()=>{
   const response=await fetch(probe,{method:'GET',redirect:'follow',credentials:'omit',cache:'no-store'});
   const body=await response.text();
   let data;try{data=JSON.parse(body)}catch(_){throw Error('ไม่ใช่ JSON API (อาจยังไม่ได้ Deploy โค้ด probe)')}
-  if(!response.ok||data.service!=='t2project'||data.probe!=='ok'||data.mode!=='public-health-only')throw Error('API response ไม่ตรงที่คาด');
-  out.textContent='ผ่าน: GitHub อ่าน JSON สถานะ API ได้ (ยังไม่ใช่การทดสอบ Login/POST)';
- }catch(err){out.textContent='ยังไม่ผ่าน: '+err.message+'\nสาเหตุที่เป็นไปได้: CORS, redirect, deployment เก่า หรือการเข้าถึง URL\nอย่าแก้ด้วยการส่งรหัสผ่านใน URL';}
+  if(!response.ok||data.service!=='t2project'||data.probe!=='ok'||data.mode!=='public-health-only'||data.version!==2)throw Error('API response ไม่ตรงที่คาด');
+  out.textContent='ผ่าน: API เวอร์ชัน 2 ตอบกลับตรงตามสัญญา (ยังไม่ใช่การทดสอบ Login/POST)';
+ }catch(err){out.textContent='ยังไม่ผ่าน: '+err.message+'\nสาเหตุที่เป็นไปได้: CORS, redirect, deployment เก่า, สิทธิ์เข้าถึง URL หรือยังไม่เผยแพร่เวอร์ชัน 2\nอย่าแก้ด้วยการส่งรหัสผ่านใน URL';}
 };
 </script></body></html>
