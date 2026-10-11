@@ -43,7 +43,7 @@ function fetchSlips(){
  el("slipStatus").textContent="กำลังโหลดรายการ...";
  google.script.run.withSuccessHandler(result=>{
   if(request!==slipRequest||currentToken!==token)return;
-  if(!result||!result.ok){el("slipStatus").textContent="ไม่สามารถโหลดรายการได้";return}
+  if(!result||!result.ok){el("slipStatus").textContent="ไม่สามารถโหลดรายการได้";el("nextSlips").disabled=false;return}
   const list=el("slipList");if(slipPage===1)list.replaceChildren();
   for(const slip of result.items){
    const item=document.createElement("p");
