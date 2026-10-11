@@ -31,9 +31,9 @@ function t2ClaimMemberAccount(invite,username,password){
   const userId=Utilities.getUuid();
   // Claim marker is set before account creation; retry is blocked if an append fails.
   // Operator reconciliation is required for partial write failures.
-  sh.getRange(index+1,4).setValue(new Date());
   t2Sheet_("Users").appendRow([userId,normalized,"member",String(member.room_id),
    String(member.member_id),credential.salt,credential.password_hash,"active",new Date()]);
+  sh.getRange(index+1,4).setValue(new Date());
   const activationSheet=t2Sheet_("MemberActivations");
   const activationData=activationSheet.getDataRange().getValues();
   for(let i=1;i<activationData.length;i++){
