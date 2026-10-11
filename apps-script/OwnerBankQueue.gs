@@ -1,6 +1,7 @@
 /** Owner bank request queue: read-only. */
 function t2OwnerBankQueue(token){
- t2RequireRole_(token,["owner"]);
+ const actor=t2RequireRole_(token,["owner"]);
+ if(!actor)return {ok:false,error:"FORBIDDEN"};
  const sheet=t2Db_().getSheetByName("MemberBankRequests");
  if(!sheet)return {ok:false,error:"BANK_SETUP_REQUIRED"};
  const rows=t2Rows_("MemberBankRequests").filter(r=>String(r.status)==="pending");
