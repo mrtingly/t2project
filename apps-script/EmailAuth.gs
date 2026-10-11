@@ -41,7 +41,8 @@ function t2EmailAuthRequest_(email) {
     (String(u.role) === "owner" || String(u.role) === "admin")
   );
   if (!user) return generic;
-  const code = String(Math.floor(Math.random() * 1000000)).padStart(6,"0");
+  const randomHex = Utilities.getUuid().replace(/-/g,"").slice(0,12);
+  const code = String(parseInt(randomHex,16) % 1000000).padStart(6,"0");
   const nonce = Utilities.getUuid();
   const digest = t2EmailAuthDigest_(nonce + ":" + code);
   const key = t2EmailAuthChallengeKey_(address);
