@@ -202,3 +202,22 @@ function t2ActivationCountsTest(){
  if(!ok)throw Error("Activation counts failed");
  return {ok:ok,counts:result};
 }
+
+/** Admin-only activation history, filtered before any response is built. */
+function t2AdminActivationHistory(token,status,limit){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const filter=String(status||"");
+ if(filter&&!["pending_admin","approved","claimed","rejected"].includes(filter))
+  return {ok:false,error:"INVALID_STATUS"};
+ const max=Math.min(100,Math.max(1,Math.floor(Number(limit)||25)));
+ const members=new Map(t2Rows_("Members").filter(m=>t2ActivationCanManage_(actor,m))
+  .map(m=>[String(m.member_id),m]));
+ const rows=t2ActivationRows_().filter(r=>members.has(String(r.member_id))&&
+  (!filter||String(r.status)===filter));
+ rows.sort((a,b)=>new Date(b.requested_at).getTime()-new Date(a.requested_at).getTime());
+ return {ok:true,items:rows.slice(0,max).map(r=>({
+  request_id:String(r.request_id),member_id:String(r.member_id),
+  full_name:String(members.get(String(r.member_id)).full_name),
+  status:String(r.status),room_id:String(members.get(String(r.member_id)).room_id)
+ }))};
+}
