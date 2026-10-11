@@ -347,8 +347,9 @@ function t2Actor_(token){
  if(!t2ValidSessionToken_(token))throw Error("Unauthorized");
  const hash=t2SessionHash_(token);
  const sessions=t2Rows_("Sessions");
- const session=sessions.find(s=>s.token_hash===hash&&t2SessionActive_(s,Date.now()));
- if(!session)throw Error("Session expired");
+ const activeSessions=sessions.filter(s=>s.token_hash===hash&&t2SessionActive_(s,Date.now()));
+ if(activeSessions.length!==1)throw Error("Session expired or ambiguous");
+ const session=activeSessions[0];
  const actor=t2Rows_("Users").find(u=>u.user_id===session.user_id&&u.status==="active");
  if(!actor)throw Error("Unauthorized");
  return actor;
