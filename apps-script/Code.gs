@@ -36,6 +36,46 @@ function doPost(e){
 }
 
 /**
+ * Auth API router foundation. Deliberately disabled for all public requests.
+ * The server ignores caller-provided flags: only Script Properties can enable it.
+ * Do not enable until credential hashing, abuse controls, and deployment security
+ * have received independent review.
+ */
+function t2AuthApiDispatch_(action,payload){
+ if(PropertiesService.getScriptProperties().getProperty("T2_AUTH_API_ENABLED")!=="true")
+  return {ok:false,error:"AUTH_API_DISABLED"};
+ if(!payload||typeof payload!=="object"||Array.isArray(payload))
+  return {ok:false,error:"INVALID_REQUEST"};
+ if(action==="dashboard"){
+  if(typeof payload.token!=="string"||payload.token.length<50||payload.token.length>200)
+   return {ok:false,error:"UNAUTHORIZED"};
+  try{return dashboard(payload.token)}catch(_){return {ok:false,error:"UNAUTHORIZED"}}
+ }
+ if(action==="logout"){
+  if(typeof payload.token!=="string"||payload.token.length<50||payload.token.length>200)
+   return {ok:false,error:"UNAUTHORIZED"};
+  return logout(payload.token);
+ }
+ return {ok:false,error:"ACTION_NOT_AVAILABLE"};
+}
+/** Editor-only test. No database access, credentials, or sessions. */
+function t2AuthApiGateTest(){
+ const props=PropertiesService.getScriptProperties();
+ if(props.getProperty("T2_AUTH_API_ENABLED")==="true")
+  throw Error("Disable T2_AUTH_API_ENABLED before running gate test");
+ const checks=[
+  ["dashboard_blocked",t2AuthApiDispatch_("dashboard",{token:"x".repeat(64)}).error==="AUTH_API_DISABLED"],
+  ["logout_blocked",t2AuthApiDispatch_("logout",{token:"x".repeat(64)}).error==="AUTH_API_DISABLED"],
+  ["login_unavailable",t2AuthApiDispatch_("login",{username:"test"}).error==="AUTH_API_DISABLED"],
+  ["public_post_blocked",JSON.parse(doPost({parameter:{action:"dashboard"},postData:{contents:"{}",type:"text/plain"}}).getContent()).error==="API_POST_NOT_ENABLED"]
+ ];
+ const report={ok:checks.every(c=>c[1]),results:checks.map(c=>({test:c[0],passed:c[1]}))};
+ console.log(JSON.stringify(report));
+ if(!report.ok)throw Error("Auth API gate test failed");
+ return report;
+}
+
+/**
  * Safe public API security smoke test. Run from the Apps Script editor.
  * Does not touch the database, create sessions, or accept credentials.
  */
