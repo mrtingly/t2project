@@ -34,9 +34,24 @@
     });
     return parseResponse(response);
   }
+  async function authStatus() {
+    const response = await fetch(endpoint() + "?action=auth_status", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: "",
+      credentials: "omit",
+      cache: "no-store",
+      redirect: "follow"
+    });
+    const data = await parseResponse(response);
+    if (data.authEnabled !== false || data.loginEnabled !== false || data.mode !== "auth-closed") {
+      throw new Error("Authentication status is unknown or unsupported");
+    }
+    return Object.freeze({ authEnabled: false, loginEnabled: false, mode: "auth-closed" });
+  }
   // Deliberately refuses login data until the authentication protocol has been reviewed.
   function login() {
     return Promise.reject(new Error("Login API is not enabled"));
   }
-  root.T2Api = Object.freeze({ health, transportProbe, login });
+  root.T2Api = Object.freeze({ health, transportProbe, authStatus, login });
 })(window);
