@@ -367,7 +367,6 @@ function logout(token){
   for(let i=1;i<vals.length;i++){
    if(vals[i][0]===hash&&!vals[i][3]){
     sh.getRange(i+1,4).setValue(new Date());
-    break;
    }
   }
   return {ok:true};
