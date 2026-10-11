@@ -10,7 +10,11 @@
  * Do not use a real national ID as a login credential.
  */
 const T2_={users:"Users",audit:"AuditLog",sessions:"Sessions"};
-function doGet(){
+function doGet(e){
+ // Public transport probe: no credentials, database access, or user data.
+ if(e&&e.parameter&&e.parameter.t2_probe==="1"){
+  return ContentService.createTextOutput(JSON.stringify({service:"t2project",probe:"ok",version:1})).setMimeType(ContentService.MimeType.JSON);
+ }
  return HtmlService.createHtmlOutputFromFile("index")
   .setTitle("T2PROJECT — เข้าสู่ระบบ")
   .addMetaTag("viewport","width=device-width, initial-scale=1");
