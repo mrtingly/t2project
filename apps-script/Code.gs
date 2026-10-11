@@ -285,28 +285,12 @@ function t2AuthPreflight(){
 }
 function t2LockKey_(username){return "T2_FAIL_"+Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,username.toLowerCase())).slice(0,32)}
 function login(payload){
- if(PropertiesService.getScriptProperties().getProperty("T2_LEGACY_LOGIN_ENABLED")!=="true")
-  return {ok:false,message:"ระบบเข้าสู่ระบบจริงยังไม่เปิดใช้งาน"};
- if(!payload||typeof payload!=="object")return {ok:false,message:"ข้อมูลไม่ถูกต้อง"};
- const username=String(payload.username||"").trim(), password=String(payload.password||""), role=String(payload.role||"");
- if(!/^[a-zA-Z0-9._@-]{4,80}$/.test(username)||!["member","admin","owner"].includes(role)||!password||password.length>256)return {ok:false,message:"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"};
- const cache=CacheService.getScriptCache(),key=t2LockKey_(username);
- const failures=Number(cache.get(key)||0);
- if(failures>=5)return {ok:false,message:"ลองเข้าสู่ระบบมากเกินไป กรุณารอ 15 นาที"};
- const user=t2Rows_("Users").find(u=>String(u.username).toLowerCase()===username.toLowerCase());
- const matched=user&&String(user.status)==="active"&&String(user.role)===role&&t2Hash_(password,String(user.salt))===String(user.password_hash);
- if(!matched){cache.put(key,String(failures+1),900);return {ok:false,message:"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"}}
- cache.remove(key);
- const token=Utilities.getUuid()+Utilities.getUuid(),tokenHash=t2SessionHash_(token);
- const expires=new Date(Date.now()+30*60*1000);
- t2Sheet_("Sessions").appendRow([tokenHash,user.user_id,expires,""]);
- t2Audit_("LOGIN",user.user_id,role);
- return {ok:true,token,role,displayName:role==="owner"?"Owner":role==="admin"?"Admin":"Member",expiresAt:expires.toISOString(),dashboard:{ok:true,role,room_id:role==="admin"?user.room_id:null,member_id:role==="member"?user.member_id:null}};
+ // Deprecated login entry point. Never process passwords or create sessions.
+ // A separately reviewed identity provider must replace this function.
+ return {ok:false,message:"ระบบเข้าสู่ระบบจริงยังไม่เปิดใช้งาน"};
 }
-/** No-write regression check for the legacy authentication safety gate. */
+/** No-write regression check for disabled legacy authentication. */
 function t2LegacyLoginGateTest(){
- const enabled=PropertiesService.getScriptProperties().getProperty("T2_LEGACY_LOGIN_ENABLED");
- if(enabled==="true")throw Error("Legacy login must remain disabled");
  const result=login({username:"testuser",password:"dummy",role:"owner"});
  const report={ok:result.ok===false&&result.message==="ระบบเข้าสู่ระบบจริงยังไม่เปิดใช้งาน",legacyLoginEnabled:false};
  console.log(JSON.stringify(report));
