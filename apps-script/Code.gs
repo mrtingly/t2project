@@ -1,8 +1,8 @@
 /**
  * T2PROJECT — fresh-start Apps Script server.
- * Deploy as HtmlService; NEVER publish user data or credentials in GitHub.
- * Requires a NEW private Google Spreadsheet ID in Script Properties:
- * T2_DB_ID = <new spreadsheet id>
+ * Backend API only. GitHub Pages owns all HTML/UI.
+ * Never publish user data or credentials in GitHub.
+ * T2_DB_ID must point to the existing approved private spreadsheet.
  *
  * Bootstrap: set T2_BOOTSTRAP_OWNER_USER and T2_BOOTSTRAP_OWNER_PASSWORD
  * in Script Properties temporarily, run t2Install() from Apps Script editor,
@@ -10,14 +10,22 @@
  * Do not use a real national ID as a login credential.
  */
 const T2_={users:"Users",audit:"AuditLog",sessions:"Sessions"};
-function doGet(e){
- // Backend/API only. Never serve HTML or expose personal data.
- if(e && e.parameter && e.parameter.t2_probe === "1"){
-  return ContentService.createTextOutput(JSON.stringify({service:"t2project",probe:"ok",version:2}))
-   .setMimeType(ContentService.MimeType.JSON);
- }
- return ContentService.createTextOutput(JSON.stringify({ok:false,error:"API endpoint: unsupported request"}))
+function t2Json_(value){
+ return ContentService.createTextOutput(JSON.stringify(value))
   .setMimeType(ContentService.MimeType.JSON);
+}
+function doGet(e){
+ // Public diagnostics only. Never expose credentials, users, or database contents.
+ const p=(e&&e.parameter)||{};
+ if(p.t2_probe==="1" || p.action==="health"){
+  return t2Json_({service:"t2project",probe:"ok",version:2,mode:"public-health-only"});
+ }
+ return t2Json_({ok:false,error:"UNSUPPORTED_PUBLIC_ENDPOINT"});
+}
+function doPost(e){
+ // Fail closed: authentication and authorized POST routing must be reviewed
+ // before accepting any member data, passwords, tokens, or writes.
+ return t2Json_({ok:false,error:"API_POST_NOT_ENABLED"});
 }
 
 function t2Db_(){
