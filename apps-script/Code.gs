@@ -702,6 +702,21 @@ function t2ReceiptSummary(token,roomId){
  summary.verified_amount=summary.verified_amount/100;
  return summary;
 }
+/** Member dashboard: self-only financial totals, without bank-confirmation assumptions. */
+function t2MemberOverview(token){
+ const actor=t2RequireRole_(token,["member"]);
+ const member=t2Rows_("Members").find(m=>String(m.member_id)===String(actor.member_id)&&String(m.status)==="active");
+ if(!member)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
+ const slips=t2Rows_("Slips").filter(r=>String(r.member_id)===String(member.member_id)&&String(r.status)!=="deleted");
+ let pendingCents=0,verifiedCents=0;
+ for(const slip of slips){
+  const cents=Math.round(Number(slip.amount)*100);
+  if(!Number.isSafeInteger(cents)||cents<0)continue;
+  if(String(slip.status)==="verified")verifiedCents+=cents;
+  if(String(slip.status)==="pending_verification")pendingCents+=cents;
+ }
+ return {ok:true,profile:{member_id:String(member.member_id),full_name:String(member.full_name),room_id:String(member.room_id)},receipts:{count:slips.length,pending_amount:pendingCents/100,verified_amount:verifiedCents/100},returns:{status:"not_calculated"}};
+}
 function t2MemberSlips(token){
  const actor=t2RequireRole_(token,["member"]);return {ok:true,slips:t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&String(s.status)!=="deleted").slice(-200).map(s=>({transfer_at:String(s.transfer_at),amount:Number(s.amount),reference_last6:String(s.reference_last6),status:String(s.status)}))};
 }
