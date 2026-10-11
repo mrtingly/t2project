@@ -99,8 +99,8 @@ function t2ActivationCanManage_(actor,member){
  */
 function t2AdminStartMemberActivation(token,memberId){
  const actor=t2RequireRole_(token,["owner","admin"]);
- const member=t2ActivationMember_(memberId);
  if(!/^M[A-F0-9]{16}$/.test(String(memberId||"")))return {ok:false,error:"INVALID_MEMBER_ID"};
+ const member=t2ActivationMember_(memberId);
  if(!t2ActivationCanManage_(actor,member))return {ok:false,error:"NOT_ACCESSIBLE"};
  const lock=LockService.getScriptLock();if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
  try{
