@@ -627,8 +627,10 @@ function t2ListSlips(token,memberId,limit){
  const id=String(memberId||"").trim();
  const max=Math.max(1,Math.min(200,Math.floor(Number(limit)||50)));
  const members=t2Rows_("Members");
- const member=members.find(m=>String(m.member_id)===id&&t2CanReadMember_(actor,m));
- if(!member)return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
+ const matches=members.filter(m=>String(m.member_id)===id&&String(m.status)==="active");
+ if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_ACCESSIBLE_OR_AMBIGUOUS"};
+ const member=matches[0];
+ if(!t2CanReadMember_(actor,member))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
  const slips=t2Rows_("Slips").filter(s=>String(s.member_id)===id&&String(s.room_id)===String(member.room_id)&&String(s.status)!=="deleted");
  slips.sort((a,b)=>new Date(b.transfer_at).getTime()-new Date(a.transfer_at).getTime());
  return {ok:true,member:{member_id:id,full_name:String(member.full_name),room_id:String(member.room_id)},total:slips.length,slips:slips.slice(0,max).map(s=>({slip_id:String(s.slip_id),transfer_at:new Date(s.transfer_at).toISOString(),amount:Number(s.amount),reference_last6:String(s.reference_last6),sender:String(s.sender),receiver:String(s.receiver),status:String(s.status)}))};
