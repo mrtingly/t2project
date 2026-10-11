@@ -99,7 +99,7 @@ body{background:radial-gradient(ellipse 650px 440px at 6% 8%,#dfeeff 0%,transpar
 <script>
 "use strict";
 let selected="member";
-const roles={member:{name:"สมาชิก",metrics:[["0","รายการสลิป"],["0","ยอดรวมของฉัน"],["0","ผู้รับผลประโยชน์"]],menu:["ข้อมูลส่วนตัว","สรุปยอดและผลตอบแทน","รายการสลิปของฉัน","ผู้ติดต่อฉุกเฉิน","ผู้รับผลประโยชน์","พิมพ์ข้อมูลของฉัน"]},admin:{name:"ผู้ดูแลห้อง",metrics:[["0","สมาชิกในห้อง"],["0","สลิปรอตรวจ"],["0","รายการวันนี้"]],menu:["ลงทะเบียนสมาชิก","ค้นหาสมาชิกในห้อง","เพิ่มสลิป 1–5 รายการ","ตรวจสอบรายการซ้ำ","รายงานภายในห้อง"]},owner:{name:"เจ้าของระบบ",metrics:[["8","ห้องที่กำหนด"],["0","สมาชิกตัวอย่าง"],["0","รายการรอตรวจ"]],menu:["ภาพรวม 8 ห้อง","จัดการผู้ดูแล","ตรวจสอบ Statement","กระทบยอดธนาคาร","รายงานและพิมพ์"]}};
+const roles={member:{name:"สมาชิก",metrics:[["0","รายการสลิป"],["0","ยอดรวมของฉัน"],["0","ผู้รับผลประโยชน์"]],menu:["ข้อมูลส่วนตัว","สรุปยอดและผลตอบแทน","รายการสลิปของฉัน","ผู้ติดต่อฉุกเฉิน","ผู้รับผลประโยชน์","พิมพ์ข้อมูลของฉัน"]},admin:{name:"ผู้ดูแลห้อง",metrics:[["0","สมาชิกในห้อง"],["0","สลิปรอตรวจ"],["0","รายการวันนี้"]],menu:["ภาพรวม Admin","ลงทะเบียนสมาชิก","ค้นหาสมาชิกในห้อง","เพิ่มสลิป 1–5 รายการ","ตรวจสอบรายการซ้ำ","รายงานภายในห้อง"]},owner:{name:"เจ้าของระบบ",metrics:[["8","ห้องที่กำหนด"],["0","สมาชิกตัวอย่าง"],["0","รายการรอตรวจ"]],menu:["ภาพรวม 8 ห้อง","จัดการผู้ดูแล","ตรวจสอบ Statement","กระทบยอดธนาคาร","รายงานและพิมพ์"]}};
 const $=id=>document.getElementById(id);
 const samples={
 member:{
@@ -161,10 +161,24 @@ function memberFinance(root,view){
  window.print()});
  filter.addEventListener("change",()=>{empty.textContent=filter.value==="all"?"ยังไม่มีรายการสลิปหรือผลตอบแทนที่ยืนยันแล้ว":"ไม่มีรายการในสถานะที่เลือก"});
 }
+
+function adminWorkspace(root,label){
+ const note=document.createElement("p");note.textContent="ต้นแบบหน้าจอ Admin ยังไม่ได้เชื่อม Master หรือฐานข้อมูลจริง";root.append(note);
+ if(label==="ภาพรวม Admin"){
+  const grid=document.createElement("div");grid.className="finance-cards";
+  [["สมาชิกในห้อง","—"],["สลิปรอตรวจ","0"],["รายการวันนี้","0"]].forEach(([name,value])=>{const card=document.createElement("div");card.className="finance-card";const title=document.createElement("span");title.textContent=name;const number=document.createElement("strong");number.textContent=value;card.append(title,number);grid.append(card)});root.append(grid);
+  ["ลงทะเบียนสมาชิก","ค้นหาสมาชิกในห้อง","เพิ่มสลิป 1–5 รายการ","รายงานภายในห้อง"].forEach(label=>{const button=document.createElement("button");button.className="workspace-action";button.style.margin="6px";button.textContent=label;button.onclick=()=>showWorkspace(label);root.append(button)});
+ }else{
+  const section=document.createElement("section");section.className="member-section";const h=document.createElement("h3");h.textContent="ค้นหาชื่อ–นามสกุลจาก Master";section.append(h);
+  const field=document.createElement("input");field.placeholder="ชื่อ นามสกุล (ไม่ใส่คำนำหน้า)";field.setAttribute("aria-label","ชื่อ–นามสกุล");field.style.cssText="width:100%;padding:12px;border:1px solid #d3e2f5;border-radius:10px";section.append(field);
+  const button=document.createElement("button");button.className="workspace-action";button.textContent="ตรวจรูปแบบชื่อ";button.style.margin="12px 0";const result=document.createElement("p");result.setAttribute("role","status");button.onclick=()=>{const name=field.value.trim();result.textContent=name.includes(" ")&&!/^(นาย|นางสาว|นาง)\s*/.test(name)?"รูปแบบถูกต้อง • ยังไม่สามารถค้น Master จริงได้":"กรอกชื่อและนามสกุลโดยไม่ใส่คำนำหน้า"};section.append(button,result);root.append(section);
+  if(label==="ลงทะเบียนสมาชิก"){const form=document.createElement("section");form.className="member-section";const title=document.createElement("h3");title.textContent="แบบฟอร์มสมาชิกใหม่";form.append(title);const grid=document.createElement("div");grid.className="member-form";["ชื่อ–นามสกุล","เลขบัตรประชาชน 13 หลัก","เบอร์โทรศัพท์","อีเมล","ห้องที่รับผิดชอบ (จากสิทธิ์ Admin)"].forEach((name,i)=>grid.append(memberInput(name,"",i===4)));form.append(grid);const save=document.createElement("button");save.className="workspace-action";save.textContent="บันทึก (รอเชื่อม Master และตรวจซ้ำ)";save.disabled=true;form.append(save);root.append(form)}
+ }
+}
 function showWorkspace(label){
  const data=samples[selected]?.[label]||{desc:"กำลังออกแบบหน้าจอ"};
  const root=$("workspace");root.replaceChildren();
- const heading=document.createElement("h2");heading.textContent=label;root.append(heading);if(selected==="member"&&label==="ข้อมูลส่วนตัว"){renderMemberProfile(root);root.scrollIntoView({behavior:"smooth",block:"start"});return;}if(selected==="member"&&(label==="รายการสลิปของฉัน"||label==="สรุปยอดและผลตอบแทน")){memberFinance(root,label==="รายการสลิปของฉัน"?"slips":"returns");root.scrollIntoView({behavior:"smooth",block:"start"});return;}
+ const heading=document.createElement("h2");heading.textContent=label;root.append(heading);if(selected==="admin"&&["ภาพรวม Admin","ลงทะเบียนสมาชิก","ค้นหาสมาชิกในห้อง"].includes(label)){adminWorkspace(root,label);return;}if(selected==="member"&&label==="ข้อมูลส่วนตัว"){renderMemberProfile(root);root.scrollIntoView({behavior:"smooth",block:"start"});return;}if(selected==="member"&&(label==="รายการสลิปของฉัน"||label==="สรุปยอดและผลตอบแทน")){memberFinance(root,label==="รายการสลิปของฉัน"?"slips":"returns");root.scrollIntoView({behavior:"smooth",block:"start"});return;}
  if(data.fields){const grid=document.createElement("div");grid.className="workspace-grid";data.fields.forEach((name,i)=>{const wrap=document.createElement("div");wrap.className="field";const lab=document.createElement("label");lab.textContent=name;const inp=document.createElement("input");inp.placeholder=name;if(name.includes("วันที่"))inp.type="date";else if(name.includes("เวลา"))inp.type="time";else if(name.includes("อีเมล"))inp.type="email";else if(name.includes("จำนวนเงิน")||name.includes("สัดส่วน"))inp.type="number";else inp.type="text";inp.setAttribute("aria-label",name);wrap.append(lab,inp);grid.append(wrap)});root.append(grid);}
  if(data.preview){const preview=document.createElement("div");preview.className="slip-preview";preview.textContent="พื้นที่แสดงภาพสลิป (ต้นแบบ)";preview.style.marginTop="16px";root.append(preview);}
  if(data.table){const table=document.createElement("table");table.className="data-table";const tr=document.createElement("tr");data.table.forEach(c=>{const th=document.createElement("th");th.textContent=c;tr.append(th)});const thead=document.createElement("thead");thead.append(tr);table.append(thead);const tbody=document.createElement("tbody");(data.rows||[]).forEach(row=>{const r=document.createElement("tr");row.forEach(c=>{const td=document.createElement("td");td.textContent=c;r.append(td)});tbody.append(r)});table.append(tbody);root.append(table);}
