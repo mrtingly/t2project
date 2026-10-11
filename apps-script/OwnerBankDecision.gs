@@ -1,6 +1,6 @@
 /** Owner-only bank request review; changes request status, not payment instructions. */
 function t2OwnerReviewBankRequest(token,requestId,decision){
- t2RequireRole_(token,["owner"]);
+ const actor=t2RequireRole_(token,["owner"]);
  if(typeof requestId!=="string"||!requestId||!["approved","rejected"].includes(decision))return {ok:false,error:"INVALID_INPUT"};
  const lock=LockService.getScriptLock();lock.waitLock(30000);
  try{
