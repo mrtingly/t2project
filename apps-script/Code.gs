@@ -717,6 +717,33 @@ function t2MemberOverview(token){
  }
  return {ok:true,profile:{member_id:String(member.member_id),full_name:String(member.full_name),room_id:String(member.room_id)},receipts:{count:slips.length,pending_amount:pendingCents/100,verified_amount:verifiedCents/100},returns:{status:"not_calculated"}};
 }
+/** Self-service member receipt listing, with stable Bangkok timestamps. */
+function t2MemberReceiptHistory(token,limit){
+ const actor=t2RequireRole_(token,["member"]);
+ const id=String(actor.member_id||"");
+ if(!id)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
+ const member=t2Rows_("Members").find(m=>String(m.member_id)===id&&String(m.status)==="active");
+ if(!member)return {ok:false,error:"MEMBER_NOT_AVAILABLE"};
+ const max=Math.max(1,Math.min(200,Math.floor(Number(limit)||50)));
+ const rows=t2Rows_("Slips").filter(s=>String(s.member_id)===id&&String(s.room_id)===String(member.room_id)&&String(s.status)!=="deleted");
+ rows.sort((a,b)=>new Date(b.transfer_at).getTime()-new Date(a.transfer_at).getTime());
+ return {ok:true,total:rows.length,slips:rows.slice(0,max).map(s=>({
+  slip_id:String(s.slip_id),
+  transfer_at:Utilities.formatDate(new Date(s.transfer_at),"Asia/Bangkok","yyyy-MM-dd HH:mm:ss"),
+  amount:Number(s.amount),reference_last6:String(s.reference_last6),
+  status:String(s.status)
+ }))};
+}
+/** Self-only printable snapshot; no identity number or sensitive banking details. */
+function t2MemberPrintSnapshot(token){
+ const overview=t2MemberOverview(token);
+ if(!overview.ok)return overview;
+ const history=t2MemberReceiptHistory(token,200);
+ if(!history.ok)return history;
+ return {ok:true,generated_at:Utilities.formatDate(new Date(),"Asia/Bangkok","yyyy-MM-dd HH:mm:ss"),
+  profile:overview.profile,receipts:overview.receipts,returns:overview.returns,
+  slips:history.slips,truncated:history.total>history.slips.length};
+}
 function t2MemberSlips(token){
  const actor=t2RequireRole_(token,["member"]);return {ok:true,slips:t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&String(s.status)!=="deleted").slice(-200).map(s=>({transfer_at:String(s.transfer_at),amount:Number(s.amount),reference_last6:String(s.reference_last6),status:String(s.status)}))};
 }
