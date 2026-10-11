@@ -17,7 +17,7 @@ function t2ReleaseGate(){
  add("member_login_implementation",typeof t2MemberLogin==="function","Implementation existence only; security review still required");
  add("password_kdf_review",false,"T2PROJECT username/password chosen; legacy iterated SHA-256 is not a production password KDF");
  add("member_login_review",false,"Member identity and session issuance require independent security review");
- add("owner_admin_login",false,"Legacy login deliberately disabled; identity provider not integrated");
+ add("owner_admin_login",false,"T2PROJECT username/password selected; secure verifier and role-bound session issuance not integrated");
  add("admin_dashboard_route",false,"Admin preview not yet routed behind authenticated login");
  add("owner_dashboard_route",false,"Owner preview not yet routed behind authenticated login");
  add("promotion_calculation",false,"Verified promotion schedules and calculations not integrated");
