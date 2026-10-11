@@ -133,3 +133,54 @@ function t2PortalSaveContacts(token,emergency,beneficiaries){
   return {ok:true};
  }finally{lock.releaseLock()}
 }
+
+
+/** Additive, private member photo storage; setup requires an existing private Drive folder ID. */
+function t2PortalPhotoFolder_(){
+ const id=PropertiesService.getScriptProperties().getProperty("T2_MEMBER_PHOTO_FOLDER_ID");
+ if(!id)throw Error("PHOTO_FOLDER_NOT_CONFIGURED");
+ return DriveApp.getFolderById(id);
+}
+function t2PortalPhotoInfo(token){
+ const actor=t2PortalContactsActor_(token);
+ const sheet=t2Db_().getSheetByName("MemberPhotos");
+ if(!sheet)return {ok:true,has_photo:false,setup_required:true};
+ const row=t2Rows_("MemberPhotos").find(x=>String(x.member_id)===String(actor.member_id));
+ return {ok:true,has_photo:!!(row&&row.file_id)};
+}
+function t2InstallMemberPhotos(){
+ const db=t2Db_();if(!db.getSheetByName("MemberPhotos"))db.insertSheet("MemberPhotos").appendRow(["member_id","file_id","mime_type","updated_at"]);
+ return "MemberPhotos ready";
+}
+function t2PortalSavePhoto(token,mimeType,base64){
+ const actor=t2PortalContactsActor_(token);
+ if(!["image/jpeg","image/png","image/webp"].includes(mimeType)||typeof base64!=="string"||base64.length>2800000)return {ok:false,error:"INVALID_PHOTO"};
+ const bytes=Utilities.base64Decode(base64);
+ if(bytes.length>2000000)return {ok:false,error:"PHOTO_TOO_LARGE"};
+ const signature=bytes.slice(0,12).map(x=>x&255);
+ const jpg=signature[0]===255&&signature[1]===216&&signature[2]===255;
+ const png=signature.slice(0,8).join(",")==="137,80,78,71,13,10,26,10";
+ const webp=String.fromCharCode.apply(null,signature.slice(0,4))==="RIFF"&&String.fromCharCode.apply(null,signature.slice(8,12))==="WEBP";
+ if(!(mimeType==="image/jpeg"&&jpg||mimeType==="image/png"&&png||mimeType==="image/webp"&&webp))return {ok:false,error:"INVALID_IMAGE_FORMAT"};
+ const sheet=t2Db_().getSheetByName("MemberPhotos");if(!sheet)return {ok:false,error:"PHOTO_SETUP_REQUIRED"};
+ const folder=t2PortalPhotoFolder_();
+ const file=folder.createFile(Utilities.newBlob(bytes,mimeType,"member-photo-"+Utilities.getUuid()));
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{
+  const rows=sheet.getDataRange().getValues(),index=rows.findIndex((r,i)=>i>0&&String(r[0])===String(actor.member_id));
+  const previous=index>=0?String(rows[index][1]||""):"";
+  const values=[String(actor.member_id),file.getId(),mimeType,new Date()];
+  if(index>=0)sheet.getRange(index+1,1,1,4).setValues([values]);else sheet.appendRow(values);
+  if(previous&&previous!==file.getId()){try{DriveApp.getFileById(previous).setTrashed(true)}catch(ignore){}}
+  return {ok:true};
+ }catch(error){try{file.setTrashed(true)}catch(ignore){}throw error}finally{lock.releaseLock()}
+}
+function t2PortalReadPhoto(token){
+ const actor=t2PortalContactsActor_(token);
+ const sheet=t2Db_().getSheetByName("MemberPhotos");if(!sheet)return {ok:false,error:"PHOTO_SETUP_REQUIRED"};
+ const row=t2Rows_("MemberPhotos").find(x=>String(x.member_id)===String(actor.member_id));
+ if(!row||!row.file_id)return {ok:true,has_photo:false};
+ const blob=DriveApp.getFileById(String(row.file_id)).getBlob();
+ if(blob.getBytes().length>2000000)return {ok:false,error:"PHOTO_TOO_LARGE"};
+ return {ok:true,has_photo:true,mime_type:String(row.mime_type),base64:Utilities.base64Encode(blob.getBytes())};
+}
