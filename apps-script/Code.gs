@@ -661,6 +661,20 @@ function t2ReceiptReport(token,filters){
  }));
  return {ok:true,total:slips.length,truncated:slips.length>rows.length,rows:rows};
 }
+/** Read-only owner reconciliation candidate list; bank confirmation stays manual. */
+function t2ReconciliationQueue(token,limit){
+ const actor=t2RequireRole_(token,["owner"]);
+ const max=Math.max(1,Math.min(200,Math.floor(Number(limit)||50)));
+ const names=new Map(t2Rows_("Members").map(m=>[String(m.member_id),String(m.full_name)]));
+ const rows=t2Rows_("Slips").filter(s=>String(s.status)==="pending_verification");
+ rows.sort((a,b)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime());
+ return {ok:true,total:rows.length,items:rows.slice(0,max).map(s=>({
+  slip_id:String(s.slip_id),member_id:String(s.member_id),member_name:names.get(String(s.member_id))||"",
+  room_id:String(s.room_id),transfer_at:Utilities.formatDate(new Date(s.transfer_at),"Asia/Bangkok","yyyy-MM-dd HH:mm:ss"),
+  amount:Number(s.amount),reference_last6:String(s.reference_last6),sender:String(s.sender),receiver:String(s.receiver),
+  status:"pending_verification"
+ }))};
+}
 function t2ReceiptSummary(token,roomId){
  const actor=t2RequireRole_(token,["owner","admin"]);
  const requested=String(roomId||"").trim();
