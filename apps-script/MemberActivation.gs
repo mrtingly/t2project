@@ -188,3 +188,10 @@ function t2ActivationCounts_(rows){
  for(const r of rows||[]){const status=String(r.status||"");if(Object.prototype.hasOwnProperty.call(counts,status))counts[status]++;}
  return counts;
 }
+
+function t2AdminActivationSummary(token){
+ const actor=t2RequireRole_(token,["owner","admin"]);
+ const allowed=new Set(t2Rows_("Members").filter(m=>t2ActivationCanManage_(actor,m)).map(m=>String(m.member_id)));
+ const rows=t2ActivationRows_().filter(r=>allowed.has(String(r.member_id)));
+ return {ok:true,counts:t2ActivationCounts_(rows)};
+}
