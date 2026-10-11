@@ -4,7 +4,7 @@
 </head>
 <body><h1>ทดสอบการเชื่อมต่อ GitHub → Apps Script</h1>
 <p>ทดสอบเฉพาะสถานะ API สาธารณะ ไม่ส่งรหัสผ่าน โทเค็น หรือข้อมูลสมาชิก และยังไม่ใช่การทดสอบ Login</p>
-<button id="run">ทดสอบการเชื่อมต่อ</button><p id="endpoint" style="overflow-wrap:anywhere"></p><pre id="result">ยังไม่ได้ทดสอบ</pre>
+<button id="run">ทดสอบ GET</button> <button id="post-run">ทดสอบ POST</button><p id="endpoint" style="overflow-wrap:anywhere"></p><pre id="result">ยังไม่ได้ทดสอบ</pre><pre id="post-result">ยังไม่ได้ทดสอบ POST</pre>
 <script>
 const endpoint=document.getElementById('endpoint');
 const configured="https://script.google.com/macros/s/AKfycbxEg-6mVTEpMIhowbYVK7ja8XJv0QkRKPYSSoJIts6hfK9t-vQLkGQ9vfc7iG2GOu7Ajg/exec";
@@ -21,5 +21,14 @@ document.getElementById('run').onclick=async()=>{
   if(!response.ok||data.service!=='t2project'||data.probe!=='ok'||data.mode!=='public-health-only'||data.version!==2)throw Error('API response ไม่ตรงที่คาด');
   out.textContent='ผ่าน: API เวอร์ชัน 2 ตอบกลับตรงตามสัญญา (ยังไม่ใช่การทดสอบ Login/POST)';
  }catch(err){out.textContent='ยังไม่ผ่าน: '+err.message+'\nสาเหตุที่เป็นไปได้: CORS, redirect, deployment เก่า, สิทธิ์เข้าถึง URL หรือยังไม่เผยแพร่เวอร์ชัน 2\nอย่าแก้ด้วยการส่งรหัสผ่านใน URL';}
+};
+document.getElementById('post-run').onclick=async()=>{
+ const out=document.getElementById('post-result');out.textContent='กำลังทดสอบ POST...';
+ try{
+  const response=await fetch(configured+'?action=transport_probe',{method:'POST',headers:{'Content-Type':'text/plain'},body:'T2_PUBLIC_PROBE_V1',credentials:'omit',redirect:'follow'});
+  const data=await response.json();
+  if(!response.ok||data.service!=='t2project'||data.probe!=='post-ok'||data.version!==2||data.mode!=='public-transport-only')throw Error('POST response ไม่ตรงตามสัญญา');
+  out.textContent='ผ่าน: POST สาธารณะเชื่อมต่อได้ (ยังไม่ใช่ Login)';
+ }catch(err){out.textContent='POST ยังไม่ผ่าน: '+err.message+' (อาจเป็น CORS หรือยังไม่ได้ Deploy Backend ล่าสุด)';}
 };
 </script></body></html>
