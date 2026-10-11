@@ -36,6 +36,47 @@ function doPost(e){
 }
 
 /**
+ * Strict JSON envelope validation for future authenticated POST requests.
+ * Pure function: never writes to Sheets, logs credentials, or creates sessions.
+ */
+function t2ValidateAuthEnvelope_(raw){
+ if(typeof raw!=="string"||raw.length>4096)return {ok:false,error:"INVALID_REQUEST"};
+ let data;
+ try{data=JSON.parse(raw)}catch(_){return {ok:false,error:"INVALID_JSON"}}
+ if(!data||typeof data!=="object"||Array.isArray(data))return {ok:false,error:"INVALID_REQUEST"};
+ const keys=Object.keys(data);
+ if(keys.length!==2||!keys.includes("action")||!keys.includes("payload"))return {ok:false,error:"INVALID_REQUEST"};
+ if(typeof data.action!=="string"||!["login","dashboard","logout"].includes(data.action))return {ok:false,error:"ACTION_NOT_AVAILABLE"};
+ if(!data.payload||typeof data.payload!=="object"||Array.isArray(data.payload))return {ok:false,error:"INVALID_REQUEST"};
+ const p=data.payload;
+ if(data.action==="login"){
+  if(Object.keys(p).sort().join("|")!=="password|role|username"||
+   typeof p.username!=="string"||!/^[a-zA-Z0-9._@-]{4,80}$/.test(p.username)||
+   typeof p.password!=="string"||!p.password||p.password.length>256||
+   !["owner","admin","member"].includes(p.role))return {ok:false,error:"INVALID_REQUEST"};
+ }else if(Object.keys(p).join("|")!=="token"||typeof p.token!=="string"||
+          p.token.length<50||p.token.length>200)return {ok:false,error:"INVALID_REQUEST"};
+ return {ok:true,action:data.action,payload:p};
+}
+/** Editor-only parser tests: all credentials and tokens are fictitious. */
+function t2AuthEnvelopeTest(){
+ const good=JSON.stringify({action:"login",payload:{username:"testowner",password:"dummy-password",role:"owner"}});
+ const checks=[
+  ["valid_login",t2ValidateAuthEnvelope_(good).ok===true],
+  ["bad_json",t2ValidateAuthEnvelope_("{").error==="INVALID_JSON"],
+  ["unknown_action",t2ValidateAuthEnvelope_(JSON.stringify({action:"erase",payload:{}})).error==="ACTION_NOT_AVAILABLE"],
+  ["extra_fields",t2ValidateAuthEnvelope_(JSON.stringify({action:"login",payload:{username:"testowner",password:"x",role:"owner",admin:true}})).error==="INVALID_REQUEST"],
+  ["bad_role",t2ValidateAuthEnvelope_(JSON.stringify({action:"login",payload:{username:"testowner",password:"x",role:"superuser"}})).error==="INVALID_REQUEST"],
+  ["short_token",t2ValidateAuthEnvelope_(JSON.stringify({action:"dashboard",payload:{token:"x"}})).error==="INVALID_REQUEST"],
+  ["large_body",t2ValidateAuthEnvelope_("x".repeat(4097)).error==="INVALID_REQUEST"]
+ ];
+ const result={ok:checks.every(c=>c[1]),results:checks.map(c=>({test:c[0],passed:c[1]}))};
+ console.log(JSON.stringify(result));
+ if(!result.ok)throw Error("Auth envelope test failed");
+ return result;
+}
+
+/**
  * Auth API router foundation. Deliberately disabled for all public requests.
  * The server ignores caller-provided flags: only Script Properties can enable it.
  * Do not enable until credential hashing, abuse controls, and deployment security
