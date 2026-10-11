@@ -6,6 +6,10 @@ function t2MemberLogin(username,password){
  const name=t2MemberUsername_(username);
  if(!name||typeof password!=="string"||password.length>128)
   return {ok:false,error:"INVALID_CREDENTIALS"};
+ // Never disclose account existence. Enforce a short server-side cooldown
+ // before expensive password verification to limit repeated guessing.
+ const throttle=t2MemberLoginThrottle_(name);
+ if(!throttle.ok)return {ok:false,error:"TRY_AGAIN_LATER"};
  const users=t2Rows_("Users");
  const account=users.find(u=>String(u.username||"").toLowerCase()===name&&
   String(u.role)==="member"&&String(u.status)==="active");
@@ -21,6 +25,21 @@ function t2MemberLogin(username,password){
  t2Sheet_("Sessions").appendRow([t2SessionHash_(token),String(account.user_id),expires,""]);
  t2Audit_("MEMBER_LOGIN",account.user_id,"Password login");
  return {ok:true,token:token,expires_at:expires.toISOString(),role:"member"};
+}
+/** Coarse per-username cooldown; shared script cache, no PII in keys. */
+function t2MemberLoginThrottle_(username){
+ const digest=Utilities.base64EncodeWebSafe(Utilities.computeDigest(
+  Utilities.DigestAlgorithm.SHA_256,"T2_LOGIN_THROTTLE:"+username));
+ const cache=CacheService.getScriptCache();
+ const key="login:"+digest.slice(0,48);
+ const lock=LockService.getScriptLock();
+ if(!lock.tryLock(5000))return {ok:false};
+ try{
+  const attempts=Number(cache.get(key)||0);
+  if(attempts>=5)return {ok:false};
+  cache.put(key,String(attempts+1),300);
+  return {ok:true};
+ }finally{lock.releaseLock()}
 }
 /** Invalid and inactive accounts never receive a session. */
 function t2MemberLoginPolicy_(account,member){
