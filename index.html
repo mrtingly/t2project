@@ -414,6 +414,17 @@ $("forgot").addEventListener("click",()=>{recoveryStep=1;renderRecovery();$("log
 $("recoveryNext").addEventListener("click",()=>{recoveryStep=recoveryStep===3?1:recoveryStep+1;renderRecovery()});
 $("recoveryBack").addEventListener("click",()=>{$("recoveryScreen").classList.add("hidden");$("loginScreen").classList.remove("hidden");window.scrollTo(0,0)});
 
+function lockRealLogin(){
+ const form=document.getElementById("loginForm");
+ if(!form)return;
+ for(const id of ["username","password"]){
+  const input=document.getElementById(id);
+  if(input){input.value="";input.disabled=true;input.setAttribute("aria-disabled","true");}
+ }
+ const submit=form.querySelector('button[type="submit"]');
+ if(submit){submit.disabled=true;submit.textContent="Login จริงยังไม่เปิดใช้งาน";}
+}
+lockRealLogin();
 async function updateAuthReadiness(){
  const el=document.getElementById("authReadiness");
  if(!el)return;
