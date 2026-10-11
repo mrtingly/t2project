@@ -14,7 +14,7 @@ function t2MemberLogin(username,password){
  if(!t2PasswordVerify_(password,String(account.salt),String(account.password_hash)))
   return {ok:false,error:"INVALID_CREDENTIALS"};
  const member=t2ActivationMember_(account.member_id);
- if(!member||String(member.status)!=="active")
+ if(!t2MemberLoginPolicy_(account,member))
   return {ok:false,error:"INVALID_CREDENTIALS"};
  const token=Utilities.getUuid()+Utilities.getUuid();
  const expires=new Date(Date.now()+60*60*1000);
