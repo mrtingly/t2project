@@ -126,9 +126,9 @@ function t2PortalSaveContacts(token,emergency,beneficiaries){
   if(specs.some(x=>!db.getSheetByName(x[0])))return {ok:false,error:"CONTACT_SETUP_REQUIRED"};
   for(const [name,records,serialize] of specs){
    const sh=db.getSheetByName(name),values=sh.getDataRange().getValues();
-   for(let i=values.length-1;i>=1;i--)if(String(values[i][0])===String(actor.member_id))sh.deleteRow(i+1);
    const rows=records.map((x,i)=>serialize(Object.assign({slot:i+1},x)));
    if(rows.length)sh.getRange(sh.getLastRow()+1,1,rows.length,rows[0].length).setValues(rows);
+   for(let i=values.length-1;i>=1;i--)if(String(values[i][0])===String(actor.member_id))sh.deleteRow(i+1);
   }
   return {ok:true};
  }finally{lock.releaseLock()}
