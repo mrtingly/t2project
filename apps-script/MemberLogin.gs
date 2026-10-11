@@ -10,6 +10,7 @@ function t2MemberLogin(username,password){
  // before expensive password verification to limit repeated guessing.
  const throttle=t2MemberLoginThrottle_(name);
  if(!throttle.ok)return {ok:false,error:"INVALID_CREDENTIALS"};
+ // Use a uniform response for unknown users, incorrect passwords and throttling.
  const users=t2Rows_("Users");
  const account=users.find(u=>String(u.username||"").toLowerCase()===name&&
   String(u.role)==="member"&&String(u.status)==="active");
