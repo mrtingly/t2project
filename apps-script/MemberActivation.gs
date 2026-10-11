@@ -271,3 +271,15 @@ function t2ActivationRegressionSuite(){
  if(!report.ok)throw Error("Activation regression suite failed: "+JSON.stringify(results));
  return report;
 }
+
+/** Prevent spreadsheet formula interpretation in displayed user-supplied labels. */
+function t2ActivationSafeCell_(value){
+ const raw=String(value==null?"":value).replace(/[\x00-\x1f\x7f]/g," ").trim();
+ return /^[=+@\-]/.test(raw)?"'"+raw:raw;
+}
+function t2ActivationSafeCellTest(){
+ const cases=[["=1+1","'=1+1"],["+SUM(A1)","'+SUM(A1)"],["@x","'@x"],["-1","'-1"],["Normal","Normal"]];
+ const ok=cases.every(pair=>t2ActivationSafeCell_(pair[0])===pair[1]);
+ if(!ok)throw Error("Cell escaping policy failed");
+ return {ok:true,checks:cases.length};
+}
