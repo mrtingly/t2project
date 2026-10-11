@@ -1,6 +1,7 @@
 /** Owner-only bank request review; changes request status, not payment instructions. */
 function t2OwnerReviewBankRequest(token,requestId,decision){
  const actor=t2RequireRole_(token,["owner"]);
+ if(!actor)return {ok:false,error:"FORBIDDEN"};
  if(typeof requestId!=="string"||!requestId||!["approved","rejected"].includes(decision))return {ok:false,error:"INVALID_INPUT"};
  const lock=LockService.getScriptLock();lock.waitLock(30000);
  try{
@@ -18,7 +19,8 @@ function t2OwnerReviewBankRequest(token,requestId,decision){
   const memberIdCol=headers.indexOf("member_id");
   if(memberIdCol<0)return {ok:false,error:"INVALID_SCHEMA"};
   const memberId=String(values[index][memberIdCol]);
-  const reviewer=String(actor.user_id||actor.admin_id||actor.member_id||"owner");
+  const reviewer=String(actor.user_id||actor.admin_id||actor.member_id||"");
+  if(!reviewer)return {ok:false,error:"REVIEWER_ID_MISSING"};
   const auditRows=audit.getDataRange().getValues();
   const existing=auditRows.find((r,i)=>i>0&&String(r[1])===requestId);
   if(existing){
