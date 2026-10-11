@@ -29,6 +29,10 @@ function t2Hash_(password,salt){
  for(let i=0;i<15000;i++)v=Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,v));
  return v;
 }
+// Fast SHA-256 for random, high-entropy session tokens only; NOT for passwords.
+function t2SessionHash_(token){
+ return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,"T2_SESSION_V2:"+token));
+}
 function t2Audit_(action,actor,detail){t2Sheet_(T2_.audit).appendRow([new Date(),action,actor,String(detail||"").slice(0,300)])}
 function t2Install(){
  const props=PropertiesService.getScriptProperties();
@@ -84,7 +88,7 @@ function login(payload){
  const matched=user&&String(user.status)==="active"&&String(user.role)===role&&t2Hash_(password,String(user.salt))===String(user.password_hash);
  if(!matched){cache.put(key,String(failures+1),900);return {ok:false,message:"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"}}
  cache.remove(key);
- const token=Utilities.getUuid()+Utilities.getUuid(),tokenHash=t2Hash_(token,"SESSION");
+ const token=Utilities.getUuid()+Utilities.getUuid(),tokenHash=t2SessionHash_(token);
  const expires=new Date(Date.now()+30*60*1000);
  t2Sheet_("Sessions").appendRow([tokenHash,user.user_id,expires,""]);
  t2Audit_("LOGIN",user.user_id,role);
@@ -92,8 +96,11 @@ function login(payload){
 }
 function t2Actor_(token){
  if(typeof token!=="string"||token.length<50)throw Error("Unauthorized");
- const hash=t2Hash_(token,"SESSION");
- const session=t2Rows_("Sessions").find(s=>s.token_hash===hash&&!s.revoked_at&&new Date(s.expires_at).getTime()>Date.now());
+ const hash=t2SessionHash_(token);
+ const sessions=t2Rows_("Sessions");
+ let session=sessions.find(s=>s.token_hash===hash&&!s.revoked_at&&new Date(s.expires_at).getTime()>Date.now());
+ // Compatibility for sessions created before the optimization.
+ if(!session){const legacy=t2Hash_(token,"SESSION");session=sessions.find(s=>s.token_hash===legacy&&!s.revoked_at&&new Date(s.expires_at).getTime()>Date.now())}
  if(!session)throw Error("Session expired");
  const actor=t2Rows_("Users").find(u=>u.user_id===session.user_id&&u.status==="active");
  if(!actor)throw Error("Unauthorized");
@@ -104,7 +111,7 @@ function dashboard(token){
  return {ok:true,role:actor.role,room_id:actor.role==="admin"?actor.room_id:null,member_id:actor.role==="member"?actor.member_id:null,mode:"authenticated",message:"เข้าสู่ระบบสำเร็จ ระบบข้อมูลสมาชิกและสลิปกำลังพัฒนา"};
 }
 function logout(token){
- try{const hash=t2Hash_(token,"SESSION");const sh=t2Sheet_("Sessions");const vals=sh.getDataRange().getValues();for(let i=1;i<vals.length;i++)if(vals[i][0]===hash&&!vals[i][3])sh.getRange(i+1,4).setValue(new Date())}catch(_){}
+ try{const hash=t2SessionHash_(token);const sh=t2Sheet_("Sessions");const vals=sh.getDataRange().getValues();let found=false;for(let i=1;i<vals.length;i++)if(vals[i][0]===hash&&!vals[i][3]){sh.getRange(i+1,4).setValue(new Date());found=true}if(!found){const legacy=t2Hash_(token,"SESSION");for(let i=1;i<vals.length;i++)if(vals[i][0]===legacy&&!vals[i][3])sh.getRange(i+1,4).setValue(new Date())}}catch(_){}
  return {ok:true};
 }
 
