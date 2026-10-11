@@ -228,3 +228,42 @@ function t2SendMessage(token,body,conversationId){
   t2Audit_("MESSAGE",actor.user_id,id);return {ok:true,conversation_id:id};
  }finally{lock.releaseLock()}
 }
+
+/** Admin-only manual receipt entry; bank verification remains a human step. */
+function t2SaveReceipt(token,p){
+ const actor=t2RequireRole_(token,["admin"]);p=p||{};
+ const memberId=String(p.member_id||"").trim();
+ const member=t2Rows_("Members").find(m=>String(m.member_id)===memberId&&String(m.room_id)===String(actor.room_id)&&String(m.status)==="active");
+ if(!member)throw Error("ไม่พบสมาชิกในห้องของคุณ กรุณาเลือกจาก Master");
+ const date=String(p.date||""),time=String(p.time||"");
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)||!Number.isFinite(Date.parse(date+"T"+time+":00")))throw Error("วันเวลาไม่ถูกต้อง");
+ const amount=Number(p.amount),ref=String(p.ref||"");
+ if(!Number.isFinite(amount)||amount<=0||amount>100000000||Math.round(amount*100)!==amount*100)throw Error("จำนวนเงินไม่ถูกต้อง");
+ if(!/^\d{6}$/.test(ref))throw Error("รหัสท้ายสลิปต้องมี 6 หลัก");
+ const sender=t2Text_(p.sender,120),receiver=t2Text_(p.receiver,120);
+ const image=p.image||{};
+ const mime=String(image.mime||"");
+ if(!["image/jpeg","image/png","image/webp"].includes(mime))throw Error("ต้องแนบภาพ JPG PNG หรือ WEBP");
+ const base64=String(image.base64||"");
+ if(!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)||base64.length>3*1024*1024)throw Error("ภาพไม่ถูกต้องหรือมีขนาดเกิน 2 MB");
+ const folderId=PropertiesService.getScriptProperties().getProperty("T2_SLIP_FOLDER_ID");
+ if(!folderId)throw Error("ยังไม่ได้ตั้งค่าโฟลเดอร์เก็บสลิป T2_SLIP_FOLDER_ID");
+ const lock=LockService.getScriptLock();lock.waitLock(30000);
+ try{
+  const key=[date,time,ref,sender.toLocaleLowerCase("th"),receiver.toLocaleLowerCase("th")].join("|");
+  const duplicate=t2Rows_("Slips").find(r=>String(r.status)!=="deleted"&&[String(r.transfer_at).slice(0,10),String(r.transfer_at).slice(11,16),String(r.reference_last6),String(r.sender).toLocaleLowerCase("th"),String(r.receiver).toLocaleLowerCase("th")].join("|")===key);
+  if(duplicate)return {ok:false,duplicate:true,message:"พบสลิปที่มีวันเวลา รหัสท้าย และผู้โอน/ผู้รับตรงกันแล้ว"};
+  const bytes=Utilities.base64Decode(base64);if(bytes.length>2*1024*1024)throw Error("ภาพเกิน 2 MB");
+  const id=Utilities.getUuid();
+  const blob=Utilities.newBlob(bytes,mime,id+(mime==="image/png"?".png":mime==="image/webp"?".webp":".jpg"));
+  const file=DriveApp.getFolderById(folderId).createFile(blob);
+  try{
+   t2Append_("Slips",[id,memberId,actor.room_id,date+"T"+time,amount,ref,sender,receiver,"pending_verification",file.getId(),actor.user_id,new Date()]);
+  }catch(e){file.setTrashed(true);throw e}
+  t2Audit_("RECEIPT_CREATE",actor.user_id,id);
+  return {ok:true,slip_id:id,message:"บันทึกใบเสร็จแล้ว รอการยืนยันกับธนาคาร"};
+ }finally{lock.releaseLock()}
+}
+function t2MemberSlips(token){
+ const actor=t2RequireRole_(token,["member"]);return {ok:true,slips:t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&String(s.status)!=="deleted").slice(-200).map(s=>({transfer_at:String(s.transfer_at),amount:Number(s.amount),reference_last6:String(s.reference_last6),status:String(s.status)}))};
+}
