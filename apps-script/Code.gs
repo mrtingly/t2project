@@ -605,8 +605,10 @@ function t2CreateSlip(token,payload){
  const lock=LockService.getScriptLock();
  if(!lock.tryLock(15000))return {ok:false,error:"BUSY"};
  try{
-  const member=t2Rows_("Members").find(m=>String(m.member_id)===memberId&&String(m.status)==="active");
-  if(!member||!t2CanReadMember_(actor,member))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
+  const matches=t2Rows_("Members").filter(m=>String(m.member_id)===memberId&&String(m.status)==="active");
+  if(matches.length!==1)return {ok:false,error:"MEMBER_NOT_FOUND_OR_AMBIGUOUS"};
+  const member=matches[0];
+  if(!t2CanReadMember_(actor,member))return {ok:false,error:"MEMBER_NOT_ACCESSIBLE"};
   const dup=t2Rows_("Slips").some(r=>String(r.status)!=="deleted"&&
    String(r.reference_last6)===ref&&new Date(r.transfer_at).getTime()===transferDate.getTime()&&
    String(r.sender).trim().toLocaleLowerCase("th")===sender.toLocaleLowerCase("th")&&
