@@ -267,3 +267,41 @@ function t2SaveReceipt(token,p){
 function t2MemberSlips(token){
  const actor=t2RequireRole_(token,["member"]);return {ok:true,slips:t2Rows_("Slips").filter(s=>String(s.member_id)===String(actor.member_id)&&String(s.status)!=="deleted").slice(-200).map(s=>({transfer_at:String(s.transfer_at),amount:Number(s.amount),reference_last6:String(s.reference_last6),status:String(s.status)}))};
 }
+
+
+/**
+ * One-time owner password recovery. Run ONLY from the Apps Script editor
+ * under the project owner's Google account, never from the public web app.
+ * Set T2_OWNER_RESET_PASSWORD in Script Properties to a NEW password first.
+ * Remove the property automatically after successful reset.
+ */
+function t2ResetOwnerPasswordFromEditor(){
+ const props=PropertiesService.getScriptProperties();
+ const pass=String(props.getProperty("T2_OWNER_RESET_PASSWORD")||"");
+ if(pass.length<12||pass.length>256)throw Error("Set T2_OWNER_RESET_PASSWORD (12-256 characters) in Script Properties first");
+ const lock=LockService.getScriptLock();
+ lock.waitLock(30000);
+ try{
+  const sh=t2Sheet_("Users");
+  const rows=sh.getDataRange().getValues();
+  const header=rows[0].map(String);
+  const ix=Object.fromEntries(["user_id","username","role","salt","password_hash","status"].map(k=>[k,header.indexOf(k)]));
+  if(Object.values(ix).some(i=>i<0))throw Error("Users schema mismatch");
+  const owners=[];
+  for(let i=1;i<rows.length;i++)if(String(rows[i][ix.username]).toLowerCase()==="t2owner"&&String(rows[i][ix.role])==="owner"&&String(rows[i][ix.status])==="active")owners.push(i+1);
+  if(owners.length!==1)throw Error("Expected exactly one active t2owner; no changes made");
+  const row=owners[0], userId=String(rows[row-1][ix.user_id]);
+  const salt=Utilities.getUuid()+Utilities.getUuid();
+  const hash=t2Hash_(pass,salt);
+  sh.getRange(row,ix.salt+1).setValue(salt);
+  sh.getRange(row,ix.password_hash+1).setValue(hash);
+  // Invalidate existing sessions for this account.
+  const sessions=t2Sheet_("Sessions"), sessionRows=sessions.getDataRange().getValues(), keys=sessionRows[0].map(String);
+  const uid=keys.indexOf("user_id"),revoked=keys.indexOf("revoked_at");
+  if(uid<0||revoked<0)throw Error("Sessions schema mismatch; password changed, review sessions manually");
+  for(let i=1;i<sessionRows.length;i++)if(String(sessionRows[i][uid])===userId&&!sessionRows[i][revoked])sessions.getRange(i+1,revoked+1).setValue(new Date());
+  props.deleteProperty("T2_OWNER_RESET_PASSWORD");
+  t2Audit_("OWNER_PASSWORD_RESET",userId,"Reset from editor");
+  return "Owner password reset completed";
+ }finally{lock.releaseLock()}
+}
