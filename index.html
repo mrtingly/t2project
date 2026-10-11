@@ -160,6 +160,30 @@ function memberFinance(root,view){
  }else{const h=document.createElement("h1");h.textContent="T2PROJECT — "+(view==="slips"?"ใบแสดงรายการสลิป":"สรุปยอดและผลตอบแทน");const p=document.createElement("p");p.textContent="ยังไม่มีข้อมูลรายการจริงที่ผ่านการตรวจสอบ จึงไม่สามารถออกใบแสดงรายการโอนพร้อมภาพสลิปได้";output.append(h,p)}
  window.print()});
  filter.addEventListener("change",()=>{empty.textContent=filter.value==="all"?"ยังไม่มีรายการสลิปหรือผลตอบแทนที่ยืนยันแล้ว":"ไม่มีรายการในสถานะที่เลือก"});
+ if(t2Live()){
+  heading.textContent="กำลังดึงรายการใบเสร็จของคุณจากฐานข้อมูล...";
+  t2Call("t2MemberSlips",[],result=>{
+   if(!result||!result.ok){heading.textContent="ไม่สามารถโหลดใบเสร็จได้";return}
+   const slips=Array.isArray(result.slips)?result.slips:[];
+   heading.textContent="รายการใบเสร็จที่ Admin บันทึกให้คุณ • รายการรอตรวจสอบยังไม่ถือเป็นยอดลงทุนที่ยืนยันแล้ว";
+   const verified=slips.filter(x=>x.status==="verified");
+   const amount=verified.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+   const values=cards.querySelectorAll("strong");
+   if(values.length>=3){values[0].textContent=amount.toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2})+" บาท";values[1].textContent=String(verified.length);values[2].textContent="ยังไม่มีข้อมูลโปรที่ยืนยัน"}
+   const draw=()=>{
+    tbody.replaceChildren();
+    const rows=slips.filter(x=>filter.value==="all"||(filter.value==="verified"?x.status==="verified":x.status!=="verified"));
+    empty.style.display=rows.length?"none":"block";empty.textContent=slips.length?"ไม่มีรายการตามตัวกรอง":"ยังไม่มีใบเสร็จที่ Admin บันทึกให้คุณ";
+    rows.forEach(x=>{
+     const tr=document.createElement("tr");
+     [String(x.transfer_at||"").replace("T"," "),String(x.reference_last6||""),Number(x.amount||0).toLocaleString("th-TH")+" บาท","—","—",x.status==="verified"?"ยืนยันแล้ว":"รอตรวจสอบ"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td)});
+     tbody.append(tr);
+    });
+   };
+   filter.addEventListener("change",draw);draw();
+  },error=>{heading.textContent="โหลดรายการไม่สำเร็จ: "+error});
+ }
+
 }
 
 
