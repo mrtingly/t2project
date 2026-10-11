@@ -221,3 +221,12 @@ function t2AdminActivationHistory(token,status,limit){
   status:String(r.status),room_id:String(members.get(String(r.member_id)).room_id)
  }))};
 }
+
+function t2ActivationHistoryFilterTest(){
+ const statuses=["pending_admin","approved","claimed","rejected"];
+ const ok=statuses.every(s=>t2MemberActivationStatus_(s)===s)&&
+  t2MemberActivationStatus_("invalid")==="invalid"&&
+  !t2ActivationCanTransition_("claimed","approved");
+ if(!ok)throw Error("Activation history status policy failed");
+ return {ok:true,allowed_statuses:statuses};
+}
