@@ -17,6 +17,7 @@ function t2Json_(value){
 function doGet(e){
  // Public diagnostics only. Never expose credentials, users, or database contents.
  const p=(e&&e.parameter)||{};
+ if(p.action==="member_portal")return t2MemberPortalPage_();
  if(p.t2_probe==="1" || p.action==="health"){
   return t2Json_({service:"t2project",probe:"ok",version:2,mode:"public-health-only"});
  }
