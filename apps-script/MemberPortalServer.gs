@@ -114,7 +114,7 @@ function t2PortalGetContacts(token){
 function t2PortalSaveContacts(token,emergency,beneficiaries){
  const actor=t2PortalContactsActor_(token);
  if(!Array.isArray(emergency)||emergency.length<2||emergency.length>10||!Array.isArray(beneficiaries)||beneficiaries.length<1||beneficiaries.length>30)return {ok:false,error:"INVALID_COUNT"};
- const clean=(value,max)=>{if(typeof value!=="string"||value.length>max)throw Error("INVALID_INPUT");return value.trim()};
+ const clean=(value,max)=>{if(typeof value!=="string"||value.length>max)throw Error("INVALID_INPUT");const result=value.trim();if(/^[=+@]/.test(result))throw Error("INVALID_INPUT");return result};
  const e=emergency.map(x=>({full_name:clean(x.full_name,120),phone:clean(x.phone,30),relationship:clean(x.relationship,80)}));
  const b=beneficiaries.map(x=>({full_name:clean(x.full_name,120),phone:clean(x.phone,30),id_number:clean(x.id_number,30),percent:Number(x.percent)}));
  if(e.some(x=>!x.full_name||!x.phone)||b.some(x=>!x.full_name||!x.phone||!Number.isFinite(x.percent)||x.percent<=0||x.percent>100))return {ok:false,error:"INVALID_INPUT"};
