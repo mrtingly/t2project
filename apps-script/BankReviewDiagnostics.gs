@@ -6,9 +6,16 @@ function t2CheckBankReviewIntegrity(){
  const rh=r[0].map(String),ah=a[0].map(String);
  const id=rh.indexOf("request_id"),status=rh.indexOf("status"),aid=ah.indexOf("request_id"),decision=ah.indexOf("decision");
  if([id,status,aid,decision].some(i=>i<0))return {ok:false,error:"INVALID_SCHEMA"};
- const byId=new Map(),issues=[];
+ const byId=new Map(),issues=[],requestIds=new Set();
+ for(let i=1;i<r.length;i++){
+  const key=String(r[i][id]);
+  if(!key)issues.push({row:i+1,type:"EMPTY_REQUEST_ID"});
+  if(requestIds.has(key))issues.push({row:i+1,type:"DUPLICATE_REQUEST_ID",request_id:key});
+  requestIds.add(key);
+ }
  for(let i=1;i<a.length;i++){
   const key=String(a[i][aid]),value=String(a[i][decision]);
+  if(!requestIds.has(key))issues.push({row:i+1,type:"ORPHAN_AUDIT",request_id:key});
   if(byId.has(key))issues.push({row:i+1,type:"DUPLICATE_AUDIT",request_id:key});
   else byId.set(key,value);
  }
