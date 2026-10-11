@@ -12,7 +12,8 @@
 const T2_EMAIL_AUTH_ = Object.freeze({
   ttlSeconds: 300,
   cooldownSeconds: 90,
-  maxAttempts: 5
+  maxAttempts: 5,
+  maxCodeRequestsPerDay: 12
 });
 function t2EmailAuthDigest_(value) {
   return Utilities.base64EncodeWebSafe(
@@ -24,6 +25,10 @@ function t2EmailAuthChallengeKey_(email) {
 }
 function t2EmailAuthCooldownKey_(email) {
   return "t2:email:cooldown:" + t2EmailAuthDigest_(email.toLowerCase());
+}
+function t2EmailAuthRemainingSeconds_(issuedAt,now) {
+  const elapsed = Math.max(0,Math.floor((now-issuedAt)/1000));
+  return Math.max(0,T2_EMAIL_AUTH_.ttlSeconds-elapsed);
 }
 function t2EmailAuthRequest_(email) {
   const address = String(email || "").trim().toLowerCase();
@@ -37,6 +42,9 @@ function t2EmailAuthRequest_(email) {
   if (!requestLock.tryLock(10000)) return generic;
   try {
   if (cache.get(t2EmailAuthCooldownKey_(address))) return generic;
+  const dayKey="t2:email:daily:"+Utilities.formatDate(new Date(),"Asia/Bangkok","yyyyMMdd")+":"+t2EmailAuthDigest_(address);
+  const daily=Number(cache.get(dayKey)||0);
+  if(daily>=T2_EMAIL_AUTH_.maxCodeRequestsPerDay)return generic;
   // No public disclosure of whether an email exists in the Users table.
   const users = t2Rows_("Users");
   const user = users.find(u =>
@@ -50,7 +58,8 @@ function t2EmailAuthRequest_(email) {
   const nonce = Utilities.getUuid();
   const digest = t2EmailAuthDigest_(nonce + ":" + code);
   const key = t2EmailAuthChallengeKey_(address);
-  cache.put(key,JSON.stringify({nonce:nonce,digest:digest,attempts:0,user_id:String(user.user_id)}),T2_EMAIL_AUTH_.ttlSeconds);
+  cache.put(key,JSON.stringify({nonce:nonce,digest:digest,attempts:0,user_id:String(user.user_id),issued_at:Date.now()}),T2_EMAIL_AUTH_.ttlSeconds);
+  cache.put(dayKey,String(daily+1),86400);
   cache.put(t2EmailAuthCooldownKey_(address),"1",T2_EMAIL_AUTH_.cooldownSeconds);
   try {
     MailApp.sendEmail({
@@ -78,6 +87,8 @@ function t2EmailAuthConfirm_(email,code) {
     const raw = cache.get(key);
     if (!raw) return {ok:false,error:"INVALID_OR_EXPIRED_CODE"};
     const challenge = JSON.parse(raw);
+    const remaining=t2EmailAuthRemainingSeconds_(Number(challenge.issued_at),Date.now());
+    if(!Number.isFinite(remaining)||remaining<=0){cache.remove(key);return {ok:false,error:"INVALID_OR_EXPIRED_CODE"}}
     if (challenge.attempts >= T2_EMAIL_AUTH_.maxAttempts) {
       cache.remove(key);
       return {ok:false,error:"INVALID_OR_EXPIRED_CODE"};
@@ -85,7 +96,7 @@ function t2EmailAuthConfirm_(email,code) {
     challenge.attempts++;
     if (t2EmailAuthDigest_(challenge.nonce + ":" + input) !== challenge.digest) {
       if (challenge.attempts >= T2_EMAIL_AUTH_.maxAttempts) cache.remove(key);
-      else cache.put(key,JSON.stringify(challenge),T2_EMAIL_AUTH_.ttlSeconds);
+      else cache.put(key,JSON.stringify(challenge),remaining);
       return {ok:false,error:"INVALID_OR_EXPIRED_CODE"};
     }
     cache.remove(key);
