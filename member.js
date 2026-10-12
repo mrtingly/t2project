@@ -16,7 +16,7 @@ async function api(action,data={}){const r=await fetch(API_URL,{method:'POST',he
 let centralProfileReady=false,centralProfileFound=false;
 async function loadCentralProfile(){
  const d=await api('getMemberProfile');
- if(!d.ok)throw Error(d.message||'Backend ไม่รองรับการอ่านโปรไฟล์');
+ if(!d.ok)throw Error([d.message,d.error].filter(Boolean).join(' — ')||'Backend ไม่รองรับการอ่านโปรไฟล์');
  centralProfileReady=true;centralProfileFound=!!d.found;
  if(d.found&&d.data){
    profile={...profile,...(d.data.profile||{})};
