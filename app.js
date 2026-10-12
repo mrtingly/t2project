@@ -25,7 +25,7 @@ async function memberSearch(){
  try{
   const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}),data=await res.json();
   if(mode==='password'&&data.ok&&data.member&&data.token){
-   sessionStorage.setItem('t2_member',JSON.stringify({citizenId:'',documentId:'',memberId:data.member.memberId,firstName:data.member.firstName,lastName:data.member.lastName,token:data.token}));
+   sessionStorage.setItem('t2_member',JSON.stringify({citizenId:data.member.citizenId||'',documentId:data.member.citizenId||'',memberId:data.member.memberId,firstName:data.member.firstName,lastName:data.member.lastName,token:data.token}));
    location.href='member.html';return;
   }
   if(mode==='activate'&&data.ok){out.textContent='ตั้งบัญชีสำเร็จ กรุณาเลือกเข้าสู่ระบบด้วย User + Password';document.querySelector('input[value="password"]').checked=true;switchLoginMode();document.getElementById('memberResult').textContent='ตั้งบัญชีสำเร็จ กรุณาเข้าสู่ระบบด้วย User + Password';return}
