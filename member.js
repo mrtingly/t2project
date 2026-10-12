@@ -16,7 +16,7 @@ async function api(action,data={}){const r=await fetch(API_URL,{method:'POST',he
 let centralProfileReady=false,centralProfileFound=false;
 async function loadCentralProfile(){
  const d=await api('getMemberProfile');
- if(!d.ok)throw Error(d.message||'ไม่สามารถโหลดข้อมูลส่วนกลาง');
+ if(!d.ok)throw Error(d.message||'Backend ไม่รองรับการอ่านโปรไฟล์');
  centralProfileReady=true;centralProfileFound=!!d.found;
  if(d.found&&d.data){
    profile={...profile,...(d.data.profile||{})};
@@ -28,7 +28,7 @@ async function loadCentralProfile(){
  }
  fillEdit();renderBeneficiaries();renderContacts();renderProfile();
 }
-async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){console.warn('Central profile unavailable');}await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
+async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
 function toggleMemberMenu(){memberMenu.classList.toggle('open');memberShade.classList.toggle('show')}
 function showPage(id){document.querySelectorAll('.memberPage').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');toggleMemberMenu();if(id==='payments')loadBills()}
 function fillEdit(){firstName.value=m.firstName;lastName.value=m.lastName;citizenId.value=memberKey;phone.value=profile.phone||'';email.value=profile.email||'';bank.value=profile.bank||'';bankAccount.value=profile.bankAccount||'';address.value=profile.address||'';mapUrl.value=profile.mapUrl||'';updateMapLink();if(profile.photo){editAvatar.innerHTML='<img src="'+profile.photo+'">';avatar.innerHTML='<img src="'+profile.photo+'">'}if(profile.idCardPhoto&&window.idCardPreview){idCardPreview.src=profile.idCardPhoto;idCardPreview.classList.remove('hidden')}}
@@ -38,7 +38,7 @@ function previewPhoto(input){const f=input.files[0];if(!f)return;const r=new Fil
 function previewIdCard(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.idCardPhoto=r.result;if(window.idCardPreview){idCardPreview.src=r.result;idCardPreview.classList.remove('hidden')}};r.readAsDataURL(f)}
 function updateMapLink(){if(!window.openMapPin||!window.mapUrl)return;const u=mapUrl.value.trim();openMapPin.classList.toggle('hidden',!u);if(u)openMapPin.href=u}
 async function saveProfile(){
- if(!centralProfileReady){alert('ยังเชื่อมต่อฐานข้อมูลกลางไม่ได้ กรุณาลองใหม่ เพื่อป้องกันข้อมูลสูญหาย');return}
+ if(!centralProfileReady){alert('ยังเชื่อมต่อฐานข้อมูลกลางไม่ได้: '+(window.t2ProfileError||'ไม่ทราบสาเหตุ')+'\nข้อมูลที่กรอกยังอยู่ในหน้านี้ กรุณาอย่าปิดแท็บ');return}
  const b=beneficiaryDraft(),t=contactDraft(),err=validateBeneficiaries(b);
  if(err){alert(err);return}
  const nextProfile={...profile,phone:phone.value.trim(),email:email.value.trim(),bank:bank.value.trim(),bankAccount:bankAccount.value.trim(),address:address.value.trim(),mapUrl:mapUrl.value.trim()};
