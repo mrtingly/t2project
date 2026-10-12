@@ -15,7 +15,7 @@ function sameMemberId(v){return String(v??'').trim().replace(/\s+/g,'').toUpperC
 async function api(action,data={}){const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:m.token,...data})});return r.json()}
 let centralProfileReady=false,centralProfileFound=false;
 async function loadCentralProfile(){
- const d=await api('getMemberProfile');
+ const d=await api('getMemberProfile',{profileGrant});
  if(!d.ok)throw Error([d.message,d.error].filter(Boolean).join(' — ')||'Backend ไม่รองรับการอ่านโปรไฟล์');
  centralProfileReady=true;centralProfileFound=!!d.found;
  if(d.found&&d.data){
@@ -38,7 +38,33 @@ function renderProfile(){
  displayName.textContent=name();
  profileView.innerHTML='<div class="profileInfo"><div><small>ชื่อ-นามสกุล</small><b>'+esc(name())+'</b></div><div><small>ข้อมูลส่วนบุคคล</small><b>🔒 ปกปิดเพื่อความปลอดภัย</b></div><div><small>เบอร์โทรศัพท์</small><b>••••••'+esc(String(profile.phone||'').slice(-4))+'</b></div><div><small>อีเมล</small><b>🔒 ปกปิด</b></div><div><small>บัญชีธนาคาร</small><b>🔒 ปกปิด</b></div><div><small>ที่อยู่และพิกัด</small><b>🔒 ปกปิด</b></div></div><div class="profileInfo"><div><small>ผู้ติดต่อเพิ่มเติม</small><b>'+contacts.length+' รายชื่อ (ปกปิดรายละเอียด)</b></div><div><small>ผู้รับผลประโยชน์</small><b>'+beneficiaries.length+' รายชื่อ (ปกปิดรายละเอียด)</b></div></div><p style="padding:12px;color:#506580;font-size:13px">🔒 ข้อมูลสำคัญจะเปิดให้ดูหรือแก้ไขหลังยืนยันตัวตนใหม่ผ่านระบบที่ปลอดภัย</p>';
 }
-function setEdit(v){if(v){alert('เพื่อความปลอดภัย ระบบพักการเปิดข้อมูลและแก้ไขโปรไฟล์ชั่วคราว จนกว่าจะติดตั้งการยืนยันตัวตนซ้ำที่ Backend');return}profileView.classList.toggle('hidden',v);profileEdit.classList.toggle('hidden',!v);if(v)fillEdit()}
+let profileGrant='',profileGrantUntil=0;
+async function setEdit(v){
+ if(v){
+  if(!profileGrant||Date.now()>profileGrantUntil){
+   try{
+    const status=await api('profilePasswordStatus');
+    if(!status.ok){alert('ระบบยืนยันตัวตนยังไม่พร้อม กรุณาตรวจสอบ Backend');return}
+    const pw=window.prompt(status.hasPassword?'กรอกรหัสผ่านเพื่อเปิดโปรไฟล์ (สิทธิ์ 10 นาที)':'ตั้งรหัสผ่านใหม่อย่างน้อย 12 ตัว มีตัวอักษรอังกฤษและตัวเลข');
+    if(pw===null)return;
+    if(!status.hasPassword){
+     const confirmation=window.prompt('กรอกรหัสผ่านใหม่อีกครั้งเพื่อยืนยัน');
+     if(confirmation!==pw){alert('รหัสผ่านไม่ตรงกัน');return}
+     const setup=await api('setupProfilePassword',{password:pw});
+     if(!setup.ok){alert(setup.message||'ตั้งรหัสผ่านไม่สำเร็จ');return}
+    }
+    const unlock=await api('unlockMemberProfile',{password:pw});
+    if(!unlock.ok){alert(unlock.message||'ยืนยันตัวตนไม่สำเร็จ');return}
+    profileGrant=unlock.profileGrant;profileGrantUntil=Date.now()+Math.min(600,unlock.expiresIn||600)*1000;centralProfileReady=true;
+    const d=await api('getMemberProfile',{profileGrant});
+    if(!d.ok){alert(d.message||'ไม่สามารถโหลดโปรไฟล์');return}
+    if(d.found&&d.data){profile={...profile,...d.data.profile};contacts=d.data.contacts||[];beneficiaries=d.data.beneficiaries||[]}
+    fillEdit();renderContacts();renderBeneficiaries();
+   }catch(e){alert('ไม่สามารถติดต่อระบบยืนยันตัวตนได้');return}
+  }
+ }
+ profileView.classList.toggle('hidden',v);profileEdit.classList.toggle('hidden',!v);if(v)fillEdit();
+}
 function previewPhoto(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.photo=r.result;editAvatar.innerHTML='<img src="'+r.result+'">';avatar.innerHTML='<img src="'+r.result+'">'};r.readAsDataURL(f)}
 let cardMaskSource='',cardMaskRects=[],cardMaskDrag=null;
 function openCardMask(){
@@ -67,13 +93,13 @@ function confirmCardMask(){
 function previewIdCard(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.idCardPhoto=r.result;if(window.idCardPreview){idCardPreview.src=r.result;idCardPreview.classList.remove('hidden')}};r.readAsDataURL(f)}
 function updateMapLink(){if(!window.openMapPin||!window.mapUrl)return;const u=mapUrl.value.trim();openMapPin.classList.toggle('hidden',!u);if(u)openMapPin.href=u}
 async function saveProfile(){
- if(!centralProfileReady){alert('ยังเชื่อมต่อฐานข้อมูลกลางไม่ได้: '+(window.t2ProfileError||'ไม่ทราบสาเหตุ')+'\nข้อมูลที่กรอกยังอยู่ในหน้านี้ กรุณาอย่าปิดแท็บ');return}
+ if(!profileGrant||Date.now()>profileGrantUntil){alert('สิทธิ์หมดอายุ กรุณายืนยันตัวตนอีกครั้ง');return}
  const b=beneficiaryDraft(),t=contactDraft(),err=validateBeneficiaries(b);
  if(err){alert(err);return}
  const nextProfile={...profile,phone:phone.value.trim(),email:email.value.trim(),bank:bank.value.trim(),bankAccount:bankAccount.value.trim(),address:address.value.trim(),mapUrl:mapUrl.value.trim()};
  const btn=document.querySelector('#profileEdit .primary');if(btn)btn.disabled=true;
  try{
-   const d=await api('saveMemberProfile',{data:{profile:nextProfile,contacts:t,beneficiaries:b}});
+   const d=await api('saveMemberProfile',{profileGrant,data:{profile:nextProfile,contacts:t,beneficiaries:b}});
    if(!d.ok){alert(d.message||'บันทึกข้อมูลไม่สำเร็จ');return}
    profile=nextProfile;beneficiaries=b;contacts=t;centralProfileFound=true;
    m.firstName=firstName.value.trim()||m.firstName;m.lastName=lastName.value.trim()||m.lastName;
