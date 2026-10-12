@@ -13,7 +13,22 @@ function money(n){return '฿'+Number(n||0).toLocaleString('th-TH')}
 function name(){return m.firstName+' '+m.lastName}
 function sameMemberId(v){return String(v??'').trim().replace(/\s+/g,'').toUpperCase()===memberKey}
 async function api(action,data={}){const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:m.token,...data})});return r.json()}
-async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
+let centralProfileReady=false,centralProfileFound=false;
+async function loadCentralProfile(){
+ const d=await api('getMemberProfile');
+ if(!d.ok)throw Error(d.message||'ไม่สามารถโหลดข้อมูลส่วนกลาง');
+ centralProfileReady=true;centralProfileFound=!!d.found;
+ if(d.found&&d.data){
+   profile={...profile,...(d.data.profile||{})};
+   beneficiaries=Array.isArray(d.data.beneficiaries)?d.data.beneficiaries:[];
+   contacts=Array.isArray(d.data.contacts)?d.data.contacts:[];
+   localStorage.setItem(key('profile'),JSON.stringify(profile));
+   localStorage.setItem(key('beneficiaries'),JSON.stringify(beneficiaries));
+   localStorage.setItem(key('othercontacts'),JSON.stringify(contacts));
+ }
+ fillEdit();renderBeneficiaries();renderContacts();renderProfile();
+}
+async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){console.warn('Central profile unavailable');}await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
 function toggleMemberMenu(){memberMenu.classList.toggle('open');memberShade.classList.toggle('show')}
 function showPage(id){document.querySelectorAll('.memberPage').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');toggleMemberMenu();if(id==='payments')loadBills()}
 function fillEdit(){firstName.value=m.firstName;lastName.value=m.lastName;citizenId.value=memberKey;phone.value=profile.phone||'';email.value=profile.email||'';bank.value=profile.bank||'';bankAccount.value=profile.bankAccount||'';address.value=profile.address||'';mapUrl.value=profile.mapUrl||'';updateMapLink();if(profile.photo){editAvatar.innerHTML='<img src="'+profile.photo+'">';avatar.innerHTML='<img src="'+profile.photo+'">'}if(profile.idCardPhoto&&window.idCardPreview){idCardPreview.src=profile.idCardPhoto;idCardPreview.classList.remove('hidden')}}
@@ -22,18 +37,37 @@ function setEdit(v){profileView.classList.toggle('hidden',v);profileEdit.classLi
 function previewPhoto(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.photo=r.result;editAvatar.innerHTML='<img src="'+r.result+'">';avatar.innerHTML='<img src="'+r.result+'">'};r.readAsDataURL(f)}
 function previewIdCard(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.idCardPhoto=r.result;if(window.idCardPreview){idCardPreview.src=r.result;idCardPreview.classList.remove('hidden')}};r.readAsDataURL(f)}
 function updateMapLink(){if(!window.openMapPin||!window.mapUrl)return;const u=mapUrl.value.trim();openMapPin.classList.toggle('hidden',!u);if(u)openMapPin.href=u}
-function saveProfile(){if(!persistRelations())return;m.firstName=firstName.value.trim()||m.firstName;m.lastName=lastName.value.trim()||m.lastName;sessionStorage.setItem('t2_member',JSON.stringify(m));profile={...profile,phone:phone.value.trim(),email:email.value.trim(),bank:bank.value.trim(),bankAccount:bankAccount.value.trim(),address:address.value.trim(),mapUrl:mapUrl.value.trim()};localStorage.setItem(key('profile'),JSON.stringify(profile));renderProfile();setEdit(false)}
+async function saveProfile(){
+ if(!centralProfileReady){alert('ยังเชื่อมต่อฐานข้อมูลกลางไม่ได้ กรุณาลองใหม่ เพื่อป้องกันข้อมูลสูญหาย');return}
+ const b=beneficiaryDraft(),t=contactDraft(),err=validateBeneficiaries(b);
+ if(err){alert(err);return}
+ const nextProfile={...profile,phone:phone.value.trim(),email:email.value.trim(),bank:bank.value.trim(),bankAccount:bankAccount.value.trim(),address:address.value.trim(),mapUrl:mapUrl.value.trim()};
+ const btn=document.querySelector('#profileEdit .primary');if(btn)btn.disabled=true;
+ try{
+   const d=await api('saveMemberProfile',{data:{profile:nextProfile,contacts:t,beneficiaries:b}});
+   if(!d.ok){alert(d.message||'บันทึกข้อมูลไม่สำเร็จ');return}
+   profile=nextProfile;beneficiaries=b;contacts=t;centralProfileFound=true;
+   m.firstName=firstName.value.trim()||m.firstName;m.lastName=lastName.value.trim()||m.lastName;
+   sessionStorage.setItem('t2_member',JSON.stringify(m));
+   localStorage.setItem(key('profile'),JSON.stringify(profile));
+   localStorage.setItem(key('beneficiaries'),JSON.stringify(beneficiaries));
+   localStorage.setItem(key('othercontacts'),JSON.stringify(contacts));
+   renderProfile();renderBeneficiaries();renderContacts();setEdit(false);
+   alert('บันทึกโปรไฟล์ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
+ }catch(e){alert('เชื่อมต่อฐานข้อมูลกลางไม่สำเร็จ ข้อมูลยังไม่ถูกบันทึก')}
+ finally{if(btn)btn.disabled=false}
+}
 function beneficiaryDraft(){return Array.from(document.querySelectorAll('.beneficiaryCard:not(.contactCard)')).map(e=>({firstName:e.querySelector('.bf').value.trim(),lastName:e.querySelector('.bl').value.trim(),phone:e.querySelector('.bp').value.trim(),citizenId:e.querySelector('.bi').value.trim(),percent:e.querySelector('.pct').value.trim()}))}
 function contactDraft(){return Array.from(document.querySelectorAll('.contactCard')).map(e=>({firstName:e.querySelector('.cf').value.trim(),lastName:e.querySelector('.cl').value.trim(),phone:e.querySelector('.cp').value.trim()}))}
 function validateBeneficiaries(items){let sum=0;for(const b of items){if(b.percent!==''&&(!Number.isFinite(Number(b.percent))||Number(b.percent)<0||Number(b.percent)>100))return 'เปอร์เซ็นต์ต้องอยู่ระหว่าง 0 ถึง 100';sum+=Number(b.percent||0)}if(sum>100.000001)return 'ผลรวมผู้รับผลประโยชน์ '+sum.toLocaleString('th-TH')+'% เกิน 100%';return ''}
 function persistRelations(){const b=beneficiaryDraft(),t=contactDraft(),error=validateBeneficiaries(b);if(error){alert(error);return false}beneficiaries=b;contacts=t;localStorage.setItem(key('beneficiaries'),JSON.stringify(b));localStorage.setItem(key('othercontacts'),JSON.stringify(t));renderBeneficiaries();renderContacts();renderProfile();return true}
 function addBeneficiary(){beneficiaries=beneficiaryDraft();beneficiaries.push({firstName:'',lastName:'',phone:'',citizenId:'',percent:''});renderBeneficiaries()}
-function removeBeneficiary(i){beneficiaries=beneficiaryDraft();beneficiaries.splice(i,1);renderBeneficiaries();persistRelations()}
-function saveBeneficiaries(){if(persistRelations())alert('บันทึกผู้รับผลประโยชน์เรียบร้อยแล้ว')}
+function removeBeneficiary(i){beneficiaries=beneficiaryDraft();beneficiaries.splice(i,1);renderBeneficiaries()}
+function saveBeneficiaries(){alert('กรุณากด บันทึก Profile ด้านบน เพื่อบันทึกข้อมูลทั้งหมดลงฐานกลาง')}
 function renderBeneficiaries(){beneficiaryList.innerHTML=beneficiaries.map((b,i)=>'<div class="beneficiaryCard"><div class="cardHead"><b>ผู้รับผลประโยชน์ '+(i+1)+'</b><button type="button" onclick="removeBeneficiary('+i+')">ลบ</button></div><div class="twoCol"><label>ชื่อ<input class="bf" value="'+esc(b.firstName)+'"></label><label>นามสกุล<input class="bl" value="'+esc(b.lastName)+'"></label></div><label>เบอร์โทรศัพท์<input class="bp" value="'+esc(b.phone)+'"></label><label>เลขบัตรประชาชน<input class="bi" maxlength="13" value="'+esc(b.citizenId)+'"></label><label>ผลประโยชน์ (%)<input class="pct" type="number" min="0" max="100" step="any" value="'+esc(b.percent)+'"></label></div>').join('');if(beneficiaries.length)beneficiaryList.innerHTML+='<button class="primary" type="button" onclick="saveBeneficiaries()">บันทึกผู้รับผลประโยชน์</button>'}
 function addContact(){contacts=contactDraft();contacts.push({firstName:'',lastName:'',phone:''});renderContacts()}
-function removeContact(i){contacts=contactDraft();contacts.splice(i,1);renderContacts();persistRelations()}
-function saveContacts(){if(persistRelations())alert('บันทึกผู้ติดต่อเรียบร้อยแล้ว')}
+function removeContact(i){contacts=contactDraft();contacts.splice(i,1);renderContacts()}
+function saveContacts(){alert('กรุณากด บันทึก Profile ด้านบน เพื่อบันทึกข้อมูลทั้งหมดลงฐานกลาง')}
 function renderContacts(){contactList.innerHTML=contacts.map((c,i)=>'<div class="beneficiaryCard contactCard"><div class="cardHead"><b>บุคคลติดต่อ '+(i+1)+'</b><button type="button" onclick="removeContact('+i+')">ลบ</button></div><div class="twoCol"><label>ชื่อ<input class="cf" value="'+esc(c.firstName)+'"></label><label>นามสกุล<input class="cl" value="'+esc(c.lastName)+'"></label></div><label>เบอร์โทรศัพท์<input class="cp" value="'+esc(c.phone)+'"></label></div>').join('');if(contacts.length)contactList.innerHTML+='<button class="primary" type="button" onclick="saveContacts()">บันทึกผู้ติดต่อ</button>'}
 async function loadBills(){allBills.innerHTML='<div class="info">กำลังโหลดรายการ...</div>';const d=await api('getMyPayments');if(!d.ok){allBills.innerHTML='<div class="warn">ไม่สามารถโหลดรายการได้</div>';return}const rows=d.items||d.payments||[];BILLS=rows.filter(x=>{const id=x.documentId||x.document_id||x.citizenId||x.citizen_id||'';if(id)return sameMemberId(id);const fn=String(x.firstName||x.first_name||'').trim(),ln=String(x.lastName||x.last_name||'').trim();return fn===String(m.firstName||'').trim()&&ln===String(m.lastName||'').trim()});BILLS.sort((a,b)=>String(b.transferDate||b.transfer_date||b.date||'').localeCompare(String(a.transferDate||a.transfer_date||a.date||''))||String(b.transferTime||b.transfer_time||b.time||'').localeCompare(String(a.transferTime||a.transfer_time||a.time||'')));renderBills()}
 function ref6(x){const r=String(x.referenceNo||x.reference_no||x.reference||'').trim();return r.length>6?r.slice(-6):r}
