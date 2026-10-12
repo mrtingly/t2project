@@ -1,4 +1,4 @@
-const API_URL='https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec';
+const API_URL='https://script.google.com/macros/s/AKfycby9BfiDhWmUCKMymNXF1Ia02Bv4KJQatJYqE9pVYcGWhholh52FCe7onfC8J4D0stlp/exec';
 function normalizeName(v){return String(v||'').trim().replace(/^(นาย|นางสาว|นาง|น\.ส\.|น\.ส)\s*/,'').replace(/\s+/g,' ')}
 function switchMemberType(){const t=document.getElementById('memberType').value,i=document.getElementById('citizenId'),l=document.getElementById('documentLabel'),c=document.getElementById('countryWrap');if(t==='thai'){l.textContent='เลขบัตรประชาชน 13 หลัก';i.placeholder='เลขบัตรประชาชน';i.maxLength=13;i.inputMode='numeric';c.style.display='none'}else{l.textContent=t==='lao'?'Passport / รหัสสมาชิก (เช่น PA...)':'Passport';i.placeholder=t==='lao'?'Passport หรือ PA...':'Passport';i.maxLength=30;i.inputMode='text';c.style.display=t==='foreign'?'block':'none'}}
 
