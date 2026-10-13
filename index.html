@@ -9,7 +9,7 @@
 <label><span id="documentLabel">เลขบัตรประชาชน 13 หลัก</span><div class="inputBox"><span>▣</span><input id="citizenId" maxlength="13" inputmode="numeric" autocomplete="off" placeholder="เลขบัตรประชาชน"></div></label>
 <label>ชื่อ-นามสกุล<div class="inputBox"><span>●</span><input id="fullName" autocomplete="name" placeholder="ชื่อ นามสกุล (ไม่ต้องใส่คำนำหน้า)"></div></label>
 <label>รหัสเปิดใช้งานจากแอดมิน<div class="inputBox"><input id="activationCode" autocomplete="off" placeholder="รหัสที่ได้รับหลังอนุมัติ"></div></label><label>ตั้งชื่อผู้ใช้ (User)<div class="inputBox"><input id="newUsername" autocomplete="username" placeholder="ภาษาอังกฤษ 6-30 ตัว"></div></label><label>ตั้งรหัสผ่าน<div class="inputBox"><input id="newPassword" type="password" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัว มีตัวอักษรและตัวเลข"><button type="button" aria-label="แสดงรหัสผ่าน" aria-pressed="false" onclick="t2TogglePassword('newPassword',this)" style="flex:none;min-width:48px;min-height:44px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#183153;cursor:pointer">👁️ ดู</button></div></label><label>ยืนยันรหัสผ่าน<div class="inputBox"><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="กรอกรหัสผ่านซ้ำ"><button type="button" aria-label="แสดงรหัสผ่าน" aria-pressed="false" onclick="t2TogglePassword('confirmPassword',this)" style="flex:none;min-width:48px;min-height:44px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#183153;cursor:pointer">👁️ ดู</button></div></label></div></div>
-<button id="loginBtn" class="primary" onclick="memberSearch()">เข้าสู่ระบบ <span>›</span></button><div id="memberResult"></div>
+<button id="loginBtn" class="primary" onclick="memberSearch()">เข้าสู่ระบบ <span>›</span></button><button id="passkeyLoginBtn" hidden type="button" onclick="t2PasskeyLogin()" style="margin-top:10px;padding:14px;border-radius:12px;width:100%;background:#eaf3ff;color:#123b78;border:1px solid #b9d5f5">🔐 เข้าสู่ระบบด้วยโทรศัพท์ (Passkey)</button><div id="memberResult"></div>
 <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e7edf5;text-align:center;font-size:14px"><a href="admin-login.html">เจ้าหน้าที่ Admin</a><span style="margin:0 10px;color:#b5bfcc">•</span><a href="owner.html">Owner</a></div>
 </section></main><script src="app.js?v=19"></script><script>
 function t2TogglePassword(id,btn){
@@ -19,4 +19,4 @@ function t2TogglePassword(id,btn){
  btn.setAttribute('aria-label',show?'ซ่อนรหัสผ่าน':'แสดงรหัสผ่าน');
  btn.setAttribute('aria-pressed',String(show));
 }
-</script></body></html>
+</script><script src="passkey-login.js?v=1"></script></body></html>
