@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT — ตรวจสอบความพร้อม Passkey</title>
+<style>body{font-family:system-ui,"Prompt",sans-serif;background:#f5f7fc;color:#17213a;margin:0;padding:24px}main{max-width:600px;margin:30px auto;background:white;padding:26px;border-radius:18px;box-shadow:0 8px 35px #132b5215}h1{font-size:1.55rem}button{background:#155ad2;color:white;border:0;border-radius:12px;padding:15px 20px;font-size:1rem;cursor:pointer}li{margin:13px 0}#result{white-space:pre-line;line-height:1.8;background:#f2f5fa;padding:16px;border-radius:12px;margin-top:20px}.note{font-size:.9rem;color:#53627a}</style></head><body><main><h1>🔐 T2PROJECT — ตรวจสอบ Passkey</h1><p>ตรวจว่าโทรศัพท์หรือคอมพิวเตอร์รองรับการยืนยันด้วยลายนิ้วมือ ใบหน้า หรือ PIN สำหรับเว็บไซต์หรือไม่</p><button id="check">ตรวจสอบอุปกรณ์นี้</button><div id="result" role="status" aria-live="polite">ยังไม่ได้ตรวจสอบ</div><p class="note">หน้านี้เป็นการตรวจความพร้อมเท่านั้น ยังไม่ลงทะเบียน Passkey และยังไม่ปลดล็อกโปรไฟล์ ไม่มีการส่งข้อมูลชีวมิติหรือรหัสผ่านไปยังเซิร์ฟเวอร์</p><p><a href="./member.html">กลับหน้า T2PROJECT สมาชิก</a></p></main>
+<script>
+document.getElementById('check').addEventListener('click',async()=>{
+ const out=document.getElementById('result');const lines=[];
+ lines.push('HTTPS: '+(window.isSecureContext?'พร้อม':'ไม่พร้อม'));
+ lines.push('WebAuthn API: '+(!!window.PublicKeyCredential&&!!navigator.credentials?'รองรับ':'ไม่รองรับ'));
+ if(window.PublicKeyCredential){
+  if(typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable==='function'){
+   try{const ok=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();lines.push('ตัวตรวจสอบในอุปกรณ์: '+(ok?'มี':'ไม่พบหรือไม่รองรับ'))}catch(e){lines.push('ตัวตรวจสอบในอุปกรณ์: ตรวจไม่ได้')}
+  }
+  if(typeof PublicKeyCredential.isConditionalMediationAvailable==='function'){
+   try{lines.push('Conditional UI: '+((await PublicKeyCredential.isConditionalMediationAvailable())?'รองรับ':'ไม่รองรับ'))}catch(e){lines.push('Conditional UI: ตรวจไม่ได้')}
+  }
+ }
+ lines.push('\nผลนี้ไม่ได้ยืนยันว่า Passkey พร้อมใช้งานกับ T2PROJECT จนกว่าจะมีระบบตรวจสอบฝั่ง Backend');
+ out.textContent=lines.join('\n');
+});
+</script></body></html>
