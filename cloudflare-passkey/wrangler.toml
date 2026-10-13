@@ -1,0 +1,8 @@
+name = "t2project-passkey"
+main = "src/index.js"
+compatibility_date = "2026-10-14"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "t2project-passkey-db"
+database_id = "76884cd8-57cd-4588-a5a7-d261218c4d98"
