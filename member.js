@@ -4,7 +4,7 @@ const MEMBER_MONEY_RULES=[
 function memberPromo(x){let d=String(x.transferDate||x.transfer_date||x.date||"");const p=d.split("-");if(p.length===3&&Number(p[0])>2400)p[0]=String(Number(p[0])-543);d=p.join("-");const a=Number(x.amount||0),rs=MEMBER_MONEY_RULES.filter(r=>d>=r.from&&d<=r.to),matches=[];rs.forEach(r=>{const exact=r.tiers.find(t=>a===t[0]);if(exact){matches.push({period:r.n,receive:exact[1]});return}const ratios=r.tiers.map(t=>t[1]/t[0]);if(ratios.length&&ratios.every(v=>Math.abs(v-ratios[0])<.000001)&&a>0)matches.push({period:r.n,receive:Math.round(a*ratios[0])})});return matches.length?{status:"matched",period:matches.map(v=>v.period).join(","),receive:Math.max(...matches.map(v=>v.receive))}:rs.length?{status:"review",receive:0}:{status:"none",receive:0}}
 function memberReward(x){const saved=Number(x.promoReturn||x.promo_return||x.reward||0);if(saved>0)return {status:"saved",receive:saved,period:String(x.rulePeriod||x.rule_period||"")};return memberPromo(x)}
 
-const API_URL='https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec';
+const API_URL='https://script.google.com/macros/s/AKfycby9BfiDhWmUCKMymNXF1Ia02Bv4KJQatJYqE9pVYcGWhholh52FCe7onfC8J4D0stlp/exec';
 const m=JSON.parse(sessionStorage.getItem('t2_member')||'null');if(!m||!m.token)location.href='index.html';
 const memberKey=String(m.documentId||m.citizenId||'').trim().replace(/\s+/g,'').toUpperCase();
 const key=x=>'t2_'+x+'_'+memberKey;let profile=JSON.parse(localStorage.getItem(key('profile'))||'{}'),beneficiaries=JSON.parse(localStorage.getItem(key('beneficiaries'))||'[]'),contacts=JSON.parse(localStorage.getItem(key('othercontacts'))||'[]'),BILLS=[];
