@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2PROJECT ทดสอบ Passkey</title>
+<style>body{font-family:system-ui,sans-serif;background:#f3f6fb;color:#17213a;padding:20px}main{max-width:560px;margin:25px auto;background:white;padding:25px;border-radius:18px}label{display:block;margin:18px 0 7px}input,button{box-sizing:border-box;width:100%;font:inherit;padding:15px;border-radius:10px;border:1px solid #aebbd0}button{margin-top:16px;background:#155ad2;color:white;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;background:#eef3fa;padding:16px;line-height:1.7}</style>
+<main><h1>ทดสอบ Passkey</h1><p>ทดสอบการสร้างและยืนยัน Passkey เท่านั้น ยังไม่เข้าสู่บัญชีสมาชิก</p>
+<label for="user">ชื่อผู้ทดสอบ (ใช้ชื่อเดิมทั้งสองขั้นตอน)</label><input id="user" value="t2_test_01" autocomplete="off" pattern="[a-zA-Z0-9_-]{3,64}">
+<label for="secret">รหัส TEST_ENROLL_SECRET ที่ตั้งใน Cloudflare</label><input id="secret" type="password" autocomplete="off"><p>รหัสนี้ใช้เฉพาะตอนสร้าง Passkey และส่งไปยัง Worker ของคุณ ไม่บันทึกในหน้านี้</p>
+<button id="register">1. สร้าง Passkey</button><button id="auth">2. ยืนยันด้วย Passkey</button>
+<pre id="result" role="status" aria-live="polite">พร้อมทดสอบ</pre></main>
+<script>
+'use strict';
+const endpoint='https://t2project-passkey.mrtingly1.workers.dev';
+const $=id=>document.getElementById(id);
+const decode=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
+function encode(b){return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+async function api(action,userId,extra={}){const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,userId,...extra})});let d;try{d=await r.json()}catch{throw Error('Worker ไม่ส่งผล JSON (HTTP '+r.status+')')}if(!r.ok||!d.ok)throw Error(d.message||'คำขอไม่สำเร็จ (HTTP '+r.status+')');return d}
+function options(o){o.challenge=decode(o.challenge);if(o.user)o.user.id=decode(o.user.id);for(const key of ['excludeCredentials','allowCredentials'])if(o[key])o[key]=o[key].map(c=>({...c,id:decode(c.id)}));return o}
+function response(c){const r=c.response;const d={id:c.id,rawId:encode(c.rawId),type:c.type,clientExtensionResults:c.getClientExtensionResults(),response:{clientDataJSON:encode(r.clientDataJSON)}};if(c.authenticatorAttachment)d.authenticatorAttachment=c.authenticatorAttachment;if(r.attestationObject){d.response.attestationObject=encode(r.attestationObject);d.response.transports=r.getTransports?r.getTransports():[]}else{d.response.authenticatorData=encode(r.authenticatorData);d.response.signature=encode(r.signature);d.response.userHandle=r.userHandle?encode(r.userHandle):null}return d}
+async function run(register){
+ $('register').disabled=$('auth').disabled=true;
+ try{
+ if(!isSecureContext||!window.PublicKeyCredential)throw Error('อุปกรณ์หรือเบราว์เซอร์ไม่รองรับ Passkey');
+ const userId=$('user').value.trim();if(!/^[a-zA-Z0-9_-]{3,64}$/.test(userId))throw Error('ชื่อผู้ทดสอบต้องเป็นภาษาอังกฤษ ตัวเลข _ หรือ - ยาว 3–64 ตัว');
+ const testSecret=$('secret').value;if(register&&!testSecret)throw Error('กรอกรหัส TEST_ENROLL_SECRET ก่อน');
+ $('result').textContent='กำลังขอให้คุณยืนยันด้วยอุปกรณ์…';
+ const d=await api(register?'registerBegin':'authBegin',userId,register?{testSecret}:{});
+ const c=register?await navigator.credentials.create({publicKey:options(d.options)}):await navigator.credentials.get({publicKey:options(d.options)});
+ if(!c)throw Error('ไม่ได้รับ Passkey');
+ const out=await api(register?'registerFinish':'authFinish',userId,{response:response(c),...(register?{testSecret}:{})});
+ $('result').textContent=register?'สร้างและบันทึก Passkey สำเร็จ\nต่อไปกด 2. ยืนยันด้วย Passkey':(out.passkeyVerified?'ยืนยัน Passkey สำเร็จ\nproductionLogin: false\nการทดสอบครบทั้งสร้างและยืนยันแล้ว':JSON.stringify(out));
+ if(register)$('secret').value='';
+ }catch(e){$('result').textContent='ทดสอบไม่สำเร็จ: '+e.message}
+ finally{$('register').disabled=$('auth').disabled=false}
+}
+$('register').onclick=()=>run(true);$('auth').onclick=()=>run(false);
+</script></html>
