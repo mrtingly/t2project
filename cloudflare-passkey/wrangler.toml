@@ -1,6 +1,13 @@
 name = "t2project-passkey"
 main = "src/index.js"
-compatibility_date = "2026-10-14"
+compatibility_date = "2026-10-13"
+preview_urls = false
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
 
 [vars]
 RP_ID = "mrtingly.github.io"
