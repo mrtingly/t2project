@@ -1,0 +1,1 @@
+{"name":"t2project-passkey-test","private":true,"type":"module","scripts":{"deploy":"wrangler deploy","check":"node --check src/index.js"},"dependencies":{"@simplewebauthn/server":"^13.2.2"},"devDependencies":{"wrangler":"^4.0.0"}}
