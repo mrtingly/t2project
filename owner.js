@@ -1,4 +1,4 @@
-const API_URL='https://script.google.com/macros/s/AKfycby9BfiDhWmUCKMymNXF1Ia02Bv4KJQatJYqE9pVYcGWhholh52FCe7onfC8J4D0stlp/exec';let staff=JSON.parse(sessionStorage.getItem('t2_owner')||'null'),REPORT=[];
+const API_URL='https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec';let staff=JSON.parse(sessionStorage.getItem('t2_owner')||'null'),REPORT=[];
 async function call(action,data={},token=staff&&staff.token){
  const r=await fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token,...data})});
  const raw=await r.text();
