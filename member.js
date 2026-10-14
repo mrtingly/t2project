@@ -141,7 +141,7 @@ function openPrint(html,title){const w=window.open('','_blank');if(!w){alert('�
 function printReceipt(i){const x=BILLS[i];if(!x)return;openPrint(receiptHtml(x,i),'T2Project Receipt '+(i+1))}
 function printAllReceipts(){if(!BILLS.length){alert('ยังไม่มีรายการสำหรับพิมพ์');return}openPrint(BILLS.map((x,i)=>receiptHtml(x,i)).join(''),'T2Project Receipts')}
 
-async function reviewPayment(paymentId,reviewStatus,note=''){try{const d=await api('reviewPayment',{paymentId,reviewStatus,memberNote:note});if(!d.ok){alert(d.message||'บันทึกสถานะไม่สำเร็จ');return}await loadBills()}catch(e){alert('เชื่อมต่อระบบไม่ได้')}}
+async function reviewPayment(paymentId,reviewStatus,note=''){try{const d=await api('reviewPayment',{paymentId,status:reviewStatus,note:note});if(!d.ok){alert(d.message||'บันทึกสถานะไม่สำเร็จ');return}await loadBills()}catch(e){alert('เชื่อมต่อระบบไม่ได้')}}
 function reviewIncorrect(id){const note=prompt('กรุณาระบุข้อมูลที่ไม่ถูกต้อง');if(note===null)return;if(!note.trim()){alert('กรุณาระบุรายละเอียด');return}reviewPayment(id,'incorrect',note.trim())}
 function logout(){sessionStorage.removeItem('t2_member');location.href='index.html'}
 init();
