@@ -217,30 +217,37 @@ function t2LoadOcr(){
  return t2OcrScriptPromise;
 }
 function t2OcrExtract(raw){
- const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- const thaiDigits='๐๑๒๓๔๕๖๗๘๙';
- const normalize=x=>String(x||'').replace(/[๐-๙]/g,d=>String(thaiDigits.indexOf(d)));
- const text=normalize(raw);
- const dateHit=text.match(/(?:^|\D)(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})(?=\D|$)/m);
- let date='';
- if(dateHit){let y=Number(dateHit[3]),m=Number(dateHit[2]),d=Number(dateHit[1]);if(y<100)y+=y>=70?1900:2000;if(y>2400)y-=543;if(y>=2000&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31)date=[y,String(m).padStart(2,'0'),String(d).padStart(2,'0')].join('-')}
- const timeHit=text.match(/(?:^|[^\d])(\d{1,2})\s*[:.]\s*([0-5]\d)(?=\D|$)/m);
- const time=timeHit&&Number(timeHit[1])<24?String(Number(timeHit[1])).padStart(2,'0')+':'+timeHit[2]:'';
- let amount='';
- const candidates=lines.map(normalize).filter(x=>/ยอดเงิน|จำนวนเงิน|amount|total|บาท|THB/i.test(x));
- for(const line of candidates){
-  const matches=[...line.matchAll(/(\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+(?:\.\d{2})?)/g)].map(m=>m[1].replace(/,/g,'')).map(Number).filter(n=>n>0&&n<1e9);
-  if(matches.length){amount=String(matches[matches.length-1]);break}
- }
- const refLine=lines.map(normalize).find(x=>/เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?\s*(?:no)?\b|เลขที่รายการ/i.test(x));
- const refTokens=refLine?refLine.match(/\d{6,}/g):null;
- const reference=refTokens?.length?refTokens[refTokens.length-1].slice(-6):'';
- const names=[];
+ const digits='๐๑๒๓๔๕๖๗๘๙';
+ const norm=s=>String(s||'').replace(/[๐-๙]/g,ch=>String(digits.indexOf(ch)));
+ const lines=norm(raw).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+ const text=lines.join('\n');
+ let date='',time='',amount='',reference='';
+ const months={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
+ const dateNum=text.match(/(?:^|\D)(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})(?=\D|$)/m);
+ const monthPattern=/(\d{1,2})\s*(ม\.?\s*ค\.?|ก\.?\s*พ\.?|มี\.?\s*ค\.?|เม\.?\s*ย\.?|พ\.?\s*ค\.?|มิ\.?\s*ย\.?|ก\.?\s*ค\.?|ส\.?\s*ค\.?|ก\.?\s*ย\.?|ต\.?\s*ค\.?|พ\.?\s*ย\.?|ธ\.?\s*ค\.?)\.?\s*(\d{2,4})/;
+ const dateThai=text.match(monthPattern);
+ let day,month,year;
+ if(dateNum){day=+dateNum[1];month=+dateNum[2];year=+dateNum[3]}
+ else if(dateThai){day=+dateThai[1];year=+dateThai[3];const token=dateThai[2].replace(/\s/g,'').replace(/\.$/,'')+'.';month=months[token]}
+ if(year!==undefined){if(year<100)year+=year>=80?1900:2000;if(year>2400)year-=543;const dt=new Date(Date.UTC(year,month-1,day));if(dt.getUTCFullYear()===year&&dt.getUTCMonth()===month-1&&dt.getUTCDate()===day)date=year+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
+ const timeMatch=text.match(/(?:^|[^\d])([01]?\d|2[0-3])[:.]([0-5]\d)(?=\D|$)/m);
+ if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
+ for(const line of lines){if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(line))continue;const m=line.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);if(m){amount=String(Number(m[1].replace(/,/g,'')));break}}
+ const marker=/เลขที่รายการ|เลขรายการ|เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?/i;
+ for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const next=(lines[i+1]||'').match(/^\s*(\d{10,})/);const digits=(same&&same[same.length-1])||(next&&next[1]);if(digits){reference=digits.slice(-6);break}}
+ let payer='',receiver='';
  for(let i=0;i<lines.length;i++){
-  const line=lines[i],m=line.match(/^(?:จาก|ผู้โอน|ชื่อผู้โอน|from|sender|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|to|recipient)\s*[:：-]?\s*(.+)$/i);
-  if(m){let v=m[1].trim();if(v.length>3&&!/^(บัญชี|account|ธนาคาร|bank)/i.test(v))names.push({type:/^(จาก|ผู้โอน|ชื่อผู้โอน|from|sender)/i.test(line)?'payer':'receiver',value:v})}
+  const m=lines[i].match(/^(?:โอนจาก|จาก|ผู้โอน|ชื่อผู้โอน|from|sender|โอนเข้า|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|to|recipient)\s*[:：-]?\s*(.*)$/i);
+  if(!m)continue;
+  const isPayer=/^(?:โอนจาก|จาก|ผู้โอน|ชื่อผู้โอน|from|sender)/i.test(lines[i]);
+  let val=m[1].trim();
+  if(!val||/^(?:บัญชี|account|ธนาคาร|bank)/i.test(val))continue;
+  val=val.replace(/\s*(?:xxx[-x\d]+|เลขที่บัญชี).*$/i,'').trim();
+  if(val.length<5)continue;
+  if(isPayer&&!payer)payer=val;
+  if(!isPayer&&!receiver)receiver=val;
  }
- return {date,time,amount,reference,payer:names.find(x=>x.type==='payer')?.value||'',receiver:names.find(x=>x.type==='receiver')?.value||'',raw:String(raw||'')};
+ return {date,time,amount,reference,payer,receiver,raw:String(raw||'')};
 }
 function retrySlipOCR(){const file=$("slipImage")?.files?.[0];if(file)readSlipOCR(file);else alert("กรุณาเลือกภาพสลิปก่อน")}
 async function readSlipOCR(file){
