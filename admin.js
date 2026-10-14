@@ -401,6 +401,7 @@ function t2BatchEdit(index,input){
  if(!item.values)item.values={};
  item.values[key]=input.value;
  if(index===t2SlipIndex){const target=$(key);if(target)target.value=input.value;if(key==='amount'||key==='payDate')previewPromo()}
+ t2BatchUpdateButton();
 }
 function t2BatchVerify(index,checked){
  const item=t2SlipQueue[index];if(!item||item.done)return;
