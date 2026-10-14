@@ -193,15 +193,27 @@ function fileToCompressedBase64(file){
 /* Round 5 OCR: local browser recognition. Always verify values against the slip. */
 let t2OcrScriptPromise=null,t2OcrJob=0;
 function t2LoadOcr(){
- if(window.Tesseract)return Promise.resolve();
+ if(window.Tesseract&&typeof window.Tesseract.createWorker==='function')return Promise.resolve();
  if(t2OcrScriptPromise)return t2OcrScriptPromise;
- t2OcrScriptPromise=new Promise((resolve,reject)=>{
-  const script=document.createElement('script');
-  script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
-  script.onload=()=>window.Tesseract?resolve():reject(Error('OCR library unavailable'));
-  script.onerror=()=>reject(Error('OCR library download failed'));
-  document.head.appendChild(script);
- });
+ const sources=[
+  'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+  'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js'
+ ];
+ t2OcrScriptPromise=(async()=>{
+  for(const src of sources){
+   try{
+    await new Promise((resolve,reject)=>{
+     const script=document.createElement('script');
+     script.src=src;
+     script.onload=()=>window.Tesseract?.createWorker?resolve():reject(Error('OCR module missing'));
+     script.onerror=()=>reject(Error('OCR CDN unavailable'));
+     document.head.appendChild(script);
+    });
+    return;
+   }catch(e){console.warn('OCR script fallback',e)}
+  }
+  throw Error('โหลดเครื่องมือ OCR ไม่ได้ กรุณาตรวจอินเทอร์เน็ตและการบล็อก CDN');
+ })().catch(e=>{t2OcrScriptPromise=null;throw e});
  return t2OcrScriptPromise;
 }
 function t2OcrExtract(raw){
@@ -230,6 +242,7 @@ function t2OcrExtract(raw){
  }
  return {date,time,amount,reference,payer:names.find(x=>x.type==='payer')?.value||'',receiver:names.find(x=>x.type==='receiver')?.value||'',raw:String(raw||'')};
 }
+function retrySlipOCR(){const file=$("slipImage")?.files?.[0];if(file)readSlipOCR(file);else alert("กรุณาเลือกภาพสลิปก่อน")}
 async function readSlipOCR(file){
  const box=$('ocrStatus');if(!box)return;
  const job=++t2OcrJob;
@@ -237,16 +250,26 @@ async function readSlipOCR(file){
  try{
   await t2LoadOcr();
   box.textContent='กำลังอ่านข้อมูลจากรูปภาพ...';
-  const worker=await Tesseract.createWorker('tha+eng',1,{logger:m=>{if(job===t2OcrJob&&m.status==='recognizing text')box.textContent='กำลังอ่านภาพ '+Math.round((m.progress||0)*100)+'%'}});
+  let worker;
+  try{
+   worker=await Tesseract.createWorker('tha+eng',1,{logger:m=>{
+    if(job===t2OcrJob)box.textContent='OCR: '+String(m.status||'กำลังทำงาน')+(typeof m.progress==='number'?' '+Math.round(m.progress*100)+'%':'');
+   }});
+  }catch(thaiError){
+   box.textContent='OCR ภาษาไทยโหลดไม่ได้ กำลังลองภาษาอังกฤษ...';
+   worker=await Tesseract.createWorker('eng',1,{logger:m=>{
+    if(job===t2OcrJob)box.textContent='OCR อังกฤษ: '+String(m.status||'กำลังทำงาน')+(typeof m.progress==='number'?' '+Math.round(m.progress*100)+'%':'');
+   }});
+  }
   let result;
   try{result=await worker.recognize(file)}finally{await worker.terminate()}
   if(job!==t2OcrJob)return;
   const data=t2OcrExtract(result.data?.text||'');
   const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
   let n=0;
-  for(const [id,value] of Object.entries(mapping)){const el=$(id);if(el&&value&&!el.value){el.value=value;n++}}
+  for(const [id,value] of Object.entries(mapping)){const el=$(id);if(el&&value){el.value=value;n++}}
   previewPromo();
-  box.textContent=n?'OCR เติมข้อมูลให้ '+n+' ช่อง โปรดตรวจทานทุกช่องกับภาพสลิปก่อนบันทึก':'OCR ยังไม่พบข้อมูลที่เชื่อถือได้ กรุณากรอกตามภาพสลิปด้วยตนเอง';
+  box.textContent=n?'OCR เติมข้อมูล '+n+' ช่องแล้ว กรุณาตรวจความถูกต้องก่อนบันทึก':'OCR อ่านภาพแล้ว แต่จับคู่ช่องข้อมูลไม่ได้ กรุณาดูข้อความ OCR ด้านล่าง';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
  }catch(e){if(job===t2OcrJob)box.textContent='ระบบอ่านภาพอัตโนมัติไม่พร้อมใช้งาน กรุณากรอกตามภาพสลิป: '+String(e.message||e)}
 }
