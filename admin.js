@@ -476,15 +476,27 @@ async function t2SaveBatch(){
  try{
   const d=await api('round5Capabilities');
   if(!d.ok||!d.receiptUpload)throw Error('Backend ไม่พร้อมอัปโหลด');
+  // Upload up to two images concurrently to reduce waiting without overloading Apps Script.
+  const pending=t2SlipQueue.map((item,i)=>({item,i})).filter(x=>!x.item.done&&!x.item.uploadedReceipt);
+  let nextUpload=0,completedUploads=0;
+  async function uploadWorker(){
+   while(nextUpload<pending.length){
+    const {item,i}=pending[nextUpload++];
+    try{
+     const base64=await fileToCompressedBase64(item.file);
+     const up=await api('uploadReceipt',{memberId:selected.memberId,mimeType:'image/jpeg',base64});
+     if(!up.ok||!up.receipt)throw Error(up.message||'Drive upload failed');
+     item.uploadedReceipt=up.receipt;
+    }catch(e){item.uploadError=e.message||String(e)}
+    completedUploads++;
+    $('saveMessage').textContent='อัปโหลดภาพแล้ว '+completedUploads+'/'+pending.length+' ใบ — กำลังเตรียมบันทึก';
+   }
+  }
+  await Promise.all(Array.from({length:Math.min(2,pending.length)},()=>uploadWorker()));
   for(let i=0;i<t2SlipQueue.length;i++){
    const item=t2SlipQueue[i];if(item.done)continue;
-   $('saveMessage').textContent='กำลังบันทึกสลิป '+(i+1)+'/'+t2SlipQueue.length;
-   if(!item.uploadedReceipt){
-    const base64=await fileToCompressedBase64(item.file);
-    const up=await api('uploadReceipt',{memberId:selected.memberId,mimeType:'image/jpeg',base64});
-    if(!up.ok||!up.receipt)throw Error('อัปโหลดสลิป '+(i+1)+' ไม่สำเร็จ: '+(up.message||''));
-    item.uploadedReceipt=up.receipt;
-   }
+   if(!item.uploadedReceipt)throw Error('สลิปใบที่ '+(i+1)+' อัปโหลดไม่สำเร็จ: '+(item.uploadError||'กรุณาลองอีกครั้ง'));
+   $('saveMessage').textContent='กำลังบันทึกข้อมูลสลิป '+(i+1)+'/'+t2SlipQueue.length;
    const v=item.values,amount=Number(v.amount),rule=promo(v.payDate,amount);
    const payload={citizenId:selected.citizenId,documentId:selected.citizenId,firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+' '+selected.lastName,
     transferDate:v.payDate,transferTime:v.payTime,amount,referenceNo:v.reference,payerName:v.payerName,receiverName:v.receiverName,notes:v.note||'',bankVerified:true,
