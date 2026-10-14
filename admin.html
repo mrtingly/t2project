@@ -20,6 +20,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
   @page{size:A4 landscape;margin:10mm}
 }
 .grid>aside,.grid>section,.member>div{min-width:0}.member>div:first-child{overflow-wrap:anywhere;flex:1}.member>.actions{max-width:52%;flex-direction:column}.member .btn{white-space:normal;overflow-wrap:anywhere}@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.slipEntryGrid{display:grid;grid-template-columns:minmax(250px,40%) minmax(0,1fr);gap:16px;align-items:start;margin:12px 0}.slipEntryGrid .promo{margin:0}.slipEntryGrid .fields{min-width:0}@media(max-width:820px){.slipEntryGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -44,7 +45,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
 <section>
  <section class="card">
   <h2 id="receiptFormTitle">เพิ่มใบเสร็จ / เงินลงทุน</h2>
-  <div id="selectedMember" class="selected">กรุณาเลือกสมาชิกก่อน</div>\n  <div class="promo"><b>📷 แนบสลิปก่อนกรอกข้อมูล</b><div class="muted tiny" style="margin:4px 0 10px">ใช้กล้องมือถือถ่ายสลิป หรือเลือกรูปจากเครื่อง แล้วตรวจข้อมูลจากภาพก่อนบันทึก</div><input id="slipImage" type="file" accept="image/*" capture="environment" onchange="previewSlip(event)" style="width:100%"><div id="slipPreviewBox" class="hidden" style="margin-top:12px;text-align:center"><img id="slipPreview" alt="ภาพสลิป" style="max-width:100%;max-height:520px;border-radius:12px;border:1px solid #dfe7f2;object-fit:contain"><div class="tiny muted" style="margin-top:6px">ตรวจจากภาพ: ผู้โอน · วันที่ · เวลา · จำนวนเงิน · เลขอ้างอิง 6 หลักท้าย</div></div></div>
+  <div id="selectedMember" class="selected">กรุณาเลือกสมาชิกก่อน</div>\n  <div class="slipEntryGrid"><div class="promo"><b>📷 แนบสลิปก่อนกรอกข้อมูล</b><div class="muted tiny" style="margin:4px 0 10px">ใช้กล้องมือถือถ่ายสลิป หรือเลือกรูปจากเครื่อง แล้วตรวจข้อมูลจากภาพก่อนบันทึก</div><input id="slipImage" type="file" accept="image/*" capture="environment" onchange="previewSlip(event)" style="width:100%"><div id="slipPreviewBox" class="hidden" style="margin-top:12px;text-align:center"><img id="slipPreview" alt="ภาพสลิป" style="max-width:100%;max-height:520px;border-radius:12px;border:1px solid #dfe7f2;object-fit:contain"><div class="tiny muted" style="margin-top:6px">ตรวจจากภาพ: ผู้โอน · วันที่ · เวลา · จำนวนเงิน · เลขอ้างอิง 6 หลักท้าย</div></div></div>
   <div class="fields">
    <div class="field"><label>วันที่โอน</label><input id="payDate" type="date" oninput="previewPromo()"></div>
    <div class="field"><label>เวลา</label><input id="payTime" type="time"></div>
@@ -53,7 +54,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
    <div class="field"><label>ชื่อผู้โอน</label><input id="payerName"></div>
    <div class="field"><label>ชื่อผู้รับ</label><input id="receiverName"></div>
    <div class="field wide"><label>หมายเหตุ</label><textarea id="note" rows="2"></textarea></div>
-  </div>
+  </div></div>
   <div id="promoBox" class="promo">เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร</div>
   <label style="display:flex;gap:9px;align-items:flex-start;margin:12px 0"><input id="bankVerified" type="checkbox"> <span><b>ตรวจข้อมูลจากสลิปแล้ว</b><br><span class="muted tiny">Admin ตรวจว่าข้อมูลในฟอร์มตรงกับภาพสลิปแล้ว · Owner จะตรวจ Statement ภายหลัง</span></span></label>
   <div class="actions"><button id="saveReceiptBtn" class="btn" onclick="saveReceipt()">บันทึกใบเสร็จ</button><button id="cancelEditBtn" class="btn alt hidden" onclick="cancelEdit()">ยกเลิกการแก้ไข</button><button id="newReceiptBtn" class="btn alt hidden" onclick="newReceipt()">＋ ADD NEW RECEIPT</button></div>
