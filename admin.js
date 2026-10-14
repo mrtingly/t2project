@@ -377,6 +377,7 @@ function t2BatchInit(files){
 function t2BatchRender(){
  const root=$('t2BatchQueue');if(!root)return;
  root.classList.toggle('hidden',t2SlipQueue.length<2);
+ const formCard=root.closest('.card');if(formCard)formCard.classList.toggle('t2BatchMode',t2SlipQueue.length>1);
  if(t2SlipQueue.length<2){root.innerHTML='';return}
  const fields=[['payDate','วันที่','date'],['payTime','เวลา','time'],['amount','จำนวนเงิน','number'],['reference','รหัส 6 หลัก','text'],['payerName','ผู้โอน','text'],['receiverName','ผู้รับ','text']];
  root.innerHTML='<h3>ตรวจสลิป '+t2SlipQueue.length+' ใบ — ภาพและข้อมูลแยกแต่ละรายการ</h3>'+
