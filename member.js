@@ -109,8 +109,7 @@ async function saveProfile(){
    const d=await api('saveMemberProfile',{profileGrant,data:{profile:nextProfile,contacts:t,beneficiaries:b}});
    if(!d.ok){alert(d.message||'บันทึกข้อมูลไม่สำเร็จ');return}
    profile=nextProfile;beneficiaries=b;contacts=t;centralProfileFound=true;
-   m.firstName=firstName.value.trim()||m.firstName;m.lastName=lastName.value.trim()||m.lastName;
-   sessionStorage.setItem('t2_member',JSON.stringify(m));
+   // ชื่อสมาชิกยึดฐาน Master จนกว่า Backend จะยืนยันการเปลี่ยนชื่ออย่างถูกต้อง
    localStorage.setItem(key('profile'),JSON.stringify(profile));
    localStorage.setItem(key('beneficiaries'),JSON.stringify(beneficiaries));
    localStorage.setItem(key('othercontacts'),JSON.stringify(contacts));
