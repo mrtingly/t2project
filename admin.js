@@ -234,7 +234,7 @@ function t2OcrExtract(raw){
  if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
  for(const line of lines){if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(line))continue;const m=line.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);if(m){amount=String(Number(m[1].replace(/,/g,'')));break}}
  const marker=/เลขที่รายการ|เลขรายการ|เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?/i;
- for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const next=(lines[i+1]||'').match(/^\s*(\d{10,})/);const digits=(same&&same[same.length-1])||(next&&next[1]);if(digits){reference=digits.slice(-6);break}}
+ for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const nearby=lines.slice(i+1,i+5).map(x=>x.match(/(?:^|\D)(\d{12,})(?=\D|$)/)).find(Boolean);const digits=(same&&same[same.length-1])||(nearby&&nearby[1]);if(digits){reference=digits.slice(-6);break}}
  let payer='',receiver='';
  for(let i=0;i<lines.length;i++){
   const m=lines[i].match(/^(?:โอนจาก|จาก|ผู้โอน|ชื่อผู้โอน|from|sender|โอนเข้า|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|to|recipient)\s*[:：-]?\s*(.*)$/i);
