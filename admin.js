@@ -89,7 +89,7 @@ function promo(date,amount){
  return matches.length?{status:"matched",matches}:{status:"review",periods:rs.map(r=>r.n)};
 }
 function previewPromo(){const d=$("payDate").value,a=Number($("amount").value||0),box=$("promoBox");if(!d||!a){box.textContent="เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร";return}const p=promo(d,a);if(p.status==="matched"){box.innerHTML='<b>ยอดลงทุน '+money(a)+'</b><br><b>ยอดที่จะได้รับตามโปร:</b> '+p.matches.map(x=>"ช่วง "+x.period+" → <strong>"+money(x.receive)+"</strong>").join(" / ")}else if(p.status==="review"){box.innerHTML='<b>วันที่อยู่ในโปร '+p.periods.join(", ")+'</b> แต่ยอดนี้ไม่มีคู่เงินที่ชัดเจนในต้นฉบับ ต้องตรวจเอกสาร'}else box.innerHTML="<b>ไม่พบโปรในวันที่นี้</b>"}
-function previewSlip(e){const f=e.target.files&&e.target.files[0];if(!f){$("slipPreviewBox").classList.add("hidden");$("slipPreview").removeAttribute("src");return}const r=new FileReader();r.onload=()=>{$("slipPreview").src=r.result;$("slipPreviewBox").classList.remove("hidden")};r.readAsDataURL(f)}
+function previewSlip(e){const f=e.target.files&&e.target.files[0];if(!f){$("slipPreviewBox").classList.add("hidden");$("slipPreview").removeAttribute("src");return}const r=new FileReader();r.onload=()=>{$("slipPreview").src=r.result;$("slipPreviewBox").classList.remove("hidden")};r.readAsDataURL(f);readSlipOCR(f)}
 function receiptPayload(){const d=$("payDate").value,a=Number($("amount").value||0),p=promo(d,a);return {amount:a,transferDate:d,transferTime:$("payTime").value,referenceNo:$("reference").value.trim(),payerName:$("payerName").value.trim(),receiverName:$("receiverName").value.trim(),notes:$("note").value.trim(),bankVerified:$("bankVerified").checked,rulePeriod:p.status==="matched"?p.matches.map(x=>x.period).join(","):"",promoReturn:p.status==="matched"?Math.max(...p.matches.map(x=>x.receive)):0}}
 function rowPaymentId(x){return String(x.paymentId||x.payment_id||x.id||"")}
 function findMemberForRow(x){const cid=String(x.citizenId||x.citizen_id||x.documentId||x.document_id||"");return members.find(m=>String(m.citizenId||m.documentId||"")===cid)||null}
@@ -188,4 +188,65 @@ function fileToCompressedBase64(file){
   };
   reader.readAsDataURL(file);
  });
+}
+
+/* Round 5 OCR: local browser recognition. Always verify values against the slip. */
+let t2OcrScriptPromise=null,t2OcrJob=0;
+function t2LoadOcr(){
+ if(window.Tesseract)return Promise.resolve();
+ if(t2OcrScriptPromise)return t2OcrScriptPromise;
+ t2OcrScriptPromise=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  script.onload=()=>window.Tesseract?resolve():reject(Error('OCR library unavailable'));
+  script.onerror=()=>reject(Error('OCR library download failed'));
+  document.head.appendChild(script);
+ });
+ return t2OcrScriptPromise;
+}
+function t2OcrExtract(raw){
+ const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const thaiDigits='๐๑๒๓๔๕๖๗๘๙';
+ const normalize=x=>String(x||'').replace(/[๐-๙]/g,d=>String(thaiDigits.indexOf(d)));
+ const text=normalize(raw);
+ const dateHit=text.match(/(?:^|\D)(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})(?=\D|$)/m);
+ let date='';
+ if(dateHit){let y=Number(dateHit[3]),m=Number(dateHit[2]),d=Number(dateHit[1]);if(y<100)y+=y>=70?1900:2000;if(y>2400)y-=543;if(y>=2000&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31)date=[y,String(m).padStart(2,'0'),String(d).padStart(2,'0')].join('-')}
+ const timeHit=text.match(/(?:^|[^\d])(\d{1,2})\s*[:.]\s*([0-5]\d)(?=\D|$)/m);
+ const time=timeHit&&Number(timeHit[1])<24?String(Number(timeHit[1])).padStart(2,'0')+':'+timeHit[2]:'';
+ let amount='';
+ const candidates=lines.map(normalize).filter(x=>/ยอดเงิน|จำนวนเงิน|amount|total|บาท|THB/i.test(x));
+ for(const line of candidates){
+  const matches=[...line.matchAll(/(\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+(?:\.\d{2})?)/g)].map(m=>m[1].replace(/,/g,'')).map(Number).filter(n=>n>0&&n<1e9);
+  if(matches.length){amount=String(matches[matches.length-1]);break}
+ }
+ const refLine=lines.map(normalize).find(x=>/เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?\s*(?:no)?\b|เลขที่รายการ/i.test(x));
+ const refTokens=refLine?refLine.match(/\d{6,}/g):null;
+ const reference=refTokens?.length?refTokens[refTokens.length-1].slice(-6):'';
+ const names=[];
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i],m=line.match(/^(?:จาก|ผู้โอน|ชื่อผู้โอน|from|sender|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|to|recipient)\s*[:：-]?\s*(.+)$/i);
+  if(m){let v=m[1].trim();if(v.length>3&&!/^(บัญชี|account|ธนาคาร|bank)/i.test(v))names.push({type:/^(จาก|ผู้โอน|ชื่อผู้โอน|from|sender)/i.test(line)?'payer':'receiver',value:v})}
+ }
+ return {date,time,amount,reference,payer:names.find(x=>x.type==='payer')?.value||'',receiver:names.find(x=>x.type==='receiver')?.value||'',raw:String(raw||'')};
+}
+async function readSlipOCR(file){
+ const box=$('ocrStatus');if(!box)return;
+ const job=++t2OcrJob;
+ box.textContent='กำลังเตรียมระบบอ่านสลิป (ไทย/อังกฤษ)...';
+ try{
+  await t2LoadOcr();
+  box.textContent='กำลังอ่านข้อมูลจากรูปภาพ...';
+  const worker=await Tesseract.createWorker('tha+eng',1,{logger:m=>{if(job===t2OcrJob&&m.status==='recognizing text')box.textContent='กำลังอ่านภาพ '+Math.round((m.progress||0)*100)+'%'}});
+  let result;
+  try{result=await worker.recognize(file)}finally{await worker.terminate()}
+  if(job!==t2OcrJob)return;
+  const data=t2OcrExtract(result.data?.text||'');
+  const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
+  let n=0;
+  for(const [id,value] of Object.entries(mapping)){const el=$(id);if(el&&value&&!el.value){el.value=value;n++}}
+  previewPromo();
+  box.textContent=n?'OCR เติมข้อมูลให้ '+n+' ช่อง โปรดตรวจทานทุกช่องกับภาพสลิปก่อนบันทึก':'OCR ยังไม่พบข้อมูลที่เชื่อถือได้ กรุณากรอกตามภาพสลิปด้วยตนเอง';
+  const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
+ }catch(e){if(job===t2OcrJob)box.textContent='ระบบอ่านภาพอัตโนมัติไม่พร้อมใช้งาน กรุณากรอกตามภาพสลิป: '+String(e.message||e)}
 }
