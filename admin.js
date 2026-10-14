@@ -3,6 +3,7 @@ const MONEY_RULES=[
 ];
 const API_URL="https://script.google.com/macros/s/AKfycbyp18ODOgdhH2R-QdYBeasG2s4817N7vb3w5fA1wED3J2YiY9QLMODcKRnqH7NoZFWd/exec";
 let staff=null,members=[],selected=null,editingPaymentId=null,reportItems=[];
+let masterCheckedNoMatch=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const money=n=>"฿"+Number(n||0).toLocaleString("th-TH");
@@ -14,6 +15,7 @@ function filterMyMembers(){
  if(!box||!input)return;
  const query=String(input.value||"").trim().toLocaleLowerCase("th-TH").replace(/\s+/g,"");
  const extra=$("masterSearchActions"),create=$("createMemberBox");
+ masterCheckedNoMatch=false;
  if(extra)extra.classList.add("hidden");
  if(create)create.classList.add("hidden");
  if($("memberMessage"))$("memberMessage").textContent="";
@@ -39,6 +41,7 @@ async function findMember(){
   const d=await api("findMemberV2",{firstName:words[0]||"",lastName:words.slice(1).join(" ")});
   if(!d.ok){box.innerHTML='<div class="warn">'+esc(d.message||"ค้นหาไม่สำเร็จ")+'</div>';return;}
   const list=d.items||d.members||(d.member?[d.member]:[]);
+  masterCheckedNoMatch=list.length===0;
   if(list.length){
    box.innerHTML=list.slice(0,20).map(m=>'<div class="ok" style="margin-bottom:8px"><b>'+esc(((m.firstName||"")+" "+(m.lastName||"")).trim())+'</b><div class="muted tiny">'+esc(m.memberId||"")+'</div><div class="tiny">พบใน Master — ตรวจสอบสิทธิ์และเพิ่มเป็นสมาชิกในความรับผิดชอบก่อนทำรายการ</div></div>').join("");
   }else{
@@ -48,7 +51,28 @@ async function findMember(){
   $("firstName").value=words[0]||"";$("lastName").value=words.slice(1).join(" ");
  }catch(e){box.innerHTML='<div class="warn">เชื่อมต่อ Master ไม่สำเร็จ กรุณาลองใหม่</div>';}
 }
-async function createMember(){const first=$("firstName").value.trim(),last=$("lastName").value.trim(),citizen=$("citizenId").value.trim();if(!first||!last){$("memberMessage").innerHTML='<div class="warn">กรอกชื่อและนามสกุลก่อน</div>';return}try{const d=await api("createMember",{firstName:first,lastName:last,citizenId:citizen});$("memberMessage").innerHTML=d.ok?'<div class="ok">เพิ่มสมาชิกแล้ว</div>':'<div class="warn">'+esc(d.message||"เพิ่มไม่ได้")+"</div>";if(d.ok)await loadMembers()}catch(e){$("memberMessage").innerHTML='<div class="warn">เพิ่มสมาชิกไม่สำเร็จ</div>'}}
+async function createMember(){
+ const first=$("firstName").value.trim(),last=$("lastName").value.trim(),citizen=$("citizenId").value.replace(/[\s-]/g,"").trim();
+ const box=$("memberMessage");
+ if(!masterCheckedNoMatch){box.innerHTML='<div class="warn">กรุณาค้นหาใน Master ก่อนเพิ่มสมาชิกใหม่</div>';return;}
+ if(!first||!last||!/^[0-9]{13}$/.test(citizen)){box.innerHTML='<div class="warn">กรุณากรอกชื่อ นามสกุล และเลขบัตรประชาชน 13 หลักให้ครบ</div>';return;}
+ const exact=members.find(m=>String(m.firstName||"").trim()===first&&String(m.lastName||"").trim()===last || String(m.citizenId||m.documentId||"").replace(/[\s-]/g,"")===citizen);
+ if(exact){box.innerHTML='<div class="warn">พบสมาชิกนี้อยู่แล้ว กรุณาเลือกจากผลค้นหาแทนการสร้างใหม่</div>';return;}
+ const btn=$("createMemberBox")?.querySelector("button");
+ if(btn)btn.disabled=true;
+ try{
+  // Recheck the authoritative master immediately before attempting a write.
+  const check=await api("findMemberV2",{firstName:first,lastName:last,citizenId:citizen,documentId:citizen});
+  if(!check.ok){box.innerHTML='<div class="warn">'+esc(check.message||"ตรวจ Master ไม่สำเร็จ")+'</div>';return;}
+  const found=check.items||check.members||(check.member?[check.member]:[]);
+  if(found.length){masterCheckedNoMatch=false;box.innerHTML='<div class="warn">มีข้อมูลตรงกันใน Master แล้ว ไม่สร้างรายการซ้ำ กรุณาตรวจสอบสมาชิกเดิม</div>';return;}
+  if(!confirm("ยืนยันว่าตรวจสอบข้อมูลแล้วและต้องการสร้างสมาชิกใหม่?"))return;
+  const d=await api("createMember",{firstName:first,lastName:last,citizenId:citizen});
+  box.innerHTML=d.ok?'<div class="ok">เพิ่มสมาชิกแล้ว</div>':'<div class="warn">'+esc(d.message||"เพิ่มไม่ได้")+'</div>';
+  if(d.ok){masterCheckedNoMatch=false;$("createMemberBox")?.classList.add("hidden");await loadMembers();}
+ }catch(e){box.innerHTML='<div class="warn">ตรวจสอบหรือเพิ่มสมาชิกไม่สำเร็จ ไม่มีการยืนยันการสร้างรายการ</div>'}
+ finally{if(btn)btn.disabled=false}
+}
 function normalizePromoDate(date){const p=String(date||"").split("-");if(p.length===3&&Number(p[0])>2400)p[0]=String(Number(p[0])-543);return p.join("-")}
 function promo(date,amount){
  date=normalizePromoDate(date);
