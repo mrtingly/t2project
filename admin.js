@@ -120,6 +120,7 @@ async function deleteReceipt(i){
 }
 async function saveReceipt(){if(!selected){$("saveMessage").innerHTML='<div class="warn">เลือกสมาชิกก่อน</div>';return}const p=receiptPayload();if(!p.transferDate||!p.transferTime||!p.amount||!p.payerName||!p.receiverName){$("saveMessage").innerHTML='<div class="warn">กรอกวันที่ เวลา จำนวนเงิน ผู้โอน และผู้รับให้ครบ</div>';return}if(!/^\d{6}$/.test(p.referenceNo)){$("saveMessage").innerHTML='<div class="warn">รหัสสลิปต้องเป็นตัวเลข 6 หลักท้ายเท่านั้น</div>';return}if(!p.bankVerified){$("saveMessage").innerHTML='<div class="warn">กรุณาตรวจข้อมูลในฟอร์มกับภาพสลิปและติ๊กยืนยันก่อนบันทึก</div>';return}$("saveMessage").innerHTML="กำลังบันทึก…";try{let uploadedReceipt="";
  const file=$("slipImage")?.files?.[0];
+ if(!file&&!editingPaymentId)throw Error("กรุณาแนบภาพสลิปก่อนบันทึกรายการใหม่");
  if(file){
    const capabilities=await api("round5Capabilities");
    if(!capabilities.ok||!capabilities.receiptUpload)throw Error("ต้อง Deploy Backend รอบ 5 ก่อน จึงจะเก็บภาพสลิปใน Drive ได้");
