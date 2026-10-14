@@ -344,7 +344,7 @@ async function readSlipOCR(file){
   previewPromo();
   box.textContent=filled.length?'OCR กรอกจริง '+filled.length+' ช่อง: '+filled.map(id=>({payDate:'วันที่',payTime:'เวลา',amount:'จำนวนเงิน',reference:'เลขอ้างอิง',payerName:'ผู้โอน',receiverName:'ผู้รับ'}[id])).join(', ')+' — โปรดตรวจทานก่อนบันทึก':'OCR ยังไม่กรอกช่องใด กรุณาตรวจข้อความที่อ่านได้';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
-  if(t2SlipQueue.length)t2BatchCapture();
+  if(t2SlipQueue.length){t2BatchCapture();t2SlipQueue[t2SlipIndex].ocrDone=true;t2BatchRender()}
  }catch(e){if(job===t2OcrJob)box.textContent='ระบบอ่านภาพอัตโนมัติไม่พร้อมใช้งาน กรุณากรอกตามภาพสลิป: '+String(e.message||e)}
 }
 
@@ -359,20 +359,43 @@ function t2BatchCapture(){
  t2BatchRender();
 }
 function t2BatchInit(files){
- t2SlipQueue=files.map(file=>({file,values:null,verified:false,done:false}));
+ t2SlipQueue.forEach(item=>{if(item.previewUrl)URL.revokeObjectURL(item.previewUrl)});
+ t2SlipQueue=files.map(file=>({file,previewUrl:URL.createObjectURL(file),values:{},verified:false,done:false}));
  t2SlipIndex=0;
  if(files.length){T2_SLIP_FIELDS.forEach(id=>$(id).value='');$('bankVerified').checked=false}
  t2BatchRender();
 }
 function t2BatchRender(){
- const root=$('t2BatchQueue');
- if(!root)return;
+ const root=$('t2BatchQueue');if(!root)return;
  root.classList.toggle('hidden',t2SlipQueue.length<2);
  if(t2SlipQueue.length<2){root.innerHTML='';return}
- root.innerHTML='<b>สลิป '+t2SlipQueue.length+' ใบ — เลือกตรวจทีละใบก่อนบันทึกทั้งหมด</b><div class="actions" style="margin-top:10px">'+
- t2SlipQueue.map((x,i)=>'<button type="button" class="btn '+(i===t2SlipIndex?'':'alt')+'" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>'+esc((i+1)+'. '+x.file.name.slice(0,26))+(x.done?' ✓':x.verified?' • ตรวจแล้ว':'')+'</button>').join('')+'</div>'+
- '<p class="muted tiny">ตรวจข้อมูลแต่ละใบแล้วติ๊ก “ตรวจข้อมูลจากสลิปแล้ว” จากนั้นเลือกใบต่อไป เมื่อครบกดบันทึกทั้งหมด ระบบจะบันทึกเฉพาะรายการที่ยังไม่สำเร็จ</p>'+
- '<button type="button" class="btn" onclick="t2SaveBatch()" '+(t2SlipBatchBusy?'disabled':'')+'>บันทึกสลิปที่ตรวจครบ (สูงสุด 5 ใบ)</button>';
+ const fields=[['payDate','วันที่','date'],['payTime','เวลา','time'],['amount','จำนวนเงิน','number'],['reference','รหัส 6 หลัก','text'],['payerName','ผู้โอน','text'],['receiverName','ผู้รับ','text']];
+ root.innerHTML='<h3>ตรวจสลิป '+t2SlipQueue.length+' ใบ — ภาพและข้อมูลแยกแต่ละรายการ</h3>'+
+ '<p class="muted tiny">ข้อมูล OCR จะเติมลงในแต่ละรายการ ตรวจชื่อ จำนวนเงิน เลขอ้างอิง และติ๊กยืนยันแยกแต่ละใบก่อนบันทึก</p>'+
+ '<div class="t2BatchCards">'+t2SlipQueue.map((item,i)=>{
+  const v=item.values||{},url=item.previewUrl||'',current=i===t2SlipIndex;
+  const inputs=fields.map(([key,label,type])=>'<label class="t2BatchField">'+esc(label)+
+   '<input type="'+type+'" data-batch-index="'+i+'" data-batch-field="'+key+'" value="'+esc(v[key]||'')+'" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'></label>').join('');
+  return '<article class="t2BatchCard'+(current?' current':'')+'" id="t2SlipCard'+i+'"><header class="t2BatchCardHeader"><b>สลิปใบที่ '+(i+1)+'</b><span>'+esc(item.file.name.slice(0,35))+'</span><strong>'+(
+   item.done?(item.duplicate?'รายการซ้ำ — ข้ามแล้ว':'บันทึกสำเร็จ'):item.verified?'ตรวจแล้ว':'รอตรวจ')+'</strong></header>'+
+   '<div class="t2BatchCardBody"><div class="t2BatchPhoto"><img src="'+esc(url)+'" alt="ภาพสลิปใบที่ '+(i+1)+'"></div>'+
+   '<div class="t2BatchFields">'+inputs+'<label class="t2BatchField wide">หมายเหตุ<textarea data-batch-index="'+i+'" data-batch-field="note" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'>'+esc(v.note||'')+'</textarea></label>'+
+   '<label class="t2BatchConfirm"><input type="checkbox" '+(item.verified?'checked':'')+' onchange="t2BatchVerify('+i+',this.checked)" '+(item.done?'disabled':'')+'> ตรวจสอบกับภาพใบนี้แล้ว</label>'+
+   '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>เลือกใบนี้ในฟอร์มหลัก / อ่าน OCR</button></div></div></article>';
+ }).join('')+'</div><div class="actions" style="margin-top:14px"><button type="button" class="btn" onclick="t2SaveBatch()" '+(t2SlipBatchBusy?'disabled':'')+'>บันทึกใบที่ตรวจแล้วทั้งหมด ('+t2SlipQueue.length+' ใบ)</button></div>';
+}
+function t2BatchEdit(index,input){
+ const item=t2SlipQueue[index];if(!item||item.done)return;
+ const key=input.dataset.batchField;
+ if(!item.values)item.values={};
+ item.values[key]=input.value;
+ if(index===t2SlipIndex){const target=$(key);if(target)target.value=input.value;if(key==='amount'||key==='payDate')previewPromo()}
+}
+function t2BatchVerify(index,checked){
+ const item=t2SlipQueue[index];if(!item||item.done)return;
+ item.verified=Boolean(checked);
+ if(index===t2SlipIndex)$('bankVerified').checked=item.verified;
+ t2BatchRender();
 }
 function t2BatchSelect(index){
  if(t2SlipBatchBusy||index<0||index>=t2SlipQueue.length)return;
