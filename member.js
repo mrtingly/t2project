@@ -158,3 +158,13 @@ function toggleVoiceMode(){setVoiceMode(!memberVoiceMode)}
 document.addEventListener('click',e=>{if(!memberVoiceMode)return;const el=e.target.closest('button,a,input,textarea,select,th,td,h1,h2,h3,p,small,strong,b,span,.profileInfo>div,.summaryCard,.profileMoney>div,.sectionNote');if(!el||el.id==='voiceModeBtn')return;const t=readableText(el);if(t)setTimeout(()=>speakText(t),20)},true);
 document.addEventListener('focusin',e=>{if(memberVoiceMode&&e.target.matches('input,textarea,select'))speakText(readableText(e.target))});
 setTimeout(updateVoiceButton,0);
+
+function downloadMyPaymentReport(){
+ if(!BILLS.length){alert('ยังไม่มีรายการสลิปให้ดาวน์โหลด');return}
+ const rows=[['วันที่','เวลา','ผู้โอน','ผู้รับ','เลขอ้างอิง','จำนวนเงิน','ผลตอบแทนตามโปร','ลิงก์สลิป'],
+ ...BILLS.map(x=>[x.transferDate||x.transfer_date||x.date||'',x.transferTime||x.transfer_time||x.time||'',payerName(x),receiverName(x),ref6(x),x.amount||0,memberReward(x).receive,receiptUrl(x)])];
+ const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download='T2Project_Member_Receipts.csv';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
