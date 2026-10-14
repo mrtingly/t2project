@@ -250,6 +250,21 @@ function t2OcrExtract(raw){
  }
  return {date,time,amount,reference,payer,receiver,raw:String(raw||'')};
 }
+function t2OcrNames(raw){
+ const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const clean=x=>String(x||'').replace(/^(?:โอนจาก|โอนเข้า|จาก|ไปยัง|ชื่อผู้โอน|ชื่อผู้รับ|ผู้โอน|ผู้รับ|sender|recipient|from|to)\s*[:：-]?\s*/i,'').replace(/(?:xxx|XXX)[-\dxX]+/g,'').trim();
+ const labels={payer:/^(?:โอนจาก|จาก|ชื่อผู้โอน|ผู้โอน|sender|from)\s*[:：-]?/i,receiver:/^(?:โอนเข้า|ไปยัง|ถึง|ชื่อผู้รับ|ผู้รับ|recipient|to)\s*[:：-]?/i};
+ const result={payer:'',receiver:''};
+ const isName=v=>v.length>=5&&/[\u0e01-\u0e5aA-Za-z]/.test(v)&&!/^(?:บัญชี|ธนาคาร|account|bank|รายการ|จำนวนเงิน|ค่าธรรมเนียม|เลขที่)/i.test(v)&&!/\d{4,}/.test(v);
+ for(let i=0;i<lines.length;i++)for(const [key,re] of Object.entries(labels)){
+  if(result[key]||!re.test(lines[i]))continue;
+  const current=clean(lines[i]);
+  const options=[current,...lines.slice(i+1,i+4).map(clean)];
+  const name=options.find(isName);
+  if(name)result[key]=name;
+ }
+ return result;
+}
 function t2OcrFillFields(result){
  const mapping={payDate:result.date,payTime:result.time,amount:result.amount,reference:result.reference,payerName:result.payer,receiverName:result.receiver};
  let count=0;
@@ -279,6 +294,9 @@ async function readSlipOCR(file){
   try{result=await worker.recognize(file)}finally{await worker.terminate()}
   if(job!==t2OcrJob)return;
   const data=t2OcrExtract(result.data?.text||'');
+  const parsedNames=t2OcrNames(result.data?.text||'');
+  data.payer=parsedNames.payer||data.payer;
+  data.receiver=parsedNames.receiver||data.receiver;
   const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
   const n=t2OcrFillFields(data);
   previewPromo();
