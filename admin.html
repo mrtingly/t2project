@@ -19,6 +19,7 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
   th:last-child,td:last-child{display:none!important}
   @page{size:A4 landscape;margin:10mm}
 }
+.grid>aside,.grid>section,.member>div{min-width:0}.member>div:first-child{overflow-wrap:anywhere;flex:1}.member>.actions{max-width:52%;flex-direction:column}.member .btn{white-space:normal;overflow-wrap:anywhere}@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -26,11 +27,19 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
 <main class="wrap">
 <div class="grid">
 <aside>
- <section class="card"><h3>ค้นหาสมาชิกของฉัน</h3><div class="muted tiny">พิมพ์ชื่อหรือนามสกุลเพื่อค้นหาสมาชิกในความรับผิดชอบ</div><input id="memberSearch" type="search" autocomplete="off" placeholder="พิมพ์ชื่อหรือนามสกุล..." oninput="filterMyMembers()" style="width:100%;padding:13px;margin-top:12px;border:1px solid #cfd9e8;border-radius:10px;font:inherit"><div id="memberList" aria-live="polite"><div class="muted tiny" style="margin-top:12px">เริ่มพิมพ์เพื่อค้นหา</div></div></section>
- <section class="card"><h3>ค้นหา / เพิ่มสมาชิก</h3><div class="fields">
-  <div class="field"><label>ชื่อ</label><input id="firstName"></div><div class="field"><label>นามสกุล</label><input id="lastName"></div>
-  <div class="field wide"><label>เลขบัตรประชาชน</label><input id="citizenId" inputmode="numeric" maxlength="13"></div>
- </div><div class="actions" style="margin-top:12px"><button class="btn alt" onclick="findMember()">ค้นหา</button><button class="btn" onclick="createMember()">เพิ่มสมาชิกใหม่</button></div><div id="memberMessage" style="margin-top:10px"></div></section>
+ <section class="card"><h3>ค้นหา / เลือกสมาชิก</h3>
+ <div class="muted tiny">พิมพ์ชื่อหรือนามสกุล แล้วเลือกสมาชิกเพื่อบันทึกสลิป</div>
+ <input id="memberSearch" type="search" autocomplete="off" placeholder="พิมพ์ชื่อหรือนามสกุล..." oninput="filterMyMembers()" style="width:100%;padding:13px;margin-top:12px;border:1px solid #cfd9e8;border-radius:10px;font:inherit">
+ <div id="memberList" aria-live="polite"></div>
+ <div id="masterSearchActions" class="hidden" style="margin-top:12px"><button type="button" class="btn alt" onclick="findMember()">ค้นหาในข้อมูล Master</button></div>
+ <div id="memberMessage" style="margin-top:12px"></div>
+ <div id="createMemberBox" class="hidden" style="margin-top:14px">
+ <h3>เพิ่มสมาชิกใหม่</h3><div class="fields">
+ <div class="field"><label>ชื่อ</label><input id="firstName"></div>
+ <div class="field"><label>นามสกุล</label><input id="lastName"></div>
+ <div class="field wide"><label>เลขบัตรประชาชน</label><input id="citizenId" inputmode="numeric" maxlength="13"></div>
+ </div><div class="actions" style="margin-top:12px"><button type="button" class="btn" onclick="createMember()">ยืนยันเพิ่มสมาชิกใหม่</button></div></div>
+ </section>
 </aside>
 <section>
  <section class="card">
@@ -57,5 +66,5 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
  </section>
 </section>
 </div></main>
-<script src="admin.js?v=35"></script>
+<script src="admin.js?v=36"></script>
 </body></html>
