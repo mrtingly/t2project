@@ -230,11 +230,12 @@ function t2OcrExtract(raw){
  if(dateNum){day=+dateNum[1];month=+dateNum[2];year=+dateNum[3]}
  else if(dateThai){day=+dateThai[1];year=+dateThai[3];const token=dateThai[2].replace(/\s/g,'').replace(/\.$/,'')+'.';month=months[token]}
  if(year!==undefined){if(year<100)year=dateThai?2500+year:(year>=80?1900+year:2000+year);if(year>2400)year-=543;const dt=new Date(Date.UTC(year,month-1,day));if(dt.getUTCFullYear()===year&&dt.getUTCMonth()===month-1&&dt.getUTCDate()===day)date=year+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
- const timeMatch=text.match(/(?:^|[^\d])([01]?\d|2[0-3]):([0-5]\d)(?=\D|$)/m);
+ const contextDateLine=lines.find(x=>date&&/\d{1,2}\s*(?:มี\.?\s*ค|ก\.?\s*ค|ก\.?\s*พ|ม\.?\s*ค|เม\.?\s*ย|พ\.?\s*ค|มิ\.?\s*ย|ส\.?\s*ค|ก\.?\s*ย|ต\.?\s*ค|พ\.?\s*ย|ธ\.?\s*ค|\d{1,2}[\/.-]\d{1,2})/.test(x)&&/[0-2]?\d:[0-5]\d/.test(x))||'';
+ const timeMatch=contextDateLine.match(/(?:^|[^\d])([01]?\d|2[0-3]):([0-5]\d)(?=\D|$)/);
  if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
  for(const line of lines){if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(line))continue;const m=line.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);if(m){amount=String(Number(m[1].replace(/,/g,'')));break}}
  const marker=/เลขที่รายการ|เลขรายการ|เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?/i;
- for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const nearby=lines.slice(i+1,i+5).map(x=>x.match(/(?:^|\D)(\d{12,})(?=\D|$)/)).find(Boolean);const digits=(same&&same[same.length-1])||(nearby&&nearby[1]);if(digits){reference=digits.slice(-6);break}}
+ for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const nearby=lines.slice(i+1,i+4).flatMap(x=>[...x.matchAll(/(?:^|\D)(\d{12,25})(?=\D|$)/g)].map(m=>m[1]));const candidates=[...(same||[]),...nearby];if(candidates.length===1){reference=candidates[0].slice(-6);break}}
  let payer='',receiver='';
  for(let i=0;i<lines.length;i++){
   const m=lines[i].match(/^(?:โอนจาก|จาก|ผู้โอน|ชื่อผู้โอน|from|sender|โอนเข้า|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|to|recipient)\s*[:：-]?\s*(.*)$/i);
