@@ -235,13 +235,25 @@ function t2OcrExtract(raw){
  if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
  for(let i=0;i<lines.length;i++){
   if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(lines[i])||/ค่าธรรมเนียม|fee/i.test(lines[i]))continue;
-  const section=lines.slice(i,i+3).join(' ');
-  const marker=section.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);
-  if(marker){const v=Number(marker[1].replace(/,/g,''));if(v>0&&v<1000000000){amount=String(v);break}}
+  const section=lines.slice(i,i+3).join(' ').replace(/(\d)[.](?=\d{3}[.,])/g,'$1,');
+  // Bank slips often OCR thousands separators as periods or spaces.
+  const m=section.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,. ]{0,20}\d|\d+)\s*(?:บาท|THB|$)/i)
+      ||section.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)[^\d]{0,16}(\d{1,3}(?:[,. ]\d{3})*[,.]\d{2}|\d+)/i);
+  if(m){
+   const token=m[1].replace(/\s+/g,'');
+   const decimal=token.match(/^(.*)[,.](\d{2})$/);
+   const val=decimal?Number(decimal[1].replace(/[,.]/g,'')+'.'+decimal[2]):Number(token.replace(/[,.]/g,''));
+   if(Number.isFinite(val)&&val>0&&val<1e9){amount=String(val);break}
+  }
  }
  if(!amount){
-  const moneyLines=lines.filter(x=>/(\d{1,3}(?:,\d{3})+\.\d{2})\s*(?:บาท|THB)|฿\s*\d/i.test(x)&&!/ค่าธรรมเนียม|fee/i.test(x));
-  if(moneyLines.length===1){const v=moneyLines[0].match(/(\d[\d,]*\.\d{2})/);if(v)amount=String(Number(v[1].replace(/,/g,'')))}
+  const moneyLines=lines.filter(x=>/[\d,. ]+\s*(?:บาท|THB)/i.test(x)&&!/ค่าธรรมเนียม|fee/i.test(x));
+  const found=moneyLines.map(x=>x.match(/(\d[\d,. ]{2,20})\s*(?:บาท|THB)/i)).filter(Boolean).map(x=>x[1].trim());
+  if(found.length===1){
+   const token=found[0].replace(/\s/g,''),decimal=token.match(/^(.*)[,.](\d{2})$/);
+   const val=decimal?Number(decimal[1].replace(/[,.]/g,'')+'.'+decimal[2]):Number(token.replace(/[,.]/g,''));
+   if(val>0&&val<1e9)amount=String(val);
+  }
  }
  const marker=/เลขที่รายการ|เลขรายการ|เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?/i;
  for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const nearby=lines.slice(i+1,i+4).flatMap(x=>[...x.matchAll(/(?:^|\D)(\d{12,25})(?=\D|$)/g)].map(m=>m[1]));const candidates=[...(same||[]),...nearby];if(candidates.length===1){reference=candidates[0].slice(-6);break}}
