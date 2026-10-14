@@ -341,6 +341,13 @@ async function readSlipOCR(file){
   data.receiver=parsedNames.receiver||data.receiver;
   const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
   const filled=t2OcrFillFields(data);
+  if(t2SlipQueue.length>1){
+   const item=t2SlipQueue[t2SlipIndex];
+   if(item&&!item.done){
+    item.values=item.values||{};
+    for(const key of T2_SLIP_FIELDS){const input=$(key);if(filled.includes(key)&&input)item.values[key]=input.value}
+   }
+  }
   previewPromo();
   box.textContent=filled.length?'OCR กรอกจริง '+filled.length+' ช่อง: '+filled.map(id=>({payDate:'วันที่',payTime:'เวลา',amount:'จำนวนเงิน',reference:'เลขอ้างอิง',payerName:'ผู้โอน',receiverName:'ผู้รับ'}[id])).join(', ')+' — โปรดตรวจทานก่อนบันทึก':'OCR ยังไม่กรอกช่องใด กรุณาตรวจข้อความที่อ่านได้';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
@@ -363,6 +370,11 @@ const T2_SLIP_FIELDS=['payDate','payTime','amount','reference','payerName','rece
 function t2BatchCapture(){
  if(!t2SlipQueue.length)return;
  const item=t2SlipQueue[t2SlipIndex];
+ if(t2SlipQueue.length>1){
+  // In batch mode the cards are authoritative. Hidden single-slip fields must not overwrite reviewed data.
+  t2BatchUpdateButton();
+  return;
+ }
  item.values=Object.fromEntries(T2_SLIP_FIELDS.map(id=>[id,$(id).value]));
  item.verified=$('bankVerified').checked;
  t2BatchRender();
@@ -424,16 +436,37 @@ function t2BatchSelect(index){
  t2BatchRender();previewPromo();
  if(!item.ocrDone)readSlipOCR(item.file);
 }
-function t2BatchValid(item){
- const v=item.values||{},amount=Number(v.amount);
- return Boolean(item.verified&&v.payDate&&v.payTime&&Number.isFinite(amount)&&amount>0&&/^\d{6}$/.test(v.reference||'')&&v.payerName?.trim()&&v.receiverName?.trim());
+function t2BatchMissing(item){
+ if(item.done)return [];
+ const v=item.values||{},missing=[];
+ if(!v.payDate||!/^\d{4}-\d{2}-\d{2}$/.test(v.payDate))missing.push('วันที่โอน');
+ if(!v.payTime||!/^([01]\d|2[0-3]):[0-5]\d$/.test(v.payTime))missing.push('เวลา');
+ if(!v.amount||!Number.isFinite(Number(v.amount))||Number(v.amount)<=0)missing.push('จำนวนเงิน');
+ if(!/^\d{6}$/.test(String(v.reference||'')))missing.push('รหัสสลิป 6 หลัก');
+ if(!String(v.payerName||'').trim())missing.push('ผู้โอน');
+ if(!String(v.receiverName||'').trim())missing.push('ผู้รับ');
+ if(!item.verified)missing.push('ติ๊กยืนยันตรวจสลิป');
+ return missing;
 }
+function t2BatchValid(item){return t2BatchMissing(item).length===0}
 function t2BatchUpdateButton(){
- const b=$('t2BatchSaveAll');
- if(!b)return;
- const ready=t2SlipQueue.length>1&&t2SlipQueue.every(item=>item.done||t2BatchValid(item));
- b.disabled=t2SlipBatchBusy||!ready||t2SlipQueue.every(item=>item.done);
- b.textContent=t2SlipBatchBusy?'กำลังบันทึก กรุณารอสักครู่':t2SlipQueue.every(item=>item.done)?'บันทึกครบแล้ว':'บันทึกทั้งหมด '+t2SlipQueue.length+' สลิป';
+ const b=$('t2BatchSaveAll');if(!b)return;
+ const unfinished=t2SlipQueue.map((item,i)=>({item,i,missing:t2BatchMissing(item)})).filter(x=>!x.item.done&&x.missing.length);
+ const allDone=t2SlipQueue.every(item=>item.done);
+ b.disabled=t2SlipBatchBusy||unfinished.length>0||allDone;
+ b.textContent=t2SlipBatchBusy?'กำลังบันทึก กรุณารอสักครู่':allDone?'บันทึกครบแล้ว':'บันทึกทั้งหมด '+t2SlipQueue.length+' สลิป';
+ const notice=$('t2BatchMissingNotice');
+ if(notice){
+  notice.hidden=unfinished.length===0;
+  notice.innerHTML=unfinished.length?'<b>ยังบันทึกไม่ได้ เพราะข้อมูลไม่ครบ:</b><ul>'+unfinished.map(x=>'<li>สลิปใบที่ '+(x.i+1)+': '+x.missing.map(esc).join(', ')+'</li>').join('')+'</ul>':'';
+ }
+ for(let i=0;i<t2SlipQueue.length;i++){
+  const status=$('t2SlipMissing'+i);if(status){
+   const missing=t2BatchMissing(t2SlipQueue[i]);
+   status.textContent=missing.length?'ยังขาด: '+missing.join(', '):'ข้อมูลครบ พร้อมบันทึก';
+   status.style.color=missing.length?'#9a4d00':'#067647';
+  }
+ }
 }
 async function t2SaveBatch(){
  if(t2SlipBatchBusy||t2SlipQueue.length<2||!selected)return;
