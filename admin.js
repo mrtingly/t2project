@@ -250,6 +250,12 @@ function t2OcrExtract(raw){
  }
  return {date,time,amount,reference,payer,receiver,raw:String(raw||'')};
 }
+function t2OcrFillFields(result){
+ const mapping={payDate:result.date,payTime:result.time,amount:result.amount,reference:result.reference,payerName:result.payer,receiverName:result.receiver};
+ let count=0;
+ for(const [id,value] of Object.entries(mapping)){const input=$(id);if(input&&value){input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));count++}}
+ return count;
+}
 function retrySlipOCR(){const file=$("slipImage")?.files?.[0];if(file)readSlipOCR(file);else alert("กรุณาเลือกภาพสลิปก่อน")}
 async function readSlipOCR(file){
  const box=$('ocrStatus');if(!box)return;
@@ -274,8 +280,7 @@ async function readSlipOCR(file){
   if(job!==t2OcrJob)return;
   const data=t2OcrExtract(result.data?.text||'');
   const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
-  let n=0;
-  for(const [id,value] of Object.entries(mapping)){const el=$(id);if(el&&value){el.value=value;n++}}
+  const n=t2OcrFillFields(data);
   previewPromo();
   box.textContent=n?'OCR เติมข้อมูล '+n+' ช่องแล้ว กรุณาตรวจความถูกต้องก่อนบันทึก':'OCR อ่านภาพแล้ว แต่จับคู่ช่องข้อมูลไม่ได้ กรุณาดูข้อความ OCR ด้านล่าง';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
