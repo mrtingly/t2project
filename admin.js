@@ -11,11 +11,16 @@ async function guard(){staff=JSON.parse(sessionStorage.getItem("t2_staff")||"nul
 async function logout(){try{await api("staffLogout")}catch(e){}sessionStorage.removeItem("t2_staff");location.href="admin-login.html"}
 function filterMyMembers(){
  const box=$("memberList"),input=$("memberSearch");
- if(!box)return;
- const query=String(input?.value||"").trim().toLocaleLowerCase("th-TH").replace(/\s+/g,"");
+ if(!box||!input)return;
+ const query=String(input.value||"").trim().toLocaleLowerCase("th-TH").replace(/\s+/g,"");
+ const extra=$("masterSearchActions"),create=$("createMemberBox");
+ if(extra)extra.classList.add("hidden");
+ if(create)create.classList.add("hidden");
+ if($("memberMessage"))$("memberMessage").textContent="";
  if(!query){box.innerHTML='<div class="muted tiny" style="margin-top:12px">เริ่มพิมพ์ชื่อหรือนามสกุลเพื่อค้นหา</div>';return;}
  const hits=members.map((m,i)=>({m,i})).filter(({m})=>[m.firstName,m.lastName,(m.firstName||"")+" "+(m.lastName||""),m.memberId].some(x=>String(x||"").toLocaleLowerCase("th-TH").replace(/\s+/g,"").includes(query))).slice(0,30);
- box.innerHTML=hits.length?hits.map(({m,i})=>`<div class="member ${selected?.memberId===m.memberId?"active":""}"><div style="min-width:0;overflow-wrap:anywhere"><b>${esc((m.firstName||"")+" "+(m.lastName||""))}</b><div class="muted tiny">${esc(m.memberId||"")}</div></div><div class="actions" style="flex-wrap:wrap"><button class="btn alt" onclick="selectMember(${i})">เลือก</button>${String(m.status||"").toLowerCase()==="pending"?`<button class="btn" onclick="approveMember(${i})">ยืนยันและอนุมัติ</button>`:String(m.status||"").toLowerCase()==="active"?`<button class="btn alt" onclick="issueActivation(${i})">ออกรหัสเปิดใช้งาน</button>`:""}</div></div>`).join(""):'<div class="muted tiny" style="margin-top:12px">ไม่พบสมาชิกที่ตรงกับคำค้นหา</div>';
+ box.innerHTML=hits.length?hits.map(({m,i})=>`<div class="member ${selected?.memberId===m.memberId?"active":""}"><div style="min-width:0;overflow-wrap:anywhere"><b>${esc((m.firstName||"")+" "+(m.lastName||""))}</b><div class="muted tiny">${esc(m.memberId||"")}</div></div><div class="actions"><button class="btn alt" onclick="selectMember(${i})">เลือก</button>${String(m.status||"").toLowerCase()==="pending"?`<button class="btn" onclick="approveMember(${i})">ยืนยันและอนุมัติ</button>`:String(m.status||"").toLowerCase()==="active"?`<button class="btn alt" onclick="issueActivation(${i})">ออกรหัสเปิดใช้งาน</button>`:""}</div></div>`).join(""):'<div class="muted tiny" style="margin-top:12px">ไม่พบสมาชิกในความรับผิดชอบ ลองค้นหาใน Master</div>';
+ if(!hits.length&&extra)extra.classList.remove("hidden");
 }
 async function loadMembers(){
  const box=$("memberList");
@@ -25,7 +30,24 @@ async function loadMembers(){
 async function approveMember(i){const m=members[i];if(!m||String(m.status||"").toLowerCase()!=="pending")return;const fullName=((m.firstName||"")+" "+(m.lastName||"")).trim();if(!confirm("คุณได้ตรวจสอบตัวตนของสมาชิก "+fullName+" กับเจ้าตัวแล้ว และยืนยันเปิดสิทธิ์ให้สร้างโปรไฟล์ใช่หรือไม่?"))return;const box=$("memberMessage");box.textContent="กำลังอนุมัติสมาชิก…";try{const d=await api("approveMember",{memberId:m.memberId,identityConfirmed:true});box.innerHTML=d.ok?'<div class="ok">อนุมัติสมาชิกเรียบร้อยแล้ว<br><strong>รหัสเปิดใช้งานครั้งแรก (ใช้ครั้งเดียว ภายใน 24 ชั่วโมง)</strong><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode||'ไม่พบรหัส')+'</code><br>กรุณาส่งรหัสให้สมาชิกผ่านช่องทางที่ตรวจสอบตัวตนแล้ว รหัสนี้จะไม่แสดงซ้ำ</div>':'<div class="warn">'+esc(d.message||"อนุมัติไม่สำเร็จ")+'</div>';if(d.ok)await loadMembers()}catch(e){box.innerHTML='<div class="warn">เชื่อมต่อระบบอนุมัติไม่ได้</div>'}}
 async function issueActivation(i){const m=members[i];if(!m)return;if(!confirm('คุณตรวจสอบตัวตนสมาชิกกับเจ้าตัวแล้ว และต้องการออกรหัสเปิดใช้งานให้สมาชิกคนนี้ใช่หรือไม่?'))return;const box=$('memberMessage');try{const d=await api('issueMemberActivation',{memberId:m.memberId});box.innerHTML=d.ok?'<div class="ok"><b>รหัสเปิดใช้งานครั้งเดียว (หมดอายุ 24 ชั่วโมง)</b><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode)+'</code><br>แจ้งรหัสให้สมาชิกผ่านช่องทางที่ยืนยันตัวตนแล้ว</div>':'<div class="warn">'+esc(d.message||'ไม่สามารถออกรหัสได้')+'</div>'}catch(e){box.textContent='เชื่อมต่อระบบไม่ได้'}}
 function selectMember(i){const m=members[i];if(!m)return;selected={memberId:m.memberId||"",citizenId:m.documentId||m.citizenId||"",firstName:m.firstName||"",lastName:m.lastName||""};$("selectedMember").innerHTML="<b>สมาชิกที่เลือก:</b> "+esc(selected.firstName+" "+selected.lastName)+'<div class="muted tiny">'+esc(selected.memberId)+"</div>";loadMembers();newReceipt(false)}
-async function findMember(){const first=$("firstName").value.trim(),last=$("lastName").value.trim(),citizen=$("citizenId").value.trim();const box=$("memberMessage");if(!first&&!last&&!citizen){box.innerHTML='<div class="warn">กรอกชื่อ นามสกุล หรือเลขประจำตัวเพื่อค้นหา</div>';return}box.textContent="กำลังค้นหา…";try{const d=await api("findMemberV2",{firstName:first,lastName:last,citizenId:citizen,documentId:citizen});if(!d.ok){box.innerHTML='<div class="warn">'+esc(d.message||"ค้นหาไม่สำเร็จ")+'</div>';return}const list=d.items||d.members||(d.member?[d.member]:[]);box.innerHTML=list.length?list.map(m=>{const n=m.memberNumber||m.member_number||m.sequenceNumber||m.sequence_number||"";const room=m.room||m.roomCode||"";const number=n?("เลขสมาชิก "+esc(n)):"รหัสสมาชิก "+esc(m.memberId||"");return '<div class="ok"><b>'+number+'</b>'+(room?' · ห้อง '+esc(room):'')+'<div class="muted tiny">'+esc(((m.firstName||"")+" "+(m.lastName||"")).trim())+'</div></div>'}).join(""):'<div class="warn">ไม่พบสมาชิกตามข้อมูล Master</div>'}catch(e){box.innerHTML='<div class="warn">ค้นหาไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้</div>'}}
+async function findMember(){
+ const query=String($("memberSearch")?.value||"").trim();
+ const box=$("memberMessage");if(!query)return;
+ const words=query.split(/\s+/).filter(Boolean);
+ box.textContent="กำลังค้นหาใน Master…";
+ try{
+  const d=await api("findMemberV2",{firstName:words[0]||"",lastName:words.slice(1).join(" ")});
+  if(!d.ok){box.innerHTML='<div class="warn">'+esc(d.message||"ค้นหาไม่สำเร็จ")+'</div>';return;}
+  const list=d.items||d.members||(d.member?[d.member]:[]);
+  if(list.length){
+   box.innerHTML=list.slice(0,20).map(m=>'<div class="ok" style="margin-bottom:8px"><b>'+esc(((m.firstName||"")+" "+(m.lastName||"")).trim())+'</b><div class="muted tiny">'+esc(m.memberId||"")+'</div><div class="tiny">พบใน Master — ตรวจสอบสิทธิ์และเพิ่มเป็นสมาชิกในความรับผิดชอบก่อนทำรายการ</div></div>').join("");
+  }else{
+   box.innerHTML='<div class="warn">ไม่พบใน Master สามารถกรอกข้อมูลเพื่อเพิ่มสมาชิกใหม่ได้</div>';
+  }
+  const form=$("createMemberBox");form?.classList.remove("hidden");
+  $("firstName").value=words[0]||"";$("lastName").value=words.slice(1).join(" ");
+ }catch(e){box.innerHTML='<div class="warn">เชื่อมต่อ Master ไม่สำเร็จ กรุณาลองใหม่</div>';}
+}
 async function createMember(){const first=$("firstName").value.trim(),last=$("lastName").value.trim(),citizen=$("citizenId").value.trim();if(!first||!last){$("memberMessage").innerHTML='<div class="warn">กรอกชื่อและนามสกุลก่อน</div>';return}try{const d=await api("createMember",{firstName:first,lastName:last,citizenId:citizen});$("memberMessage").innerHTML=d.ok?'<div class="ok">เพิ่มสมาชิกแล้ว</div>':'<div class="warn">'+esc(d.message||"เพิ่มไม่ได้")+"</div>";if(d.ok)await loadMembers()}catch(e){$("memberMessage").innerHTML='<div class="warn">เพิ่มสมาชิกไม่สำเร็จ</div>'}}
 function normalizePromoDate(date){const p=String(date||"").split("-");if(p.length===3&&Number(p[0])>2400)p[0]=String(Number(p[0])-543);return p.join("-")}
 function promo(date,amount){
