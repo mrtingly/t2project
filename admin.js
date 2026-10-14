@@ -89,7 +89,7 @@ function promo(date,amount){
  return matches.length?{status:"matched",matches}:{status:"review",periods:rs.map(r=>r.n)};
 }
 function previewPromo(){const d=$("payDate").value,a=Number($("amount").value||0),box=$("promoBox");if(!d||!a){box.textContent="เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร";return}const p=promo(d,a);if(p.status==="matched"){box.innerHTML='<b>ยอดลงทุน '+money(a)+'</b><br><b>ยอดที่จะได้รับตามโปร:</b> '+p.matches.map(x=>"ช่วง "+x.period+" → <strong>"+money(x.receive)+"</strong>").join(" / ")}else if(p.status==="review"){box.innerHTML='<b>วันที่อยู่ในโปร '+p.periods.join(", ")+'</b> แต่ยอดนี้ไม่มีคู่เงินที่ชัดเจนในต้นฉบับ ต้องตรวจเอกสาร'}else box.innerHTML="<b>ไม่พบโปรในวันที่นี้</b>"}
-function previewSlip(e){const files=Array.from(e.target.files||[]);if(files.length>10){alert('เลือกสลิปได้ไม่เกิน 10 ใบต่อครั้ง');e.target.value='';return}t2BatchInit(files);const f=files[0];if(!f){$("slipPreviewBox").classList.add("hidden");$("slipPreview").removeAttribute("src");return}const r=new FileReader();r.onload=()=>{$("slipPreview").src=r.result;$("slipPreviewBox").classList.remove("hidden")};r.readAsDataURL(f);readSlipOCR(f)}
+function previewSlip(e){const files=Array.from(e.target.files||[]);if(files.length>5){alert('เลือกสลิปได้ไม่เกิน 5 ใบต่อครั้ง');e.target.value='';return}t2BatchInit(files);const f=files[0];if(!f){$("slipPreviewBox").classList.add("hidden");$("slipPreview").removeAttribute("src");return}const r=new FileReader();r.onload=()=>{$("slipPreview").src=r.result;$("slipPreviewBox").classList.remove("hidden")};r.readAsDataURL(f);readSlipOCR(f)}
 function receiptPayload(){const d=$("payDate").value,a=Number($("amount").value||0),p=promo(d,a);return {amount:a,transferDate:d,transferTime:$("payTime").value,referenceNo:$("reference").value.trim(),payerName:$("payerName").value.trim(),receiverName:$("receiverName").value.trim(),notes:$("note").value.trim(),bankVerified:$("bankVerified").checked,rulePeriod:p.status==="matched"?p.matches.map(x=>x.period).join(","):"",promoReturn:p.status==="matched"?Math.max(...p.matches.map(x=>x.receive)):0}}
 function rowPaymentId(x){return String(x.paymentId||x.payment_id||x.id||"")}
 function findMemberForRow(x){const cid=String(x.citizenId||x.citizen_id||x.documentId||x.document_id||"");return members.find(m=>String(m.citizenId||m.documentId||"")===cid)||null}
@@ -391,8 +391,9 @@ function t2BatchRender(){
    '<div class="t2BatchCardBody"><div class="t2BatchPhoto"><img src="'+esc(url)+'" alt="ภาพสลิปใบที่ '+(i+1)+'"></div>'+
    '<div class="t2BatchFields">'+inputs+'<label class="t2BatchField wide">หมายเหตุ<textarea data-batch-index="'+i+'" data-batch-field="note" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'>'+esc(v.note||'')+'</textarea></label>'+
    '<label class="t2BatchConfirm"><input type="checkbox" '+(item.verified?'checked':'')+' onchange="t2BatchVerify('+i+',this.checked)" '+(item.done?'disabled':'')+'> ตรวจสอบกับภาพใบนี้แล้ว</label>'+
-   '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>อ่าน OCR ใบนี้อีกครั้ง</button>'+ '<button type="button" class="btn" onclick="t2SaveSlip('+i+')" '+(t2SlipBatchBusy||item.done?'disabled':'')+'>'+(item.done?'บันทึกแล้ว':'บันทึกสลิปใบที่ '+(i+1))+'</button>'+'</div></div></article>';
- }).join('')+'</div>';
+   '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>อ่าน OCR ใบนี้อีกครั้ง</button></div></div></article>';
+ }).join('')+'</div><div style="margin-top:14px"><button id="t2BatchSaveAll" type="button" class="btn" onclick="t2SaveBatch()" disabled>บันทึกทั้งหมด</button></div>';
+ t2BatchUpdateButton();
 }
 function t2BatchEdit(index,input){
  const item=t2SlipQueue[index];if(!item||item.done)return;
@@ -422,42 +423,47 @@ function t2BatchSelect(index){
  t2BatchRender();previewPromo();
  if(!item.ocrDone)readSlipOCR(item.file);
 }
-async function t2SaveSlip(index){
- if(t2SlipBatchBusy)return;
- const item=t2SlipQueue[index];
- if(!item||item.done)return;
- if(!selected){$('saveMessage').textContent='กรุณาเลือกสมาชิกก่อน';return}
+function t2BatchValid(item){
  const v=item.values||{},amount=Number(v.amount);
- if(!item.verified||!v.payDate||!v.payTime||!Number.isFinite(amount)||amount<=0||
- !/^\d{6}$/.test(v.reference||'')||!v.payerName?.trim()||!v.receiverName?.trim()){
-  $('saveMessage').textContent='สลิปใบที่ '+(index+1)+' ยังไม่ครบ: วันที่ เวลา จำนวนเงิน รหัสอ้างอิง ผู้โอน ผู้รับ หรือช่องยืนยัน';
-  return;
- }
- // Lock the queue while the transaction is running to avoid double submit.
- t2SlipBatchBusy=true;t2BatchRender();
+ return Boolean(item.verified&&v.payDate&&v.payTime&&Number.isFinite(amount)&&amount>0&&/^\d{6}$/.test(v.reference||'')&&v.payerName?.trim()&&v.receiverName?.trim());
+}
+function t2BatchUpdateButton(){
+ const b=$('t2BatchSaveAll');
+ if(!b)return;
+ const ready=t2SlipQueue.length>1&&t2SlipQueue.every(item=>item.done||t2BatchValid(item));
+ b.disabled=t2SlipBatchBusy||!ready||t2SlipQueue.every(item=>item.done);
+ b.textContent=t2SlipBatchBusy?'กำลังบันทึก กรุณารอสักครู่':t2SlipQueue.every(item=>item.done)?'บันทึกครบแล้ว':'บันทึกทั้งหมด '+t2SlipQueue.length+' สลิป';
+}
+async function t2SaveBatch(){
+ if(t2SlipBatchBusy||t2SlipQueue.length<2||!selected)return;
+ t2BatchCapture();
+ if(!t2SlipQueue.every(item=>item.done||t2BatchValid(item))){$('saveMessage').textContent='กรุณาตรวจข้อมูลและยืนยันทุกสลิปให้ครบ';t2BatchUpdateButton();return}
+ t2SlipBatchBusy=true;t2BatchUpdateButton();
  try{
-  const capabilities=await api('round5Capabilities');
-  if(!capabilities.ok||!capabilities.receiptUpload)throw Error('Backend ไม่พร้อมอัปโหลด');
-  if(!item.uploadedReceipt){
-   const encoded=await fileToCompressedBase64(item.file);
-   const up=await api('uploadReceipt',{memberId:selected.memberId,mimeType:'image/jpeg',base64:encoded});
-   if(!up.ok||!up.receipt)throw Error(up.message||'อัปโหลดภาพไม่สำเร็จ');
-   item.uploadedReceipt=up.receipt;
+  const d=await api('round5Capabilities');
+  if(!d.ok||!d.receiptUpload)throw Error('Backend ไม่พร้อมอัปโหลด');
+  for(let i=0;i<t2SlipQueue.length;i++){
+   const item=t2SlipQueue[i];if(item.done)continue;
+   $('saveMessage').textContent='กำลังบันทึกสลิป '+(i+1)+'/'+t2SlipQueue.length;
+   if(!item.uploadedReceipt){
+    const base64=await fileToCompressedBase64(item.file);
+    const up=await api('uploadReceipt',{memberId:selected.memberId,mimeType:'image/jpeg',base64});
+    if(!up.ok||!up.receipt)throw Error('อัปโหลดสลิป '+(i+1)+' ไม่สำเร็จ: '+(up.message||''));
+    item.uploadedReceipt=up.receipt;
+   }
+   const v=item.values,amount=Number(v.amount),rule=promo(v.payDate,amount);
+   const payload={citizenId:selected.citizenId,documentId:selected.citizenId,firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+' '+selected.lastName,
+    transferDate:v.payDate,transferTime:v.payTime,amount,referenceNo:v.reference,payerName:v.payerName,receiverName:v.receiverName,notes:v.note||'',bankVerified:true,
+    rulePeriod:rule.status==='matched'?rule.matches.map(x=>x.period).join(','):'',promoReturn:rule.status==='matched'?Math.max(...rule.matches.map(x=>x.receive)):0,receipt:item.uploadedReceipt};
+   const saved=await api('savePayment',payload);
+   if(!saved.ok){
+    if(saved.duplicate){item.done=true;item.duplicate=true;continue}
+    throw Error('บันทึกสลิป '+(i+1)+' ไม่สำเร็จ: '+(saved.message||''));
+   }
+   item.done=true;item.paymentId=saved.paymentId;
   }
-  const r=promo(v.payDate,amount);
-  const payload={citizenId:selected.citizenId,documentId:selected.citizenId,
-   firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+' '+selected.lastName,
-   transferDate:v.payDate,transferTime:v.payTime,amount,referenceNo:v.reference,
-   payerName:v.payerName,receiverName:v.receiverName,notes:v.note||'',bankVerified:true,
-   rulePeriod:r.status==='matched'?r.matches.map(x=>x.period).join(','):'',
-   promoReturn:r.status==='matched'?Math.max(...r.matches.map(x=>x.receive)):0,receipt:item.uploadedReceipt};
-  const saved=await api('savePayment',payload);
-  if(!saved.ok){
-   if(saved.duplicate){item.done=true;item.duplicate=true;}
-   else throw Error(saved.message||'บันทึกข้อมูลไม่สำเร็จ');
-  }else{item.done=true;item.paymentId=saved.paymentId}
-  $('saveMessage').innerHTML='<div class="ok">สลิปใบที่ '+(index+1)+(item.duplicate?' เป็นรายการซ้ำ ไม่บันทึกซ้ำ':' บันทึกเรียบร้อย')+'</div>';
+  $('saveMessage').innerHTML='<div class="ok">บันทึกสลิปสำเร็จครบ '+t2SlipQueue.length+' ใบ</div>';
   await loadReport();
- }catch(e){$('saveMessage').innerHTML='<div class="warn">สลิปใบที่ '+(index+1)+': '+esc(e.message||String(e))+'</div>'}
+ }catch(e){$('saveMessage').innerHTML='<div class="warn">'+esc(e.message||String(e))+' — สลิปที่สำเร็จแล้วจะไม่ส่งซ้ำ</div>'}
  finally{t2SlipBatchBusy=false;t2BatchRender()}
 }
