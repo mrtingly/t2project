@@ -118,7 +118,18 @@ async function deleteReceipt(i){
  if(!confirm("ยืนยันลบใบเสร็จของ "+(who||"สมาชิก")+" รหัส "+String(x.referenceNo||"").slice(-6)+" ?"))return;
  try{const d=await api("deletePayment",{paymentId:id});if(!d.ok){alert(d.message||"ลบไม่สำเร็จ");return}await loadReport();alert("ลบรายการแล้ว")}catch(e){alert("เชื่อมต่อระบบไม่ได้")}
 }
-async function saveReceipt(){if(!selected){$("saveMessage").innerHTML='<div class="warn">เลือกสมาชิกก่อน</div>';return}const p=receiptPayload();if(!p.transferDate||!p.transferTime||!p.amount||!p.payerName||!p.receiverName){$("saveMessage").innerHTML='<div class="warn">กรอกวันที่ เวลา จำนวนเงิน ผู้โอน และผู้รับให้ครบ</div>';return}if(!/^\d{6}$/.test(p.referenceNo)){$("saveMessage").innerHTML='<div class="warn">รหัสสลิปต้องเป็นตัวเลข 6 หลักท้ายเท่านั้น</div>';return}if(!p.bankVerified){$("saveMessage").innerHTML='<div class="warn">กรุณาตรวจข้อมูลในฟอร์มกับภาพสลิปและติ๊กยืนยันก่อนบันทึก</div>';return}$("saveMessage").innerHTML="กำลังบันทึก…";try{const action=editingPaymentId?"updatePayment":"savePayment";const d=await api(action,{paymentId:editingPaymentId||"",citizenId:selected.citizenId,documentId:selected.citizenId,firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+" "+selected.lastName,...p,receipt:""});if(d.ok){$("saveMessage").innerHTML='<div class="ok">✓ บันทึกรายการเรียบร้อย</div>';editingPaymentId=null;$("receiptFormTitle").textContent="เพิ่มใบเสร็จ / เงินลงทุน";$("saveReceiptBtn").textContent="บันทึกใบเสร็จ";$("cancelEditBtn").classList.add("hidden");$("newReceiptBtn").classList.remove("hidden");await loadReport()}else $("saveMessage").innerHTML='<div class="warn">'+esc(d.message||"บันทึกไม่สำเร็จ")+"</div>"}catch(e){$("saveMessage").innerHTML='<div class="warn">เชื่อมต่อระบบบันทึกไม่ได้</div>'}}
+async function saveReceipt(){if(!selected){$("saveMessage").innerHTML='<div class="warn">เลือกสมาชิกก่อน</div>';return}const p=receiptPayload();if(!p.transferDate||!p.transferTime||!p.amount||!p.payerName||!p.receiverName){$("saveMessage").innerHTML='<div class="warn">กรอกวันที่ เวลา จำนวนเงิน ผู้โอน และผู้รับให้ครบ</div>';return}if(!/^\d{6}$/.test(p.referenceNo)){$("saveMessage").innerHTML='<div class="warn">รหัสสลิปต้องเป็นตัวเลข 6 หลักท้ายเท่านั้น</div>';return}if(!p.bankVerified){$("saveMessage").innerHTML='<div class="warn">กรุณาตรวจข้อมูลในฟอร์มกับภาพสลิปและติ๊กยืนยันก่อนบันทึก</div>';return}$("saveMessage").innerHTML="กำลังบันทึก…";try{let uploadedReceipt="";
+ const file=$("slipImage")?.files?.[0];
+ if(file){
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)){throw Error("รองรับสลิป JPG PNG หรือ WebP เท่านั้น")}
+   const data=await fileToCompressedBase64(file);
+   const uploaded=await api("uploadReceipt",{memberId:selected.memberId,mimeType:"image/jpeg",base64:data});
+   if(!uploaded.ok)throw Error(uploaded.message||"จัดเก็บภาพสลิปใน Drive ไม่สำเร็จ");
+   uploadedReceipt=uploaded.receipt;
+ }else if(!editingPaymentId){
+   throw Error("กรุณาแนบภาพสลิปก่อนบันทึก");
+ }
+ const action=editingPaymentId?"updatePayment":"savePayment";const d=await api(action,{paymentId:editingPaymentId||"",citizenId:selected.citizenId,documentId:selected.citizenId,firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+" "+selected.lastName,...p,receipt:uploadedReceipt});if(d.ok){$("saveMessage").innerHTML='<div class="ok">✓ บันทึกรายการเรียบร้อย</div>';editingPaymentId=null;$("receiptFormTitle").textContent="เพิ่มใบเสร็จ / เงินลงทุน";$("saveReceiptBtn").textContent="บันทึกใบเสร็จ";$("cancelEditBtn").classList.add("hidden");$("newReceiptBtn").classList.remove("hidden");await loadReport()}else $("saveMessage").innerHTML='<div class="warn">'+esc(d.message||"บันทึกไม่สำเร็จ")+"</div>"}catch(e){$("saveMessage").innerHTML='<div class="warn">'+esc(e.message||"เชื่อมต่อระบบบันทึกไม่ได้")+'</div>'}}
 function newReceipt(scroll=true){editingPaymentId=null;if($("receiptFormTitle"))$("receiptFormTitle").textContent="เพิ่มใบเสร็จ / เงินลงทุน";if($("saveReceiptBtn"))$("saveReceiptBtn").textContent="บันทึกใบเสร็จ";if($("cancelEditBtn"))$("cancelEditBtn").classList.add("hidden");["payDate","payTime","amount","reference","payerName","receiverName","note"].forEach(id=>$(id).value="");if($("slipImage"))$("slipImage").value="";if($("slipPreview"))$("slipPreview").removeAttribute("src");if($("slipPreviewBox"))$("slipPreviewBox").classList.add("hidden");$("bankVerified").checked=false;$("promoBox").textContent="เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร";$("saveMessage").innerHTML="";$("newReceiptBtn").classList.add("hidden");if(scroll)$("payDate").scrollIntoView({behavior:"smooth",block:"center"})}
 function thDateTime(){
  const d=new Date();
@@ -155,3 +166,25 @@ function printAdminReceipt(i){
 }
 async function loadReport(){try{const d=await api("getReport",{});const rows=d.items||d.payments||[];reportItems=rows;const s=d.summary||{};$("sumCount").textContent=Number(s.paymentCount??rows.length).toLocaleString("th-TH");$("sumAmount").textContent=money(s.totalAmount??rows.reduce((a,x)=>a+Number(x.amount||0),0));$("sumReturn").textContent=money(s.totalPromo??s.totalPromoReturn??s.totalReturn??rows.reduce((a,x)=>a+Number(x.promoReturn||0),0));$("reportRows").innerHTML=rows.length?rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.transferDate||"")}</td><td>${esc(x.transferTime||"")}</td><td>${esc((x.firstName||"")+" "+(x.lastName||""))}</td><td>${esc(x.payerName||"-")}</td><td>${esc(x.receiverName||"-")}</td><td>${esc(x.referenceNo||"")}</td><td>${money(x.amount)}</td><td>${money(x.promoReturn)}</td><td><div class="actions"><button class="btn alt" onclick="printAdminReceipt(${i})">พิมพ์</button><button class="btn alt" onclick="editReceipt(${i})">แก้ไข</button><button class="btn red" onclick="deleteReceipt(${i})">ลบ</button></div></td></tr>`).join(""):'<tr><td colspan="10">ยังไม่มีรายการ</td></tr>'}catch(e){$("reportRows").innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}}
 document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await loadMembers();await loadReport()}});
+
+function fileToCompressedBase64(file){
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onerror=()=>reject(Error("อ่านไฟล์ภาพไม่ได้"));
+  reader.onload=()=>{
+   const img=new Image();
+   img.onerror=()=>reject(Error("ไฟล์ภาพไม่ถูกต้อง"));
+   img.onload=()=>{
+    const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+    canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+    const b64=canvas.toDataURL("image/jpeg",0.72).split(",")[1]||"";
+    if(b64.length>3500000){reject(Error("ภาพสลิปมีขนาดใหญ่เกินไป"));return}
+    resolve(b64);
+   };
+   img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+ });
+}
