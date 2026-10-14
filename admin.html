@@ -50,6 +50,18 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
 .admin-report-table::-webkit-scrollbar-thumb{background:#a2b3cc;border-radius:20px}
 @media(max-width:820px){.admin-report-table table{min-width:980px}.admin-report-table td{padding:11px 9px}}
 @media print{.admin-report-table{border:0!important;overflow:visible!important}.admin-report-table table{min-width:0!important}.admin-report-table th,.admin-report-table td{padding:5px!important;font-size:10px!important}}
+
+/* Keep report controls visible while scrolling the wide table */
+.admin-report-table th:last-child,.admin-report-table td:last-child{
+ position:sticky;right:0;z-index:3;min-width:148px;width:148px;
+ background:#fff;box-shadow:-7px 0 14px -12px rgba(18,45,86,.45);
+}
+.admin-report-table th:last-child{background:#eaf1fa;z-index:4;text-align:center}
+.admin-report-table tbody tr:nth-child(even) td:last-child{background:#fbfdff}
+.admin-report-table tbody tr:hover td:last-child{background:#f5f9ff}
+.admin-report-table .report-action-group{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+.admin-report-table .report-btn{padding:9px 8px;min-height:36px;font-size:12px;flex:0 0 auto}
+@media print{.admin-report-table th:last-child,.admin-report-table td:last-child{position:static!important;box-shadow:none!important}}
 </style>
 </head>
 <body>
@@ -97,5 +109,5 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
  </section>
 </section>
 </div></main>
-<script src="admin.js?v=57"></script>
+<script src="admin.js?v=58"></script>
 </body></html>
