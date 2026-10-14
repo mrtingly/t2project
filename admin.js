@@ -233,7 +233,16 @@ function t2OcrExtract(raw){
  const contextDateLine=lines.find(x=>date&&/\d{1,2}\s*(?:มี\.?\s*ค|ก\.?\s*ค|ก\.?\s*พ|ม\.?\s*ค|เม\.?\s*ย|พ\.?\s*ค|มิ\.?\s*ย|ส\.?\s*ค|ก\.?\s*ย|ต\.?\s*ค|พ\.?\s*ย|ธ\.?\s*ค|\d{1,2}[\/.-]\d{1,2})/.test(x)&&/[0-2]?\d:[0-5]\d/.test(x))||'';
  const timeMatch=contextDateLine.match(/(?:^|[^\d])([01]?\d|2[0-3]):([0-5]\d)(?=\D|$)/);
  if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
- for(const line of lines){if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(line))continue;const m=line.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);if(m){amount=String(Number(m[1].replace(/,/g,'')));break}}
+ for(let i=0;i<lines.length;i++){
+  if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(lines[i])||/ค่าธรรมเนียม|fee/i.test(lines[i]))continue;
+  const section=lines.slice(i,i+3).join(' ');
+  const marker=section.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);
+  if(marker){const v=Number(marker[1].replace(/,/g,''));if(v>0&&v<1000000000){amount=String(v);break}}
+ }
+ if(!amount){
+  const moneyLines=lines.filter(x=>/(\d{1,3}(?:,\d{3})+\.\d{2})\s*(?:บาท|THB)|฿\s*\d/i.test(x)&&!/ค่าธรรมเนียม|fee/i.test(x));
+  if(moneyLines.length===1){const v=moneyLines[0].match(/(\d[\d,]*\.\d{2})/);if(v)amount=String(Number(v[1].replace(/,/g,'')))}
+ }
  const marker=/เลขที่รายการ|เลขรายการ|เลขอ้างอิง|รหัสอ้างอิง|reference|ref(?:erence)?/i;
  for(let i=0;i<lines.length;i++){if(!marker.test(lines[i]))continue;const same=lines[i].match(/(\d{10,})/g);const nearby=lines.slice(i+1,i+4).flatMap(x=>[...x.matchAll(/(?:^|\D)(\d{12,25})(?=\D|$)/g)].map(m=>m[1]));const candidates=[...(same||[]),...nearby];if(candidates.length===1){reference=candidates[0].slice(-6);break}}
  let payer='',receiver='';
@@ -252,24 +261,43 @@ function t2OcrExtract(raw){
 }
 function t2OcrNames(raw){
  const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- const clean=x=>String(x||'').replace(/^(?:โอนจาก|โอนเข้า|จาก|ไปยัง|ชื่อผู้โอน|ชื่อผู้รับ|ผู้โอน|ผู้รับ|sender|recipient|from|to)\s*[:：-]?\s*/i,'').replace(/(?:xxx|XXX)[-\dxX]+/g,'').trim();
- const labels={payer:/^(?:โอนจาก|จาก|ชื่อผู้โอน|ผู้โอน|sender|from)\s*[:：-]?/i,receiver:/^(?:โอนเข้า|ไปยัง|ถึง|ชื่อผู้รับ|ผู้รับ|recipient|to)\s*[:：-]?/i};
  const result={payer:'',receiver:''};
- const isName=v=>v.length>=5&&/[\u0e01-\u0e5aA-Za-z]/.test(v)&&!/^(?:บัญชี|ธนาคาร|account|bank|รายการ|จำนวนเงิน|ค่าธรรมเนียม|เลขที่)/i.test(v)&&!/\d{4,}/.test(v);
- for(let i=0;i<lines.length;i++)for(const [key,re] of Object.entries(labels)){
-  if(result[key]||!re.test(lines[i]))continue;
-  const current=clean(lines[i]);
-  const options=[current,...lines.slice(i+1,i+4).map(clean)];
-  const name=options.find(isName);
-  if(name)result[key]=name;
+ const labels={payer:/^(?:โอนจาก|จาก|ชื่อผู้โอน|ผู้โอน|sender|from)\s*[:：-]?/i,receiver:/^(?:โอนเข้า|ไปยัง|ถึง|ชื่อผู้รับ|ผู้รับ|recipient|to)\s*[:：-]?/i};
+ const sanitize=x=>String(x||'').replace(/(?:xxx|XXX)[-\dxX]+/g,'').replace(/^[\s:：-]+/,'').trim();
+ const valid=v=>v.length>=4&&/[\u0e01-\u0e5aA-Za-z]/.test(v)&&!/\d{4,}|xxx|จำนวนเงิน|ค่าธรรมเนียม|เลขที่รายการ|ธนาคาร|บัญชี/i.test(v)&&v.split(/\s+/).length<=8;
+ // Many Thai bank slips put "โอนจาก" and "โอนเข้า" on the same row, with each name two rows below.
+ const fromIndex=lines.findIndex(x=>labels.payer.test(x));
+ const toIndex=lines.findIndex(x=>labels.receiver.test(x));
+ for(const [kind,index] of [['payer',fromIndex],['receiver',toIndex]]){
+  if(index<0)continue;
+  const marker=labels[kind],inline=sanitize(lines[index].replace(marker,''));
+  if(valid(inline)){result[kind]=inline;continue}
+  for(let step=1;step<=5;step++){
+   const row=lines[index+step];if(!row)break;
+   const name=sanitize(row);
+   if(valid(name)){result[kind]=name;break}
+  }
+ }
+ // Recognize common layout "โอนจาก     โอนเข้า" followed by sender/recipient names in paired columns.
+ if(fromIndex===toIndex&&fromIndex>=0){
+  const candidate=lines.slice(fromIndex+1,fromIndex+7).filter(valid);
+  if(candidate.length>=2){result.payer=candidate[0];result.receiver=candidate[1]}
  }
  return result;
 }
 function t2OcrFillFields(result){
  const mapping={payDate:result.date,payTime:result.time,amount:result.amount,reference:result.reference,payerName:result.payer,receiverName:result.receiver};
- let count=0;
- for(const [id,value] of Object.entries(mapping)){const input=$(id);if(input&&value){input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));count++}}
- return count;
+ const filled=[];
+ for(const [id,value] of Object.entries(mapping)){
+  const input=$(id);
+  if(input&&value){
+   input.value=value;
+   input.dataset.ocrFilled='true';
+   input.dispatchEvent(new Event('input',{bubbles:true}));
+   filled.push(id);
+  }
+ }
+ return filled;
 }
 function retrySlipOCR(){const file=$("slipImage")?.files?.[0];if(file)readSlipOCR(file);else alert("กรุณาเลือกภาพสลิปก่อน")}
 async function readSlipOCR(file){
@@ -298,9 +326,9 @@ async function readSlipOCR(file){
   data.payer=parsedNames.payer||data.payer;
   data.receiver=parsedNames.receiver||data.receiver;
   const mapping={payDate:data.date,payTime:data.time,amount:data.amount,reference:data.reference,payerName:data.payer,receiverName:data.receiver};
-  const n=t2OcrFillFields(data);
+  const filled=t2OcrFillFields(data);
   previewPromo();
-  box.textContent=n?'OCR เติมข้อมูล '+n+' ช่องแล้ว กรุณาตรวจความถูกต้องก่อนบันทึก':'OCR อ่านภาพแล้ว แต่จับคู่ช่องข้อมูลไม่ได้ กรุณาดูข้อความ OCR ด้านล่าง';
+  box.textContent=filled.length?'OCR กรอกจริง '+filled.length+' ช่อง: '+filled.map(id=>({payDate:'วันที่',payTime:'เวลา',amount:'จำนวนเงิน',reference:'เลขอ้างอิง',payerName:'ผู้โอน',receiverName:'ผู้รับ'}[id])).join(', ')+' — โปรดตรวจทานก่อนบันทึก':'OCR ยังไม่กรอกช่องใด กรุณาตรวจข้อความที่อ่านได้';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
  }catch(e){if(job===t2OcrJob)box.textContent='ระบบอ่านภาพอัตโนมัติไม่พร้อมใช้งาน กรุณากรอกตามภาพสลิป: '+String(e.message||e)}
 }
