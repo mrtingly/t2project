@@ -403,8 +403,8 @@ function t2BatchRender(){
    '<div class="t2BatchCardBody"><div class="t2BatchPhoto"><img src="'+esc(url)+'" alt="ภาพสลิปใบที่ '+(i+1)+'"></div>'+
    '<div class="t2BatchFields">'+inputs+'<label class="t2BatchField wide">หมายเหตุ<textarea data-batch-index="'+i+'" data-batch-field="note" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'>'+esc(v.note||'')+'</textarea></label>'+
    '<label class="t2BatchConfirm"><input type="checkbox" '+(item.verified?'checked':'')+' onchange="t2BatchVerify('+i+',this.checked)" '+(item.done?'disabled':'')+'> ตรวจสอบกับภาพใบนี้แล้ว</label>'+
-   '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>อ่าน OCR ใบนี้อีกครั้ง</button></div></div></article>';
- }).join('')+'</div><div style="margin-top:14px"><button id="t2BatchSaveAll" type="button" class="btn" onclick="t2SaveBatch()" disabled>บันทึกทั้งหมด</button></div>';
+   '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>อ่าน OCR ใบนี้อีกครั้ง</button><div id="t2SlipMissing'+i+'" role="status" style="grid-column:1/-1;font-size:13px"></div></div></div></article>';
+ }).join('')+'</div><div id="t2BatchMissingNotice" role="status" style="margin-top:14px;padding:12px;background:#fff4e5;color:#754200;border-radius:10px" hidden></div><div style="margin-top:14px"><button id="t2BatchSaveAll" type="button" class="btn" onclick="t2SaveBatch()" disabled>บันทึกทั้งหมด</button></div>';
  t2BatchUpdateButton();
 }
 function t2BatchEdit(index,input){
