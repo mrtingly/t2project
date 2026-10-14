@@ -274,27 +274,29 @@ function t2OcrExtract(raw){
 function t2OcrNames(raw){
  const lines=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  const result={payer:'',receiver:''};
- const labels={payer:/^(?:โอนจาก|จาก|ชื่อผู้โอน|ผู้โอน|sender|from)\s*[:：-]?/i,receiver:/^(?:โอนเข้า|ไปยัง|ถึง|ชื่อผู้รับ|ผู้รับ|recipient|to)\s*[:：-]?/i};
- const sanitize=x=>String(x||'').replace(/(?:xxx|XXX)[-\dxX]+/g,'').replace(/^[\s:：-]+/,'').trim();
- const valid=v=>v.length>=4&&/[\u0e01-\u0e5aA-Za-z]/.test(v)&&!/\d{4,}|xxx|จำนวนเงิน|ค่าธรรมเนียม|เลขที่รายการ|ธนาคาร|บัญชี/i.test(v)&&v.split(/\s+/).length<=8;
- // Many Thai bank slips put "โอนจาก" and "โอนเข้า" on the same row, with each name two rows below.
- const fromIndex=lines.findIndex(x=>labels.payer.test(x));
- const toIndex=lines.findIndex(x=>labels.receiver.test(x));
- for(const [kind,index] of [['payer',fromIndex],['receiver',toIndex]]){
-  if(index<0)continue;
-  const marker=labels[kind],inline=sanitize(lines[index].replace(marker,''));
-  if(valid(inline)){result[kind]=inline;continue}
-  for(let step=1;step<=5;step++){
-   const row=lines[index+step];if(!row)break;
-   const name=sanitize(row);
-   if(valid(name)){result[kind]=name;break}
+ const labels={payer:/^(?:โอนจาก|จาก|ผู้โอน|ชื่อผู้โอน|sender|from)/i,receiver:/^(?:โอนเข้า|โอนเข้าบัญชี|ไปยัง|ถึง|ผู้รับ|ชื่อผู้รับ|recipient|to)/i};
+ const clean=v=>String(v||'').replace(/(?:xxx|XXX)[\dxX-]*/g,'').replace(/(?:\b\d{2,}[-xX\d]*\b)/g,'').replace(/^[\s:：\-–]+|[\s:：\-–]+$/g,'').trim();
+ const valid=v=>v.length>=5&&/[\u0e01-\u0e5aA-Za-z]/.test(v)&&!/(?:จำนวนเงิน|ค่าธรรมเนียม|เลขที่|บัญชี|ธนาคาร|รายการสำเร็จ|K PLUS|SME|วันทำรายการ)/i.test(v)&&!/\d{4,}/.test(v);
+ const markerLine=lines.findIndex(line=>labels.payer.test(line)&&labels.receiver.test(line));
+ if(markerLine>=0){
+  // OCR frequently puts two column headings or two names on one line.
+  const heading=lines[markerLine],fromMatch=heading.match(/(?:โอนจาก|จาก|ผู้โอน|sender|from)\s*(.*?)\s*(?:โอนเข้า|ไปยัง|ผู้รับ|recipient|to)\s*(.*)/i);
+  if(fromMatch){if(valid(clean(fromMatch[1])))result.payer=clean(fromMatch[1]);if(valid(clean(fromMatch[2])))result.receiver=clean(fromMatch[2])}
+  for(const line of lines.slice(markerLine+1,markerLine+7)){
+   const halves=line.split(/\s{2,}|\t+/).map(clean).filter(valid);
+   if(halves.length>=2){result.payer ||= halves[0];result.receiver ||= halves[1];break}
   }
  }
- // Recognize common layout "โอนจาก     โอนเข้า" followed by sender/recipient names in paired columns.
- if(fromIndex===toIndex&&fromIndex>=0){
-  const candidate=lines.slice(fromIndex+1,fromIndex+7).filter(valid);
-  if(candidate.length>=2){result.payer=candidate[0];result.receiver=candidate[1]}
+ for(const [kind,re] of Object.entries(labels)){
+  if(result[kind])continue;
+  const i=lines.findIndex(x=>re.test(x));if(i<0)continue;
+  const inline=clean(lines[i].replace(re,''));
+  if(valid(inline)&&!(labels.payer.test(inline)||labels.receiver.test(inline))){result[kind]=inline;continue}
+  const candidates=lines.slice(i+1,i+6).map(clean).filter(valid);
+  if(candidates.length)result[kind]=candidates[kind==='payer'?0:Math.min(1,candidates.length-1)]||'';
  }
+ // Avoid copying the same ambiguous name into both sender and receiver.
+ if(result.payer&&result.payer===result.receiver)result.receiver='';
  return result;
 }
 function t2OcrFillFields(result){
