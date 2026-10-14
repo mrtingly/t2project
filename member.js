@@ -96,6 +96,13 @@ async function saveProfile(){
  if(!profileGrant||Date.now()>profileGrantUntil){alert('สิทธิ์หมดอายุ กรุณายืนยันตัวตนอีกครั้ง');return}
  const b=beneficiaryDraft(),t=contactDraft(),err=validateBeneficiaries(b);
  if(err){alert(err);return}
+ const validContacts=t.filter(c=>c.firstName&&c.lastName&&c.phone);
+ if(validContacts.length<2||t.some(c=>!c.firstName||!c.lastName||!c.phone)){
+   alert('กรุณาระบุผู้ติดต่อฉุกเฉินอย่างน้อย 2 คน พร้อมชื่อ นามสกุล และเบอร์โทรศัพท์ให้ครบทุกคน');return;
+ }
+ if(b.some(x=>!x.firstName||!x.lastName||!x.phone||!x.citizenId||x.percent==='')){
+   alert('กรุณากรอกข้อมูลผู้รับผลประโยชน์แต่ละคนให้ครบ หรือยกเลิกรายการที่ยังไม่ต้องการบันทึก');return;
+ }
  const nextProfile={...profile,phone:phone.value.trim(),email:email.value.trim(),bank:bank.value.trim(),bankAccount:bankAccount.value.trim(),address:address.value.trim(),mapUrl:mapUrl.value.trim()};
  const btn=document.querySelector('#profileEdit .primary');if(btn)btn.disabled=true;
  try{
@@ -121,7 +128,7 @@ function removeBeneficiary(i){beneficiaries=beneficiaryDraft();beneficiaries.spl
 function saveBeneficiaries(){alert('กรุณากด บันทึก Profile ด้านบน เพื่อบันทึกข้อมูลทั้งหมดลงฐานกลาง')}
 function renderBeneficiaries(){beneficiaryList.innerHTML=beneficiaries.map((b,i)=>'<div class="beneficiaryCard"><div class="cardHead"><b>ผู้รับผลประโยชน์ '+(i+1)+'</b><button type="button" onclick="removeBeneficiary('+i+')">ลบ</button></div><div class="twoCol"><label>ชื่อ<input class="bf" value="'+esc(b.firstName)+'"></label><label>นามสกุล<input class="bl" value="'+esc(b.lastName)+'"></label></div><label>เบอร์โทรศัพท์<input class="bp" value="'+esc(b.phone)+'"></label><label>เลขบัตรประชาชน<input class="bi" maxlength="13" value="'+esc(b.citizenId)+'"></label><label>ผลประโยชน์ (%)<input class="pct" type="number" min="0" max="100" step="any" value="'+esc(b.percent)+'"></label></div>').join('');if(beneficiaries.length)beneficiaryList.innerHTML+='<button class="primary" type="button" onclick="saveBeneficiaries()">บันทึกผู้รับผลประโยชน์</button>'}
 function addContact(){contacts=contactDraft();contacts.push({firstName:'',lastName:'',phone:''});renderContacts()}
-function removeContact(i){contacts=contactDraft();contacts.splice(i,1);renderContacts()}
+function removeContact(i){contacts=contactDraft();if(contacts.length<=2){alert('ต้องมีผู้ติดต่อฉุกเฉินอย่างน้อย 2 คน');return}contacts.splice(i,1);renderContacts()}
 function saveContacts(){alert('กรุณากด บันทึก Profile ด้านบน เพื่อบันทึกข้อมูลทั้งหมดลงฐานกลาง')}
 function renderContacts(){contactList.innerHTML=contacts.map((c,i)=>'<div class="beneficiaryCard contactCard"><div class="cardHead"><b>บุคคลติดต่อ '+(i+1)+'</b><button type="button" onclick="removeContact('+i+')">ลบ</button></div><div class="twoCol"><label>ชื่อ<input class="cf" value="'+esc(c.firstName)+'"></label><label>นามสกุล<input class="cl" value="'+esc(c.lastName)+'"></label></div><label>เบอร์โทรศัพท์<input class="cp" value="'+esc(c.phone)+'"></label></div>').join('');if(contacts.length)contactList.innerHTML+='<button class="primary" type="button" onclick="saveContacts()">บันทึกผู้ติดต่อ</button>'}
 async function loadBills(){allBills.innerHTML='<div class="info">กำลังโหลดรายการ...</div>';const d=await api('getMyPayments');if(!d.ok){allBills.innerHTML='<div class="warn">ไม่สามารถโหลดรายการได้</div>';return}const rows=d.items||d.payments||[];BILLS=rows.filter(x=>{const id=x.documentId||x.document_id||x.citizenId||x.citizen_id||'';if(id)return sameMemberId(id);const fn=String(x.firstName||x.first_name||'').trim(),ln=String(x.lastName||x.last_name||'').trim();return fn===String(m.firstName||'').trim()&&ln===String(m.lastName||'').trim()});BILLS.sort((a,b)=>String(b.transferDate||b.transfer_date||b.date||'').localeCompare(String(a.transferDate||a.transfer_date||a.date||''))||String(b.transferTime||b.transfer_time||b.time||'').localeCompare(String(a.transferTime||a.transfer_time||a.time||'')));renderBills()}
