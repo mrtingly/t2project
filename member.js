@@ -184,3 +184,14 @@ function downloadMySlip(i){
  }catch(e){alert('ลิงก์สลิปไม่ถูกต้อง');return}
  const a=document.createElement('a');a.href=target;a.target='_blank';a.rel='noopener';a.click();
 }
+
+function printMyProfile(){
+ const view=document.getElementById('profileView');
+ if(!view){alert('ยังไม่มีข้อมูลโปรไฟล์');return}
+ const memberName=document.getElementById('displayName')?.textContent||'สมาชิก';
+ const values='<h2>ข้อมูลสมาชิก: '+esc(memberName)+'</h2>'+
+ '<p><strong>ยอดลงทุน:</strong> '+esc(document.getElementById('profileInvestment')?.textContent||'')+
+ ' &nbsp; <strong>จำนวนสลิป:</strong> '+esc(document.getElementById('profileBillCount')?.textContent||'')+
+ ' &nbsp; <strong>ผลตอบแทน:</strong> '+esc(document.getElementById('profileReward')?.textContent||'')+'</p>';
+ openPrint('<section class="printReceipt">'+values+view.innerHTML+'</section>','T2PROJECT ข้อมูลสมาชิก');
+}
