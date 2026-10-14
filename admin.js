@@ -344,7 +344,16 @@ async function readSlipOCR(file){
   previewPromo();
   box.textContent=filled.length?'OCR กรอกจริง '+filled.length+' ช่อง: '+filled.map(id=>({payDate:'วันที่',payTime:'เวลา',amount:'จำนวนเงิน',reference:'เลขอ้างอิง',payerName:'ผู้โอน',receiverName:'ผู้รับ'}[id])).join(', ')+' — โปรดตรวจทานก่อนบันทึก':'OCR ยังไม่กรอกช่องใด กรุณาตรวจข้อความที่อ่านได้';
   const detail=$('ocrRecognized');if(detail){detail.value=data.raw.slice(0,7000);detail.classList.remove('hidden')}
-  if(t2SlipQueue.length){t2BatchCapture();t2SlipQueue[t2SlipIndex].ocrDone=true;t2BatchRender()}
+  if(t2SlipQueue.length){
+   const current=t2SlipIndex;
+   t2BatchCapture();
+   t2SlipQueue[current].ocrDone=true;
+   t2BatchRender();
+   if(t2SlipQueue.length>1){
+    const next=t2SlipQueue.findIndex((item,i)=>i>current&&!item.ocrDone);
+    if(next>=0)setTimeout(()=>{if(!t2SlipBatchBusy&&t2SlipIndex===current)t2BatchSelect(next)},150);
+   }
+  }
  }catch(e){if(job===t2OcrJob)box.textContent='ระบบอ่านภาพอัตโนมัติไม่พร้อมใช้งาน กรุณากรอกตามภาพสลิป: '+String(e.message||e)}
 }
 
@@ -410,7 +419,7 @@ function t2BatchSelect(index){
  $('ocrRecognized').value='';
  $('ocrStatus').textContent=item.values?'ข้อมูลสลิปใบ '+(index+1)+' — ตรวจสอบอีกครั้งก่อนบันทึก':'กำลังอ่านสลิปใบ '+(index+1);
  t2BatchRender();previewPromo();
- if(!item.values)readSlipOCR(item.file);
+ if(!item.ocrDone)readSlipOCR(item.file);
 }
 async function t2SaveBatch(){
  if(t2SlipBatchBusy)return;
