@@ -165,7 +165,7 @@ function printAdminReceipt(i){
  '<div class="foot"><span>พิมพ์เมื่อ '+esc(thDateTime())+'</span><span>Reference: '+esc(String(x.referenceNo||"").slice(-6)||"—")+'</span></div>';
  printDoc("T2Project Payment "+pid,body,false);
 }
-async function loadReport(){try{const d=await api("getReport",{});const rows=d.items||d.payments||[];reportItems=rows;const s=d.summary||{};$("sumCount").textContent=Number(s.paymentCount??rows.length).toLocaleString("th-TH");$("sumAmount").textContent=money(s.totalAmount??rows.reduce((a,x)=>a+Number(x.amount||0),0));$("sumReturn").textContent=money(s.totalPromo??s.totalPromoReturn??s.totalReturn??rows.reduce((a,x)=>a+Number(x.promoReturn||0),0));$("reportRows").innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="report-no">${i+1}</td><td class="report-date">${esc(x.transferDate||"")}</td><td class="report-time">${esc(x.transferTime||"")}</td><td class="report-member">${esc(((x.firstName||"")+" "+(x.lastName||"")).trim())}</td><td class="report-person">${esc(x.payerName||"-")}</td><td class="report-person">${esc(x.receiverName||"-")}</td><td class="report-ref">${esc(x.referenceNo||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(x.promoReturn)}</td><td><div class="report-action-group"><button type="button" class="report-btn print" onclick="printAdminReceipt(${i})">พิมพ์</button><button type="button" class="report-btn edit" onclick="editReceipt(${i})">แก้ไข</button><button type="button" class="report-btn delete" onclick="deleteReceipt(${i})">ลบ</button></div></td></tr>`).join(""):'<tr><td colspan="10">ยังไม่มีรายการ</td></tr>'}catch(e){$("reportRows").innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}}
+async function loadReport(){try{const d=await api("getReport",{});const rows=d.items||d.payments||[];reportItems=rows;const s=d.summary||{};$("sumCount").textContent=Number(s.paymentCount??rows.length).toLocaleString("th-TH");$("sumAmount").textContent=money(s.totalAmount??rows.reduce((a,x)=>a+Number(x.amount||0),0));$("sumReturn").textContent=money(s.totalPromo??s.totalPromoReturn??s.totalReturn??rows.reduce((a,x)=>a+Number(x.promoReturn||0),0));$("reportRows").innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="report-no">${i+1}</td><td class="report-date">${esc(x.transferDate||"")}</td><td class="report-time">${esc(x.transferTime||"")}</td><td class="report-member">${esc(((x.firstName||"")+" "+(x.lastName||"")).trim())}</td><td class="report-person">${esc(x.payerName||"-")}</td><td class="report-person">${esc(x.receiverName||"-")}</td><td class="report-ref">${esc(x.referenceNo||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(x.promoReturn)}</td><td><button type="button" class="report-menu-trigger" aria-label="จัดการรายการที่ ${i+1}" aria-haspopup="true" aria-expanded="false" onclick="toggleAdminReportMenu(event,${i})">⋯</button></td></tr>`).join(""):'<tr><td colspan="10">ยังไม่มีรายการ</td></tr>'}catch(e){$("reportRows").innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}}
 document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await loadMembers();await loadReport()}});
 
 function fileToCompressedBase64(file){
@@ -513,3 +513,40 @@ async function t2SaveBatch(){
  }catch(e){$('saveMessage').innerHTML='<div class="warn">'+esc(e.message||String(e))+' — สลิปที่สำเร็จแล้วจะไม่ส่งซ้ำ</div>'}
  finally{t2SlipBatchBusy=false;t2BatchRender()}
 }
+
+let t2ReportMenuIndex=-1;
+function closeAdminReportMenu(){
+ const menu=document.getElementById('t2ReportMenu');
+ if(menu)menu.remove();
+ document.querySelectorAll('.report-menu-trigger[aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'));
+ t2ReportMenuIndex=-1;
+}
+function toggleAdminReportMenu(event,index){
+ event.preventDefault();event.stopPropagation();
+ const trigger=event.currentTarget;
+ if(t2ReportMenuIndex===index){closeAdminReportMenu();return}
+ closeAdminReportMenu();
+ t2ReportMenuIndex=index;
+ trigger.setAttribute('aria-expanded','true');
+ const menu=document.createElement('div');
+ menu.id='t2ReportMenu';menu.className='report-floating-menu';menu.setAttribute('role','menu');
+ menu.innerHTML='<button type="button" role="menuitem" data-action="print">🖨 พิมพ์</button>'+
+ '<button type="button" role="menuitem" data-action="edit">✎ แก้ไข</button>'+
+ '<button type="button" role="menuitem" data-action="delete" class="danger">🗑 ลบรายการ</button>';
+ document.body.appendChild(menu);
+ const rect=trigger.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
+ menu.style.left=Math.max(8,Math.min(rect.right-w,window.innerWidth-w-8))+'px';
+ menu.style.top=(rect.bottom+h+8<=window.innerHeight?rect.bottom+5:Math.max(8,rect.top-h-5))+'px';
+ menu.addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-action]');if(!btn)return;
+  const action=btn.dataset.action;
+  closeAdminReportMenu();
+  if(action==='print')printAdminReceipt(index);
+  else if(action==='edit')editReceipt(index);
+  else if(action==='delete')deleteReceipt(index);
+ });
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#t2ReportMenu,.report-menu-trigger'))closeAdminReportMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAdminReportMenu()});
+window.addEventListener('scroll',closeAdminReportMenu,true);
+window.addEventListener('resize',closeAdminReportMenu);
