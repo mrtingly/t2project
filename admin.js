@@ -229,7 +229,7 @@ function t2OcrExtract(raw){
  let day,month,year;
  if(dateNum){day=+dateNum[1];month=+dateNum[2];year=+dateNum[3]}
  else if(dateThai){day=+dateThai[1];year=+dateThai[3];const token=dateThai[2].replace(/\s/g,'').replace(/\.$/,'')+'.';month=months[token]}
- if(year!==undefined){if(year<100)year+=year>=80?1900:2000;if(year>2400)year-=543;const dt=new Date(Date.UTC(year,month-1,day));if(dt.getUTCFullYear()===year&&dt.getUTCMonth()===month-1&&dt.getUTCDate()===day)date=year+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
+ if(year!==undefined){if(year<100)year=dateThai?2500+year:(year>=80?1900+year:2000+year);if(year>2400)year-=543;const dt=new Date(Date.UTC(year,month-1,day));if(dt.getUTCFullYear()===year&&dt.getUTCMonth()===month-1&&dt.getUTCDate()===day)date=year+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
  const timeMatch=text.match(/(?:^|[^\d])([01]?\d|2[0-3])[:.]([0-5]\d)(?=\D|$)/m);
  if(timeMatch)time=String(+timeMatch[1]).padStart(2,'0')+':'+timeMatch[2];
  for(const line of lines){if(!/จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total/i.test(line))continue;const m=line.match(/(?:จำนวนเงิน|ยอดเงิน|จำนวนที่โอน|amount|total)\s*[:：]?\s*(?:฿|THB)?\s*(\d[\d,]*\.\d{2}|\d[\d,]*)/i);if(m){amount=String(Number(m[1].replace(/,/g,'')));break}}
