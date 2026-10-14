@@ -12,9 +12,9 @@ async function logout(){try{await api("staffLogout")}catch(e){}sessionStorage.re
 function filterMyMembers(){
  const box=$("memberList"),input=$("memberSearch");
  if(!box)return;
- const query=String(input?.value||"").trim().toLocaleLowerCase("th-TH").replace(/\\s+/g,"");
+ const query=String(input?.value||"").trim().toLocaleLowerCase("th-TH").replace(/\s+/g,"");
  if(!query){box.innerHTML='<div class="muted tiny" style="margin-top:12px">เริ่มพิมพ์ชื่อหรือนามสกุลเพื่อค้นหา</div>';return;}
- const hits=members.map((m,i)=>({m,i})).filter(({m})=>[m.firstName,m.lastName,(m.firstName||"")+" "+(m.lastName||""),m.memberId].some(x=>String(x||"").toLocaleLowerCase("th-TH").replace(/\\s+/g,"").includes(query))).slice(0,30);
+ const hits=members.map((m,i)=>({m,i})).filter(({m})=>[m.firstName,m.lastName,(m.firstName||"")+" "+(m.lastName||""),m.memberId].some(x=>String(x||"").toLocaleLowerCase("th-TH").replace(/\s+/g,"").includes(query))).slice(0,30);
  box.innerHTML=hits.length?hits.map(({m,i})=>`<div class="member ${selected?.memberId===m.memberId?"active":""}"><div style="min-width:0;overflow-wrap:anywhere"><b>${esc((m.firstName||"")+" "+(m.lastName||""))}</b><div class="muted tiny">${esc(m.memberId||"")}</div></div><div class="actions" style="flex-wrap:wrap"><button class="btn alt" onclick="selectMember(${i})">เลือก</button>${String(m.status||"").toLowerCase()==="pending"?`<button class="btn" onclick="approveMember(${i})">ยืนยันและอนุมัติ</button>`:String(m.status||"").toLowerCase()==="active"?`<button class="btn alt" onclick="issueActivation(${i})">ออกรหัสเปิดใช้งาน</button>`:""}</div></div>`).join(""):'<div class="muted tiny" style="margin-top:12px">ไม่พบสมาชิกที่ตรงกับคำค้นหา</div>';
 }
 async function loadMembers(){
