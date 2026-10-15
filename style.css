@@ -326,3 +326,12 @@ body{overflow-x:hidden}
 .ownerPromoImport input{display:none!important}
 .ownerPromoTier>button{align-self:end;background:#fff6f6;border:1px solid #eab9c0;color:#9f2532;border-radius:10px;min-height:46px}
 @media(max-width:650px){.ownerPromoDates{grid-template-columns:1fr}.ownerPromoTier{grid-template-columns:1fr}.ownerPromoActions button{flex:1;min-width:120px}.ownerPromoEditor{padding:12px}}
+
+/* Owner automatic promo calculator v39 */
+.ownerPromoCalculator{margin:14px 0 22px;padding:18px;border:1px solid #b8d4f5;border-radius:18px;background:linear-gradient(145deg,#f5faff,#e6f1ff)}
+.ownerPromoCalculator h3{margin:0 0 7px;color:#113c7a}
+.ownerPromoCalculator p{font-size:13px;line-height:1.6;color:#476786}
+.ownerPromoCalculator label{font-weight:700;color:#214b7e}
+.ownerPromoCalculator input{display:block;margin-top:7px;min-height:50px;padding:12px;width:100%;font-size:16px;background:#fff;border:1px solid #abc9ed;border-radius:11px}
+.ownerPromoCalculator #ownerCalcResult{font-size:15px;font-weight:700;line-height:1.7;background:#fff;color:#143e76;border:1px solid #cadcf5}
+@media(max-width:650px){.ownerPromoCalculator{padding:13px}.ownerPromoCalculator #ownerCalcResult{font-size:14px}}
