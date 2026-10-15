@@ -294,3 +294,10 @@ body{overflow-x:hidden}
 .menu{max-width:88vw;overflow-y:auto}
 }
 @media(max-width:390px){.brand b{font-size:17px}.profileCard{padding:13px!important}}
+
+/* Round 7 mobile-first statement workspace */
+.ownerMobileNav{grid-template-columns:repeat(5,minmax(0,1fr))}
+#ownerStatementSection input[type=file]{display:block;width:100%;min-height:50px;padding:12px;border:1px solid #c9dcf3;border-radius:12px;background:#f6faff;color:#174575}
+#ownerStatementSection .tableWrap{margin-top:12px}
+#ownerStatementSection #ownerStatementSummary{padding:13px 15px;background:#eaf3ff;border-radius:12px;color:#153f77;font-weight:600;line-height:1.6}
+@media(max-width:700px){.ownerMobileNav{grid-template-columns:repeat(3,minmax(0,1fr))}.ownerMobileNav button{min-height:48px;padding:9px 5px;font-size:12px}#ownerStatementSection{overflow-wrap:anywhere}}
