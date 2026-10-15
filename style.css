@@ -278,3 +278,19 @@ button:disabled{opacity:.6;cursor:not-allowed}
 @media(max-width:360px){.ownerMobileNav button{font-size:11px}.t2OwnerHero h1{font-size:21px}#ownerDashboard{padding-left:9px;padding-right:9px}}
 @media(min-width:701px){#ownerDashboard{padding:24px 22px 80px}.ownerMobileNav{max-width:900px;gap:10px}.ownerMobileNav button{font-size:14px}#ownerDashboard .ownerSectionHead{flex-direction:row;align-items:center;justify-content:space-between}#ownerDashboard .reportActions{display:flex}#ownerDashboard .ownerStats{grid-template-columns:repeat(4,minmax(0,1fr))}#ownerDashboard .panel{padding:22px}#ownerDashboard .ownerQuick{display:flex;flex-wrap:wrap}#ownerDashboard table{min-width:0}}
 @media print{.ownerMobileNav{display:none!important}#ownerDashboard{padding:0!important}}
+
+
+/* Member mobile-first refinement v34 */
+@media(max-width:700px){
+body{overflow-x:hidden}
+.top{min-height:62px;height:auto;padding:10px 15px;position:sticky;top:0;z-index:12}
+.memberShell,.profileShell,.memberWrap{width:100%;max-width:100%;padding-left:12px!important;padding-right:12px!important}
+.profileCard,.memberCard{min-width:0;max-width:100%;border-radius:17px;padding:16px!important;overflow-wrap:anywhere}
+.profileCard input,.profileCard select,.profileCard textarea,.memberShell input,.memberShell select{max-width:100%;font-size:16px!important;min-height:46px}
+.profileCard button,.memberShell button:not(.hamb),.memberCard button{min-height:46px;white-space:normal}
+.profileCard .fields,.memberShell .fields{grid-template-columns:1fr!important}
+.profileCard table,.memberShell table{min-width:580px}
+.profileCard .tableWrap,.memberShell .tableWrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.menu{max-width:88vw;overflow-y:auto}
+}
+@media(max-width:390px){.brand b{font-size:17px}.profileCard{padding:13px!important}}
