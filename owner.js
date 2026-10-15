@@ -59,7 +59,7 @@ function printOwnerMember(){
 }
 
 function ownerShowSection(which){
- const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection'};
+ const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
  if(which==='admins')ownerRenderAdmins();
@@ -96,4 +96,53 @@ function ownerPageChange(delta){
  const rows=REPORT.slice(next*50,(next+1)*50);
  ownerRows.innerHTML=rows.map(x=>'<tr><td>'+esc(x.transferDate||x.transfer_date||'')+' '+esc(x.transferTime||x.transfer_time||'')+'</td><td>'+esc(String(x.firstName||'')+' '+String(x.lastName||''))+'</td><td>'+money(x.amount)+'</td><td>'+esc(x.rulePeriod||x.rule_period||'')+'</td><td>'+money(x.promoReturn||x.promo_return||0)+'</td><td>'+esc(x.reviewStatus||x.review_status||'pending')+'</td><td>'+esc(x.memberNote||x.member_note||'—')+'</td></tr>').join('');
  ownerUpdatePage();
+}
+
+/* Round 7 — temporary, local-only CSV statement reconciliation */
+function ownerCsvRows(raw){
+ const rows=[];let row=[],cell='',quoted=false;
+ for(let i=0;i<raw.length;i++){const c=raw[i];if(c==='"'){if(quoted&&raw[i+1]==='"'){cell+='"';i++}else quoted=!quoted}
+ else if(c===','&&!quoted){row.push(cell);cell=''}
+ else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&raw[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=''}
+ else cell+=c}
+ if(cell||row.length){row.push(cell);rows.push(row)}
+ return rows
+}
+function ownerNormDate(s){
+ let v=String(s||'').trim().replace(/^\uFEFF/,'');
+ const m=v.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+ if(m){let y=Number(m[3]);if(y>2400)y-=543;return String(y)+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}
+ const iso=v.match(/^(\d{4})-(\d\d)-(\d\d)/);
+ if(iso){let y=Number(iso[1]);if(y>2400)y-=543;return String(y)+'-'+iso[2]+'-'+iso[3]}
+ return ''
+}
+function ownerNormMoney(s){const n=Number(String(s??'').replace(/[฿,\s]/g,''));return Number.isFinite(n)?Math.round(n*100):NaN}
+async function ownerReadStatement(file){
+ const summary=document.getElementById('ownerStatementSummary'),body=document.getElementById('ownerStatementRows');
+ if(!file){summary.textContent='กรุณาเลือกไฟล์';return}
+ if(file.size>5*1024*1024){summary.textContent='ไฟล์ใหญ่เกิน 5 MB';return}
+ try{
+ const rows=ownerCsvRows(await file.text());
+ if(rows.length<2)throw Error('ไม่พบข้อมูลใน CSV');
+ const cols=rows[0].map(x=>x.toLowerCase().trim().replace(/^\uFEFF/,''));
+ const find=(patterns)=>cols.findIndex(c=>patterns.some(p=>c.includes(p)));
+ const dateI=find(['วันที่','date','transaction date']),amountI=find(['เงินเข้า','credit','amount','จำนวนเงิน','deposit']),refI=find(['อ้างอิง','reference','ref','เลขที่รายการ']);
+ if(dateI<0||amountI<0)throw Error('ต้องมีหัวคอลัมน์วันที่และจำนวนเงิน/เงินเข้า กรุณาตรวจไฟล์ CSV');
+ const slips=REPORT.map((x,i)=>({i,date:ownerNormDate(x.transferDate||x.transfer_date),amount:ownerNormMoney(x.amount),ref:String(x.referenceNo||x.reference_no||'').replace(/\D/g,'').slice(-6)}));
+ const used=new Set();let matched=0,unmatched=0,ambiguous=0,invalid=0,bodyRows=[];
+ for(const cells of rows.slice(1).filter(a=>a.some(x=>x.trim()))){
+ const date=ownerNormDate(cells[dateI]),amount=ownerNormMoney(cells[amountI]),ref=refI>=0?String(cells[refI]||'').replace(/\D/g,'').slice(-6):'';
+ if(!date||!Number.isFinite(amount)||amount<=0){invalid++;continue}
+ let possibles=slips.filter(x=>!used.has(x.i)&&x.date===date&&x.amount===amount);
+ if(ref.length===6)possibles=possibles.filter(x=>x.ref===ref);
+ let status='';
+ if(possibles.length===1){used.add(possibles[0].i);matched++;status='พบคู่ (รอตรวจหลักฐาน)'}
+ else if(possibles.length>1){ambiguous++;status='อาจตรงหลายสลิป ต้องตรวจด้วยคน'}
+ else{unmatched++;status='ไม่พบสลิปที่ตรงกัน — ตรวจสอบสลิปตกหล่น'}
+ bodyRows.push('<tr><td>'+esc(date)+'</td><td>'+esc(String(cells[amountI]||''))+'</td><td>'+esc(ref||'—')+'</td><td>'+esc(status)+'</td></tr>');
+ }
+ summary.textContent='จับคู่เบื้องต้น '+matched+' · ไม่พบคู่ '+unmatched+' · อาจตรงหลายรายการ '+ambiguous+' · แถวที่ข้าม '+invalid+' · สลิปที่ยังไม่ถูกจับคู่ '+(slips.length-used.size)+' รายการ';
+ body.innerHTML=bodyRows.slice(0,150).join('')||'<tr><td colspan="4">ไม่มีรายการ</td></tr>';
+ if(bodyRows.length>150)summary.textContent+=' (แสดง 150 รายการแรก)';
+ }catch(e){summary.textContent=e.message||'อ่าน CSV ไม่สำเร็จ';body.innerHTML=''}
 }
