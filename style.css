@@ -216,3 +216,19 @@ table tbody tr:hover{background:#f3f8ff}
 .ownerQuick button,.secondary,button.secondary{background:#fff!important;color:#154b91!important;border:1px solid #a9c9ed!important}
 .ownerQuick button:hover,.secondary:hover{background:#e9f3ff!important;color:#103d7c!important}
 button:disabled{opacity:.6;cursor:not-allowed}
+
+
+/* Owner header refinement v32 */
+.t2OwnerTop{display:grid!important;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:14px max(22px,calc((100% - 1180px)/2))!important;min-height:78px}
+.t2OwnerTop .brand{justify-self:start}.t2OwnerTop #ownerLogout{justify-self:end;margin:0}
+.t2OwnerHeaderTitle{display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;line-height:1.45}
+.t2OwnerHeaderTitle strong{font-size:17px;color:#153e7b;font-weight:700;letter-spacing:.1px}
+.t2OwnerHeaderTitle span{font-size:10px;letter-spacing:2.1px;color:#6687b5;font-weight:700}
+.t2OwnerHero{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:34px 38px!important;border-radius:23px!important;background:linear-gradient(115deg,#123b78,#216bc1)!important;box-shadow:0 14px 32px rgba(20,73,145,.15)}
+.t2OwnerHero .t2OwnerHeroText{max-width:730px}
+.t2OwnerHero small{display:block;letter-spacing:2.3px;font-size:11px;font-weight:700;opacity:.85;margin-bottom:10px}
+.t2OwnerHero h1{margin:0;font-size:clamp(24px,3vw,34px);line-height:1.35;letter-spacing:0;font-weight:700}
+.t2OwnerHero p{margin:10px 0 0;line-height:1.7;font-size:14px;opacity:.95}
+.t2OwnerHeroMark{width:114px;height:114px;border:1px solid rgba(255,255,255,.27);background:rgba(255,255,255,.12);border-radius:25px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;font-weight:800;font-size:40px;line-height:1.1;flex:none}
+.t2OwnerHeroMark span{font-size:11px;letter-spacing:2.4px;margin-top:6px}
+@media(max-width:700px){.t2OwnerTop{grid-template-columns:1fr auto!important;gap:10px;padding:12px 16px!important}.t2OwnerHeaderTitle{grid-column:1/-1;grid-row:2;padding-top:5px;border-top:1px solid #e7eef8}.t2OwnerHeaderTitle strong{font-size:15px}.t2OwnerTop #ownerLogout{grid-column:2;grid-row:1}.t2OwnerHero{padding:24px 22px!important;border-radius:18px!important}.t2OwnerHeroMark{display:none}.t2OwnerHero h1{font-size:25px}.t2OwnerHero p{font-size:13px}}
