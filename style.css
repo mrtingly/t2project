@@ -232,3 +232,49 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .t2OwnerHeroMark{width:114px;height:114px;border:1px solid rgba(255,255,255,.27);background:rgba(255,255,255,.12);border-radius:25px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;font-weight:800;font-size:40px;line-height:1.1;flex:none}
 .t2OwnerHeroMark span{font-size:11px;letter-spacing:2.4px;margin-top:6px}
 @media(max-width:700px){.t2OwnerTop{grid-template-columns:1fr auto!important;gap:10px;padding:12px 16px!important}.t2OwnerHeaderTitle{grid-column:1/-1;grid-row:2;padding-top:5px;border-top:1px solid #e7eef8}.t2OwnerHeaderTitle strong{font-size:15px}.t2OwnerTop #ownerLogout{grid-column:2;grid-row:1}.t2OwnerHero{padding:24px 22px!important;border-radius:18px!important}.t2OwnerHeroMark{display:none}.t2OwnerHero h1{font-size:25px}.t2OwnerHero p{font-size:13px}}
+
+
+/* T2 Owner: mobile-first layout v33 */
+#ownerDashboard{width:100%;max-width:1180px;margin:0 auto;padding:14px 12px 104px}
+#ownerDashboard .ownerHero{margin-bottom:14px}
+.ownerMobileNav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:9px;margin:0 0 15px;background:#fff;border:1px solid #dbe8f8;border-radius:19px;box-shadow:0 8px 22px rgba(18,60,117,.08)}
+.ownerMobileNav button{min-width:0;min-height:54px;padding:10px 5px;background:#f0f6ff;border:1px solid transparent;border-radius:13px;color:#245489;font:600 13px/1.35 'Prompt',sans-serif;white-space:normal;cursor:pointer}
+.ownerMobileNav button[aria-current="page"]{background:#164c94;color:#fff;border-color:#164c94;box-shadow:0 5px 13px rgba(19,75,150,.16)}
+#ownerDashboard .panel{padding:16px;border-radius:17px;margin-bottom:13px}
+#ownerDashboard .ownerQuick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#ownerDashboard .ownerQuick button{min-height:44px;padding:8px 2px;font-size:12px}
+#ownerDashboard .reportFilters{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#ownerDashboard .reportFilters label{min-width:0}
+#ownerDashboard .reportFilters input{min-width:0;width:100%;min-height:48px;font-size:16px}
+#ownerDashboard .ownerStats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+#ownerDashboard .ownerStats>div{padding:14px;min-width:0;border-radius:15px}
+#ownerDashboard .ownerStats strong{font-size:clamp(17px,5vw,24px);overflow-wrap:anywhere;line-height:1.35}
+#ownerDashboard .ownerStats small{font-size:12px;line-height:1.4}
+#ownerDashboard .ownerSectionHead{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+#ownerDashboard .reportActions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#ownerDashboard .reportActions button{margin:0;min-height:48px;padding:10px 6px;font-size:13px}
+#ownerDashboard .tableWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;border:1px solid #dce8f7;border-radius:12px}
+#ownerDashboard table{min-width:680px}
+#ownerDashboard th,#ownerDashboard td{font-size:12px;white-space:nowrap;padding:11px 10px}
+#ownerDashboard button{touch-action:manipulation}
+#ownerDashboard #ownerAdminSelect,#ownerDashboard #ownerMemberSelect,#ownerDashboard #ownerAdminSearch,#ownerDashboard #ownerMemberSearch{min-height:50px;max-width:100%;font-size:16px;border:1px solid #bfd5ee;border-radius:12px;background:#fff}
+#ownerDashboard #ownerMembersSection button,#ownerDashboard #ownerReportsSection button,#ownerDashboard #ownerAdminSection button{min-height:44px}
+#ownerDashboard #ownerMemberDetail{overflow-wrap:anywhere}
+@media(max-width:700px){
+.t2OwnerTop{min-height:60px;padding:10px 13px!important;grid-template-columns:1fr auto!important}
+.t2OwnerTop .brand b{font-size:17px}
+.t2OwnerTop #ownerLogout{padding:9px 11px;font-size:12px}
+.t2OwnerHeaderTitle{display:none!important}
+.t2OwnerHero{padding:22px 20px!important;margin-top:0;border-radius:18px!important}
+.t2OwnerHero small{font-size:10px;letter-spacing:1.4px}
+.t2OwnerHero h1{font-size:24px;line-height:1.35}
+.t2OwnerHero p{font-size:12px;line-height:1.6}
+.ownerMobileNav{position:sticky;top:0;z-index:9;margin-left:-3px;margin-right:-3px}
+#ownerDashboard .ownerSectionHead h2{font-size:19px}
+#ownerDashboard #ownerMembersSection>div[style*="display:flex"]{display:grid!important;grid-template-columns:1fr 1fr;gap:9px!important}
+#ownerMemberSearch,#ownerMemberSelect{grid-column:1/-1;min-width:0!important;width:100%}
+#ownerDashboard #ownerMembersSection button{width:100%;font-size:12px;padding:10px 6px}
+}
+@media(max-width:360px){.ownerMobileNav button{font-size:11px}.t2OwnerHero h1{font-size:21px}#ownerDashboard{padding-left:9px;padding-right:9px}}
+@media(min-width:701px){#ownerDashboard{padding:24px 22px 80px}.ownerMobileNav{max-width:900px;gap:10px}.ownerMobileNav button{font-size:14px}#ownerDashboard .ownerSectionHead{flex-direction:row;align-items:center;justify-content:space-between}#ownerDashboard .reportActions{display:flex}#ownerDashboard .ownerStats{grid-template-columns:repeat(4,minmax(0,1fr))}#ownerDashboard .panel{padding:22px}#ownerDashboard .ownerQuick{display:flex;flex-wrap:wrap}#ownerDashboard table{min-width:0}}
+@media print{.ownerMobileNav{display:none!important}#ownerDashboard{padding:0!important}}
