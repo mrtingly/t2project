@@ -180,7 +180,34 @@ function printAdminReceipt(i){
  '<div class="foot"><span>พิมพ์เมื่อ '+esc(thDateTime())+'</span><span>Reference: '+esc(String(x.referenceNo||"").slice(-6)||"—")+'</span></div>';
  printDoc("T2Project Payment "+pid,body,false);
 }
-async function loadReport(){try{const d=await api("getReport",{});const rows=d.items||d.payments||[];reportItems=rows;const s=d.summary||{};$("sumCount").textContent=Number(s.paymentCount??rows.length).toLocaleString("th-TH");$("sumAmount").textContent=money(s.totalAmount??rows.reduce((a,x)=>a+Number(x.amount||0),0));$("sumReturn").textContent=money(s.totalPromo??s.totalPromoReturn??s.totalReturn??rows.reduce((a,x)=>a+Number(x.promoReturn||0),0));$("reportRows").innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="report-no">${i+1}</td><td class="report-date">${esc(x.transferDate||"")}</td><td class="report-time">${esc(x.transferTime||"")}</td><td class="report-member">${esc(((x.firstName||"")+" "+(x.lastName||"")).trim())}</td><td class="report-person">${esc(x.payerName||"-")}</td><td class="report-person">${esc(x.receiverName||"-")}</td><td class="report-ref">${esc(x.referenceNo||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(x.promoReturn)}</td><td><button type="button" class="report-menu-trigger" aria-label="จัดการรายการที่ ${i+1}" aria-haspopup="true" aria-expanded="false" onclick="toggleAdminReportMenu(event,${i})">⋯</button></td></tr>`).join(""):'<tr><td colspan="10">ยังไม่มีรายการ</td></tr>'}catch(e){$("reportRows").innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}}
+function adminLocalDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function adminRowDate(x){return normalizePromoDate(String(x.transferDate||x.transfer_date||x.date||'').trim()).slice(0,10)}
+let adminHistoryMode='today';
+function adminHistoryToday(){adminHistoryMode='today';$('adminHistoryDate').value=adminLocalDate();renderAdminHistory()}
+function adminHistoryAll(){adminHistoryMode='all';$('adminHistoryDate').value='';renderAdminHistory()}
+function renderAdminHistory(){
+ const picker=$('adminHistoryDate');if(!picker)return;
+ const date=picker.value;
+ if(adminHistoryMode!=='all')adminHistoryMode='date';
+ const rows=reportItems.map((x,i)=>({x,i})).filter(({x})=>adminHistoryMode==='all'||adminRowDate(x)===date);
+ const total=rows.reduce((a,{x})=>a+Number(x.amount||0),0);
+ const promo=rows.reduce((a,{x})=>a+Number(x.promoReturn||x.promo_return||0),0);
+ $('sumCount').textContent=rows.length.toLocaleString('th-TH');
+ $('sumAmount').textContent=money(total);
+ $('sumReturn').textContent=money(promo);
+ $('adminHistoryCaption').textContent=(adminHistoryMode==='all'?'ทุกรายการ':('วันที่โอน '+(date||'กรุณาเลือกวันที่')))+' • พบ '+rows.length+' รายการ • แสดงตามวันที่โอนบนสลิป';
+ $('reportRows').innerHTML=rows.length?rows.map(({x,i},j)=>`<tr><td class="report-no">${j+1}</td><td class="report-date">${esc(x.transferDate||x.transfer_date||"")}</td><td class="report-time">${esc(x.transferTime||x.transfer_time||"")}</td><td class="report-member">${esc(((x.firstName||x.first_name||"")+" "+(x.lastName||x.last_name||"")).trim())}</td><td class="report-person">${esc(x.payerName||x.payer_name||"-")}</td><td class="report-person">${esc(x.receiverName||x.receiver_name||"-")}</td><td class="report-ref">${esc(x.referenceNo||x.reference_no||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(x.promoReturn||x.promo_return)}</td><td><button type="button" class="report-menu-trigger" aria-label="จัดการรายการที่ ${j+1}" aria-haspopup="true" aria-expanded="false" onclick="toggleAdminReportMenu(event,${i})">⋯</button></td></tr>`).join(""):'<tr><td colspan="10">ไม่มีสลิปในวันที่เลือก</td></tr>';
+}
+async function loadReport(){
+ try{
+ const d=await api("getReport",{});
+ if(!d.ok)throw Error(d.message||'โหลดรายงานไม่สำเร็จ');
+ reportItems=d.items||d.payments||[];
+ const picker=$('adminHistoryDate');
+ if(picker&&!picker.value&&adminHistoryMode!=='all')picker.value=adminLocalDate();
+ renderAdminHistory();
+ }catch(e){$('reportRows').innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}
+}
 document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await loadMembers();await loadReport()}});
 
 function fileToCompressedBase64(file){
