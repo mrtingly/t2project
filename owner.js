@@ -168,7 +168,7 @@ async function ownerLoadPromos(){
   if(!Array.isArray(data.rules))throw new Error('รูปแบบข้อมูลโปรไม่ถูกต้อง');
   OWNER_PROMOS=data.rules;
   try{OWNER_PROMOS=JSON.parse(localStorage.getItem('t2_owner_promo_drafts_v1')||'null')||OWNER_PROMOS}catch(e){}
-  ownerPromoReset();ownerRenderPromos();
+  ownerPromoReset();ownerRenderPromos();ownerPromoCalculate();
  }catch(e){if(box)box.textContent=e.message||'โหลดโปรไม่สำเร็จ'}
 }
 function ownerRenderPromos(){
@@ -185,7 +185,7 @@ function ownerRenderPromos(){
 }
 
 let OWNER_PROMO_EDIT_ID=null;
-function ownerPromoPersist(){localStorage.setItem('t2_owner_promo_drafts_v1',JSON.stringify(OWNER_PROMOS));ownerRenderPromos()}
+function ownerPromoPersist(){localStorage.setItem('t2_owner_promo_drafts_v1',JSON.stringify(OWNER_PROMOS));ownerRenderPromos();ownerPromoCalculate()}
 function ownerPromoReset(){
  OWNER_PROMO_EDIT_ID=null;
  for(const id of ['promoEditName','promoEditFrom','promoEditTo']){const e=document.getElementById(id);if(e)e.value=''}
@@ -236,4 +236,25 @@ async function ownerPromoImport(file){
  if(!confirm('แทนที่ฉบับร่างปัจจุบันด้วยข้อมูล '+obj.rules.length+' โปร?'))return;
  OWNER_PROMOS=obj.rules;ownerPromoPersist();ownerPromoReset();
  }catch(e){alert('นำเข้าไม่ได้: '+e.message)}
+}
+
+function ownerPromoCompute(rules,date,amount){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||''))||!Number.isFinite(amount)||amount<=0)return {status:'invalid',matches:[]};
+ const candidates=(rules||[]).filter(r=>r.from<=date&&date<=r.to);
+ const matches=candidates.flatMap(r=>(r.tiers||[]).filter(t=>Number(t[0])===amount).map(t=>({n:r.n,name:r.name||'โปรช่วงที่ '+r.n,receive:Number(t[1])})));
+ if(!candidates.length)return {status:'none',matches:[]};
+ if(!matches.length)return {status:'review',reason:'ยอดลงทุนนี้ไม่มีอัตราที่ระบุไว้ในโปร',matches:[]};
+ if(new Set(matches.map(x=>x.receive)).size>1)return {status:'conflict',matches};
+ return {status:'matched',receive:matches[0].receive,matches};
+}
+function ownerPromoCalculate(){
+ const box=document.getElementById('ownerCalcResult');if(!box)return;
+ const date=document.getElementById('ownerCalcDate')?.value,amount=Number(document.getElementById('ownerCalcAmount')?.value);
+ if(!date||!amount){box.textContent='กรอกวันที่โอนและยอดลงทุนเพื่อคำนวณ';return}
+ const out=ownerPromoCompute(OWNER_PROMOS||[],date,amount);
+ if(out.status==='matched')box.textContent='ยอดที่จะได้รับตามโปร '+money(out.receive)+' | '+out.matches.map(x=>x.name).join(', ')+' (ไม่ใช่เงินที่ได้รับจริง)';
+ else if(out.status==='conflict')box.textContent='โปรทับซ้อนและให้ผลต่างกัน — ต้องตรวจสอบ: '+out.matches.map(x=>x.name+' → '+money(x.receive)).join(' / ');
+ else if(out.status==='none')box.textContent='ไม่พบโปรในวันที่นี้';
+ else if(out.status==='review')box.textContent='วันที่อยู่ในช่วงโปร แต่ยอดลงทุนนี้ไม่มีอัตราที่กำหนดไว้ ต้องตรวจสอบก่อน';
+ else box.textContent='กรอกวันที่และยอดลงทุนที่ถูกต้อง';
 }
