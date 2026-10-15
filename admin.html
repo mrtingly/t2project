@@ -92,7 +92,25 @@ header{background:#fff;border-bottom:1px solid #dfe7f2;position:sticky;top:0;z-i
 .report-floating-menu button.danger:hover{background:#fff0ee}
 @media print{.report-floating-menu{display:none!important}}
 </style>
-</head>
+<link rel="stylesheet" href="style.css?v=30">
+<style id="t2-admin-bluewhite">
+:root{--navy:#123a73;--navy2:#195cb1;--blue:#eaf3ff;--ink:#142c4c}
+body{font-family:'Prompt',sans-serif!important;background:linear-gradient(160deg,#f8fbff,#eaf3ff)!important;color:#183452!important}
+header{background:#fff!important;border-bottom:1px solid #d6e5f7!important}
+.brand,h2,h3{color:#173e78!important}
+.card{background:#fff;border:1px solid #d9e7f8;box-shadow:0 12px 34px rgba(16,68,135,.065);border-radius:18px}
+.btn{background:linear-gradient(135deg,#2779d2,#124a91);color:#fff}
+.btn.alt{background:#e8f2ff;color:#154e97;border:1px solid #bdd8fa}
+.btn.red{background:#b92f42}
+.member.active,.selected{background:#eaf4ff;border-color:#83b7f0}
+.promo,.summary div{background:#f0f6ff;border:1px solid #d8e8fa}
+th,.admin-report-table th{background:#eaf3ff!important;color:#173e78!important}
+td{border-color:#e0eaf7}
+tr:hover td{background:#f6faff}
+.field input,.field textarea,.t2BatchField input,.t2BatchField textarea{border:1px solid #c7d9ef;border-radius:11px}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid #83b7f0;outline-offset:2px}
+@media print{body{background:#fff!important}}
+</style></head>
 <body>
 <header><div class="head"><div><div class="brand">T2Project · ADMIN</div><div class="muted tiny" id="staffName">กำลังตรวจสอบสิทธิ์…</div></div><button class="btn red" onclick="logout()">ออกจากระบบ</button></div></header>
 <main class="wrap">
