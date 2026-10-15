@@ -71,20 +71,20 @@ function ownerRenderAdmins(){
  el.innerHTML='<option value="">เลือกแอดมิน / ห้อง</option>'+ids.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
  if(ids.includes(prev))el.value=prev;
  document.getElementById('ownerAdminCards').textContent='พบ '+ids.length+' ห้อง / กลุ่มรับผิดชอบ (ใช้ข้อมูลรหัสห้องในทะเบียนสมาชิก)';
- if(el.value)ownerOpenAdmin();
+ if(el.value)ownerOpenAdmin();else document.getElementById('ownerAdminDetails').textContent='เลือกห้องเพื่อตรวจสอบ';
 }
 function ownerOpenAdmin(){
  const id=document.getElementById('ownerAdminSelect').value,box=document.getElementById('ownerAdminDetails');
  if(!id){box.textContent='กรุณาเลือกห้อง';return}
  const members=OWNER_MEMBERS.filter(m=>ownerAdminKey(m)===id);
- const citizens=new Set(members.map(m=>String(m.citizenId||m.citizen_id||m.documentId||'')));
+ const citizens=new Set(members.map(m=>String(m.citizenId||m.citizen_id||m.documentId||'')).filter(Boolean));
  const payments=REPORT.filter(x=>citizens.has(String(x.citizenId||x.citizen_id||x.documentId||'')));
  const sum=payments.reduce((v,x)=>v+Number(x.amount||0),0);
  box.innerHTML='<h3>ห้อง '+esc(id)+'</h3><p>สมาชิก '+members.length.toLocaleString('th-TH')+' คน · สลิปในช่วงรายงาน '+payments.length.toLocaleString('th-TH')+' รายการ · ยอดเงิน '+money(sum)+'</p><p>ยอดสลิปอ้างอิงช่วงวันที่ในหน้ารายงาน หากไม่พบสลิปไม่ได้แปลว่าไม่มีธุรกรรม</p><div class="tableWrap"><table><thead><tr><th>สมาชิก</th><th>รหัสสมาชิก</th><th>รายการสลิป</th><th>ยอด</th><th>ตรวจข้อมูล</th></tr></thead><tbody>'+members.map(m=>{const rs=payments.filter(x=>String(x.citizenId||x.citizen_id||'')===String(m.citizenId||m.citizen_id||m.documentId||''));const amount=rs.reduce((v,x)=>v+Number(x.amount||0),0);return '<tr><td>'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</td><td>'+esc(m.memberId||'')+'</td><td>'+rs.length+'</td><td>'+money(amount)+'</td><td><button type="button" data-member-id="'+esc(m.memberId||'')+'" onclick="ownerInspectMember(this.dataset.memberId)">เปิดสมาชิก</button></td></tr>'}).join('')+'</tbody></table></div>';
 }
 function ownerInspectMember(id){
- ownerShowSection('members');filterOwnerMembers();
- const el=document.getElementById('ownerMemberSelect');if(![...el.options].some(o=>o.value===id)){document.getElementById('ownerMemberSearch').value=id;filterOwnerMembers()}
+ ownerShowSection('members');document.getElementById('ownerMemberSearch').value=id;filterOwnerMembers();
+ const el=document.getElementById('ownerMemberSelect');if(![...el.options].some(o=>o.value===id))filterOwnerMembers()
  el.value=id;openOwnerMember();
 }
 function ownerUpdatePage(){const e=document.getElementById('ownerPageLabel');if(e)e.textContent='หน้า '+(OWNER_REPORT_PAGE+1)+' / '+Math.max(1,Math.ceil(REPORT.length/50))}
