@@ -103,7 +103,12 @@ function rowPaymentId(x){return String(x.paymentId||x.payment_id||x.id||"")}
 function findMemberForRow(x){const cid=String(x.citizenId||x.citizen_id||x.documentId||x.document_id||"");return members.find(m=>String(m.citizenId||m.documentId||"")===cid)||null}
 function editReceipt(i){
  const x=reportItems[i]; if(!x)return;
- const m=findMemberForRow(x); if(m){const mi=members.indexOf(m);if(mi>=0)selectMember(mi)}
+ const m=findMemberForRow(x);
+ if(!m){alert("ไม่พบสมาชิกเจ้าของสลิปในรายชื่อที่แอดมินรับผิดชอบ จึงไม่เปิดแก้ไขเพื่อป้องกันแก้ผิดคน");return}
+ if(t2SlipBatchBusy){alert("กรุณารอการบันทึกชุดสลิปให้เสร็จก่อน");return}
+ if(t2SlipQueue.some(item=>!item.done)&&!confirm("มีสลิปที่ยังไม่บันทึก ต้องการยกเลิกชุดนั้นเพื่อแก้ไขรายการนี้หรือไม่?"))return;
+ t2BatchInit([]);
+ const mi=members.indexOf(m);selectMember(mi);
  editingPaymentId=rowPaymentId(x); if(!editingPaymentId){alert("ไม่พบรหัสรายการ");return}
  $("payDate").value=normalizePromoDate(x.transferDate||x.transfer_date||"");
  $("payTime").value=x.transferTime||x.transfer_time||"";
@@ -138,6 +143,7 @@ async function saveReceipt(){if(t2SlipQueue.length>1&&!editingPaymentId){await t
    if(!uploaded.ok)throw Error(uploaded.message||"จัดเก็บภาพสลิปใน Drive ไม่สำเร็จ");
    uploadedReceipt=uploaded.receipt;
  }
+ if(editingPaymentId&&!confirm("ยืนยันแก้ไขรายการ "+editingPaymentId+" ของสมาชิก "+selected.firstName+" "+selected.lastName+" ใช่หรือไม่?"))return;
  const action=editingPaymentId?"updatePayment":"savePayment";const d=await api(action,{paymentId:editingPaymentId||"",citizenId:selected.citizenId,documentId:selected.citizenId,firstName:selected.firstName,lastName:selected.lastName,fullName:selected.firstName+" "+selected.lastName,...p,receipt:uploadedReceipt});if(d.ok){$("saveMessage").innerHTML='<div class="ok">✓ บันทึกรายการเรียบร้อย</div>';editingPaymentId=null;$("receiptFormTitle").textContent="เพิ่มใบเสร็จ / เงินลงทุน";$("saveReceiptBtn").textContent="บันทึกใบเสร็จ";$("cancelEditBtn").classList.add("hidden");$("newReceiptBtn").classList.remove("hidden");await loadReport()}else $("saveMessage").innerHTML='<div class="warn">'+esc(d.message||"บันทึกไม่สำเร็จ")+"</div>"}catch(e){$("saveMessage").innerHTML='<div class="warn">'+esc(e.message||"เชื่อมต่อระบบบันทึกไม่ได้")+'</div>'}}
 function newReceipt(scroll=true){editingPaymentId=null;if($("receiptFormTitle"))$("receiptFormTitle").textContent="เพิ่มใบเสร็จ / เงินลงทุน";if($("saveReceiptBtn"))$("saveReceiptBtn").textContent="บันทึกใบเสร็จ";if($("cancelEditBtn"))$("cancelEditBtn").classList.add("hidden");["payDate","payTime","amount","reference","payerName","receiverName","note"].forEach(id=>$(id).value="");if($("slipImage"))$("slipImage").value="";if($("slipPreview"))$("slipPreview").removeAttribute("src");if($("slipPreviewBox"))$("slipPreviewBox").classList.add("hidden");$("bankVerified").checked=false;$("promoBox").textContent="เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร";$("saveMessage").innerHTML="";$("newReceiptBtn").classList.add("hidden");if(scroll)$("payDate").scrollIntoView({behavior:"smooth",block:"center"})}
 function thDateTime(){
