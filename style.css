@@ -208,3 +208,11 @@ table tbody tr:hover{background:#f3f8ff}
 .ok{background:#e9f8f2;color:#146846}
 @media(max-width:680px){.panel,.card{border-radius:14px}.ownerStats{gap:10px}.ownerHero{border-radius:16px}}
 @media print{body{background:#fff!important;box-shadow:none!important}button{box-shadow:none!important}}
+
+
+/* T2 accessible contrast correction v31 */
+.reportActions button,.adminBtn{background:#123e7a!important;color:#ffffff!important;border:1px solid #123e7a!important;text-shadow:none!important}
+.reportActions button:hover,.adminBtn:hover{background:#1957a3!important;color:#fff!important}
+.ownerQuick button,.secondary,button.secondary{background:#fff!important;color:#154b91!important;border:1px solid #a9c9ed!important}
+.ownerQuick button:hover,.secondary:hover{background:#e9f3ff!important;color:#103d7c!important}
+button:disabled{opacity:.6;cursor:not-allowed}
