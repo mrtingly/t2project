@@ -59,10 +59,10 @@ function printOwnerMember(){
 }
 
 function ownerShowSection(which){
- const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection'};
+ const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection',promos:'ownerPromosSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
- if(which==='admins')ownerRenderAdmins();if(which==='disputes')ownerRenderDisputes();
+ if(which==='admins')ownerRenderAdmins();if(which==='disputes')ownerRenderDisputes();if(which==='promos')ownerLoadPromos();
 }
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
@@ -154,4 +154,31 @@ function ownerRenderDisputes(){
  const sample=issues.slice(0,100);
  body.innerHTML=sample.length?sample.map(x=>'<tr><td>'+esc(x.transferDate||x.transfer_date||'—')+'</td><td>'+esc([x.firstName||x.first_name||'',x.lastName||x.last_name||''].join(' ').trim())+'</td><td>'+esc(x.referenceNo||x.reference_no||'—')+'</td><td>'+money(x.amount)+'</td><td>'+esc(x.memberNote||x.member_note||'ไม่ได้ระบุรายละเอียด')+'</td><td>แจ้งข้อมูลผิด — รอตรวจสอบ</td></tr>').join(''):'<tr><td colspan="6">ไม่มีรายการแจ้งข้อมูลผิดในชุดข้อมูลนี้</td></tr>';
  if(issues.length>100)summary.textContent+=' (แสดง 100 รายการแรก)';
+}
+
+let OWNER_PROMOS=null;
+async function ownerLoadPromos(){
+ const box=document.getElementById('ownerPromoMessage');
+ if(OWNER_PROMOS){ownerRenderPromos();return}
+ if(box)box.textContent='กำลังโหลดเงื่อนไขโปรตัวเงินที่ระบบใช้อยู่...';
+ try{
+  const r=await fetch('promo-rules-review.json?v=1',{cache:'no-store'});
+  if(!r.ok)throw new Error('ไม่สามารถโหลดตารางโปรได้');
+  const data=await r.json();
+  if(!Array.isArray(data.rules))throw new Error('รูปแบบข้อมูลโปรไม่ถูกต้อง');
+  OWNER_PROMOS=data.rules;
+  ownerRenderPromos();
+ }catch(e){if(box)box.textContent=e.message||'โหลดโปรไม่สำเร็จ'}
+}
+function ownerRenderPromos(){
+ if(!OWNER_PROMOS)return;
+ const search=String(document.getElementById('ownerPromoSearch')?.value||'').trim().toLowerCase();
+ const filter=document.getElementById('ownerPromoFilter')?.value||'all';
+ const overlaps=new Set();
+ for(let i=0;i<OWNER_PROMOS.length;i++)for(let j=i+1;j<OWNER_PROMOS.length;j++){
+ const a=OWNER_PROMOS[i],b=OWNER_PROMOS[j];if(a.from<=b.to&&b.from<=a.to){overlaps.add(a.n);overlaps.add(b.n)}
+ }
+ const rows=OWNER_PROMOS.filter(x=>(filter==='all'||(filter==='review'&&overlaps.has(x.n))||(filter==='exact'&&x.exactOnly))&&(!search||String(x.n).includes(search)||x.from.includes(search)||x.to.includes(search)));
+ document.getElementById('ownerPromoMessage').textContent='กฎโปรที่มีอยู่ '+OWNER_PROMOS.length+' ช่วง • ช่วงที่วันที่ทับซ้อน '+overlaps.size+' ช่วง • แสดง '+rows.length+' ช่วง | ยังรอตรวจเอกสารต้นฉบับ';
+ document.getElementById('ownerPromoList').innerHTML=rows.map(x=>'<article class="ownerPromoCard"><div class="ownerPromoHead"><strong>โปรช่วงที่ '+esc(x.n)+'</strong><span>'+esc(x.from)+' ถึง '+esc(x.to)+'</span></div><div class="ownerPromoMeta">'+(overlaps.has(x.n)?'<span>⚠ วันทับซ้อน</span>':'')+(x.exactOnly?'<span>ยอดตามรายการเท่านั้น</span>':'<span>มีกฎอัตราส่วนเดิมที่ต้องตรวจ</span>')+'</div><div class="tableWrap"><table><thead><tr><th>ยอดลงทุน</th><th>ผลตอบแทนตามโปร (ยังไม่ใช่รับจริง)</th></tr></thead><tbody>'+x.tiers.map(t=>'<tr><td>'+money(t[0])+'</td><td>'+money(t[1])+'</td></tr>').join('')+'</tbody></table></div></article>').join('')||'<p>ไม่พบช่วงโปรที่ค้นหา</p>';
 }
