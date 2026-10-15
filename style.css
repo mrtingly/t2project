@@ -301,3 +301,14 @@ body{overflow-x:hidden}
 #ownerStatementSection .tableWrap{margin-top:12px}
 #ownerStatementSection #ownerStatementSummary{padding:13px 15px;background:#eaf3ff;border-radius:12px;color:#153f77;font-weight:600;line-height:1.6}
 @media(max-width:700px){.ownerMobileNav{grid-template-columns:repeat(3,minmax(0,1fr))}.ownerMobileNav button{min-height:48px;padding:9px 5px;font-size:12px}#ownerStatementSection{overflow-wrap:anywhere}}
+
+/* Owner promotion directory, mobile first */
+.ownerMobileNav{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.ownerPromoCard{padding:14px;margin-top:13px;background:#fff;border:1px solid #d9e7f8;border-radius:15px;box-shadow:0 7px 20px rgba(18,68,133,.045)}
+.ownerPromoHead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;color:#143f7c}
+.ownerPromoHead strong{font-size:16px}.ownerPromoHead span{font-size:12px;color:#526f93}
+.ownerPromoMeta{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.ownerPromoMeta span{padding:5px 9px;border-radius:999px;background:#edf5ff;color:#285b97;font-size:11px}
+#ownerPromoList table{min-width:0!important;width:100%}
+#ownerPromoList td,#ownerPromoList th{white-space:normal!important;font-size:12px}
+#ownerPromosSection input,#ownerPromosSection select{min-height:49px;width:100%;font-size:16px}
+@media(min-width:701px){.ownerMobileNav{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
