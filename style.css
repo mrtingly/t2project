@@ -312,3 +312,17 @@ body{overflow-x:hidden}
 #ownerPromoList td,#ownerPromoList th{white-space:normal!important;font-size:12px}
 #ownerPromosSection input,#ownerPromosSection select{min-height:49px;width:100%;font-size:16px}
 @media(min-width:701px){.ownerMobileNav{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
+
+/* Owner promotion drafts mobile editor v38 */
+.ownerPromoEditor{margin-top:20px;padding:16px;border:1px solid #cadff7;border-radius:17px;background:#f4f9ff}
+.ownerPromoEditor>label,.ownerPromoDates label,.ownerPromoTier label{display:block;font-weight:600;color:#174375}
+.ownerPromoEditor input{display:block;width:100%;min-height:48px;margin-top:6px;border:1px solid #bcd4f1;border-radius:10px;padding:10px;background:#fff;font-size:16px}
+.ownerPromoDates,.ownerPromoTier{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.ownerPromoTier{border:1px solid #d8e7fa;background:#fff;border-radius:13px;padding:12px}
+.ownerPromoActions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.ownerPromoActions button,.ownerPromoImport{border:1px solid #b8d4f2;border-radius:11px;padding:11px 14px;background:#fff;color:#174b90;cursor:pointer;font-weight:600;min-height:46px}
+.ownerPromoActions button:hover{background:#e9f3ff}
+.ownerPromoActions .ownerPromoDelete{color:#a52739;border-color:#e7bcc1}
+.ownerPromoImport input{display:none!important}
+.ownerPromoTier>button{align-self:end;background:#fff6f6;border:1px solid #eab9c0;color:#9f2532;border-radius:10px;min-height:46px}
+@media(max-width:650px){.ownerPromoDates{grid-template-columns:1fr}.ownerPromoTier{grid-template-columns:1fr}.ownerPromoActions button{flex:1;min-width:120px}.ownerPromoEditor{padding:12px}}
