@@ -157,7 +157,7 @@ function printDoc(title,body,landscape=false){
  w.document.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+body+'<script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();
 }
 function printAdminReport(){
- const rows=reportItems, total=rows.reduce((s,x)=>s+Number(x.amount||0),0), reward=rows.reduce((s,x)=>s+Number(x.promoReturn||0),0);
+ const rows=reportItems.filter(x=>adminHistoryMode==='all'||adminRowDate(x)===$('adminHistoryDate').value), total=rows.reduce((s,x)=>s+Number(x.amount||0),0), reward=rows.reduce((s,x)=>s+Number(x.promoReturn||0),0);
  const uniqueMembers=new Set(rows.map(x=>String(x.citizenId||x.citizen_id||x.documentId||x.document_id||((x.firstName||"")+" "+(x.lastName||""))))).size;
  const body='<div class="head"><div><div class="brand">T2Project</div><div class="sub">ระบบฐานข้อมูลกลางสมาชิกและรายการลงทุน</div></div><div><div class="docTitle">รายงานรายการของ Admin</div><div class="sub">ออกเอกสาร '+esc(thDateTime())+'</div></div></div>'+
  '<div class="meta"><div class="box"><small>Admin</small><b>'+esc(staff?.displayName||staff?.username||"—")+'</b></div><div class="box"><small>Admin ID</small><b>'+esc(staff?.adminId||"—")+'</b></div><div class="box"><small>จำนวนสมาชิกในรายงาน</small><b>'+uniqueMembers.toLocaleString("th-TH")+' คน</b></div><div class="box"><small>สถานะรายงาน</small><b>ข้อมูลตรวจเบื้องต้น</b></div></div>'+
@@ -188,7 +188,7 @@ function adminHistoryAll(){adminHistoryMode='all';$('adminHistoryDate').value=''
 function renderAdminHistory(){
  const picker=$('adminHistoryDate');if(!picker)return;
  const date=picker.value;
- if(adminHistoryMode!=='all')adminHistoryMode='date';
+ if(date)adminHistoryMode='date';
  const rows=reportItems.map((x,i)=>({x,i})).filter(({x})=>adminHistoryMode==='all'||adminRowDate(x)===date);
  const total=rows.reduce((a,{x})=>a+Number(x.amount||0),0);
  const promo=rows.reduce((a,{x})=>a+Number(x.promoReturn||x.promo_return||0),0);
