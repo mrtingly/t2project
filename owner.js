@@ -48,8 +48,14 @@ async function loadOwnerMembers(){
   const d=await call('getMyMembers');
   if(!d.ok)return;
   OWNER_MEMBERS=d.items||d.members||[];
-  filterOwnerMembers();ownerRenderAdmins();
+  filterOwnerMembers();ownerRenderAdmins();ownerAccessSummary();
  }catch(e){document.getElementById('ownerMemberDetail').textContent='ยังโหลดรายชื่อสมาชิกไม่ได้'}
+}
+function ownerAccessSummary(){
+ const box=document.getElementById('ownerProfileAccessSummary');if(!box)return;
+ if(!OWNER_MEMBERS.every(m=>typeof m.profileVisited==='boolean')){box.textContent='สถานะการเข้าโปรไฟล์: รอ Backend รองรับประวัติการเปิดโปรไฟล์';return}
+ const yes=OWNER_MEMBERS.filter(m=>m.profileVisited).length;
+ box.textContent='สมาชิกทั้งหมด '+OWNER_MEMBERS.length+' คน | เข้าโปรไฟล์แล้ว '+yes+' คน | ยังไม่พบประวัติ '+(OWNER_MEMBERS.length-yes)+' คน';
 }
 function filterOwnerMembers(){
  const q=String(document.getElementById('ownerMemberSearch').value||'').trim().toLocaleLowerCase('th-TH');
@@ -91,7 +97,7 @@ async function openOwnerMember(){
   const contact=cs.map((x,i)=>field('ผู้ติดต่อ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' '+String(x.phone||''))).join('');
   const bene=bs.map((x,i)=>field('ผู้รับผลประโยชน์ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' / '+String(x.percent||0)+'%')).join('');
   box.innerHTML='<article id="ownerMemberPrintable" style="padding:20px;border:1px solid #dfe7f2;border-radius:12px;background:white"><h2>T2Project — ข้อมูลสมาชิก</h2>'+
-   field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ชื่อห้อง',ownerRoomInfo(m)?.room||m.room||m.adminId)+field('แอดมินผู้ดูแล',ownerRoomInfo(m)?.name||'ยังไม่พบการจับคู่ห้อง')+
+   field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ชื่อห้อง',ownerRoomInfo(m)?.room||m.room||m.adminId)+field('แอดมินผู้ดูแล',ownerRoomInfo(m)?.name||'ยังไม่พบการจับคู่ห้อง')+field('สถานะเข้าโปรไฟล์',typeof OWNER_MEMBERS.find(x=>String(x.memberId)===String(m.memberId))?.profileVisited==='boolean'?(OWNER_MEMBERS.find(x=>String(x.memberId)===String(m.memberId)).profileVisited?'เข้าโปรไฟล์แล้ว':'ยังไม่พบประวัติการเข้า'):'รอข้อมูลจาก Backend')+
    field('เบอร์โทร',p.phone)+field('อีเมล',p.email)+field('ธนาคาร',p.bank)+field('บัญชีธนาคาร',p.bankAccount)+field('ที่อยู่',p.address)+field('แผนที่',p.mapUrl)+
    field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',money(displayedReturn)+returnNote)+
    '<h3>ผู้ติดต่อ</h3>'+contact+'<h3>ผู้รับผลประโยชน์</h3>'+bene+'</article>';
