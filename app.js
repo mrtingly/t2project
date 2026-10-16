@@ -6,6 +6,7 @@ function switchLoginMode(){
  const mode=document.querySelector('input[name="loginMode"]:checked').value;
  document.getElementById('passwordLogin').style.display=mode==='password'?'block':'none';
  document.getElementById('activateLogin').style.display=mode==='activate'?'block':'none';
+ document.getElementById('recoverLogin').style.display='none';
  document.getElementById('loginBtn').innerHTML=mode==='password'?'เข้าสู่ระบบ <span>›</span>':'ตั้งบัญชีสมาชิก <span>›</span>';
  document.getElementById('memberResult').textContent='';
 }
@@ -33,3 +34,7 @@ async function memberSearch(){
  }catch(e){out.textContent='ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่'}finally{btn.disabled=false}
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter')memberSearch()});switchMemberType();switchLoginMode();
+async function t2RecoveryApi(action,data){const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...data})});return r.json()}
+function t2ToggleRecovery(open=true){document.getElementById('recoverLogin').style.display=open?'block':'none';document.getElementById('passwordLogin').style.display=open?'none':'block';document.getElementById('activateLogin').style.display='none';document.getElementById('loginBtn').style.display=open?'none':'';if(open){document.querySelector('input[name="loginMode"][value="password"]').checked=true;document.getElementById('resetUsername').value=document.getElementById('memberUsername').value;document.getElementById('memberResult').textContent=''}}
+async function t2RequestRecovery(){const box=document.getElementById('resetResult'),username=document.getElementById('resetUsername').value.trim();if(!username){box.textContent='กรุณากรอกชื่อผู้ใช้';return}box.textContent='กำลังส่งคำขอ...';try{const d=await t2RecoveryApi('requestMemberPasswordReset',{username});box.textContent=d.message||'กรุณาติดต่อ Admin ประจำห้อง'}catch(e){box.textContent='เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่'}}
+async function t2FinishRecovery(){const box=document.getElementById('resetResult'),username=document.getElementById('resetUsername').value.trim(),resetCode=document.getElementById('resetCode').value.trim(),pw=document.getElementById('resetPassword').value;if(pw!==document.getElementById('resetConfirm').value){box.textContent='ยืนยันรหัสผ่านใหม่ไม่ตรงกัน';return}if(!username||!resetCode||!pw){box.textContent='กรุณากรอกข้อมูลให้ครบ';return}box.textContent='กำลังตั้งรหัสผ่าน...';try{const d=await t2RecoveryApi('completeMemberPasswordReset',{username,resetCode,newPassword:pw});box.textContent=d.message||'ไม่สำเร็จ';if(d.ok){document.getElementById('memberUsername').value=username;document.getElementById('memberPassword').value='';document.getElementById('resetCode').value='';document.getElementById('resetPassword').value='';document.getElementById('resetConfirm').value='';}}catch(e){box.textContent='เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่'}}
