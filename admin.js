@@ -100,9 +100,7 @@ function promo(date,amount){
  rs.forEach(r=>{
    const exact=r.tiers.find(([paid])=>a===paid);
    if(exact){matches.push({period:r.n,receive:exact[1],mode:"exact"});return}
-   const ratios=r.tiers.map(([paid,receive])=>receive/paid);
-   const sameRatio=ratios.length>0&&ratios.every(x=>Math.abs(x-ratios[0])<0.000001);
-   if(!r.exactOnly&&sameRatio&&a>0)matches.push({period:r.n,receive:Math.round(a*ratios[0]),mode:"ratio"});
+   // Only Owner-declared exact investment tiers qualify; never extrapolate.
  });
  if(matches.length>1){const unique=[...new Set(matches.map(x=>x.receive))];if(unique.length>1)return {status:"review",periods:matches.map(x=>x.period),reason:"โปรทับซ้อนให้ผลตอบแทนต่างกัน"};}return matches.length?{status:"matched",matches}:{status:"review",periods:rs.map(r=>r.n)};
 }
