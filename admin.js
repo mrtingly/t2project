@@ -181,11 +181,26 @@ function printAdminReceipt(i){
  const body='<div class="head"><div><div class="brand">T2Project</div><div class="sub">ระบบฐานข้อมูลกลางสมาชิกและรายการลงทุน</div></div><div><div class="docTitle">ใบรายการ / Payment Record</div><div class="sub">เลขที่รายการ '+esc(pid)+'</div></div></div>'+
  '<div class="meta"><div class="box"><small>สมาชิก</small><b>'+esc(member)+'</b></div><div class="box"><small>Member ID</small><b>'+esc(x.memberId||x.member_id||"—")+'</b></div><div class="box"><small>Admin ผู้จัดทำข้อมูล</small><b>'+esc(x.adminDisplayName||x.admin_display_name||x.adminUsername||x.admin_username||staff?.displayName||staff?.username||"—")+'</b></div><div class="box"><small>สถานะเบื้องต้น</small><span class="status">บันทึกในฐานข้อมูลแล้ว</span></div></div>'+
  '<table><tbody>'+
- [['วันที่โอน',x.transferDate||"—"],['เวลา',x.transferTime||"—"],['ชื่อผู้โอน',x.payerName||"—"],['ชื่อผู้รับ',x.receiverName||"—"],['Admin ผู้จัดทำข้อมูล',(x.adminDisplayName||x.admin_display_name||x.adminUsername||x.admin_username||staff?.displayName||staff?.username||"—")],['รหัสอ้างอิง 6 หลักท้าย',String(x.referenceNo||"").slice(-6)||"—"],['ยอดลงทุน',money(x.amount)],['ช่วงโปรโมชั่น',x.rulePeriod||x.rule_period||"—"],['ผลตอบแทนตามโปร',money(x.promoReturn)]].map(r=>'<tr><th style="width:38%">'+esc(r[0])+'</th><td><b>'+esc(r[1])+'</b></td></tr>').join('')+
+ [['วันที่โอน',x.transferDate||"—"],['เวลา',x.transferTime||"—"],['ชื่อผู้โอน',x.payerName||"—"],['ชื่อผู้รับ',x.receiverName||"—"],['Admin ผู้จัดทำข้อมูล',(x.adminDisplayName||x.admin_display_name||x.adminUsername||x.admin_username||staff?.displayName||staff?.username||"—")],['รหัสอ้างอิง 6 หลักท้าย',String(x.referenceNo||"").slice(-6)||"—"],['ยอดลงทุน',money(x.amount)],['ช่วงโปรโมชั่น',x.rulePeriod||x.rule_period||"—"],['ผลตอบแทนตามโปร',money(adminDisplayPromo(x).amount)+(adminDisplayPromo(x).estimated?' (คำนวณ ยังไม่บันทึก)':'')]].map(r=>'<tr><th style="width:38%">'+esc(r[0])+'</th><td><b>'+esc(r[1])+'</b></td></tr>').join('')+
  '</tbody></table><div class="note"><b>หมายเหตุ</b><br>'+esc(x.notes||x.note||"—")+'</div>'+
  '<div class="note"><b>สถานะการตรวจสอบ</b><br>รายการนี้ผ่านการบันทึกและตรวจสอบข้อมูลเบื้องต้นในกระบวนการ Admin/Member ของ T2Project การยืนยันยอดเงินจริงในภาพรวมดำเนินการโดย Owner จาก Statement ธนาคาร</div>'+
  '<div class="foot"><span>พิมพ์เมื่อ '+esc(thDateTime())+'</span><span>Reference: '+esc(String(x.referenceNo||"").slice(-6)||"—")+'</span></div>';
- printDoc("T2Project Payment "+pid,body,false);
+ const receipt=String(x.receipt||x.receiptUrl||x.receipt_url||'').trim();
+ if(!receipt){alert('ไม่พบภาพสลิปในรายการนี้');return}
+ const fileId=receipt.includes('/file/d/')?receipt.split('/file/d/')[1].split('/')[0]:'';
+ const source=fileId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(fileId)+'&sz=w1600':receipt;
+ if(!source.startsWith('https://')){alert('ลิงก์ภาพสลิปไม่ถูกต้อง');return}
+ const w=window.open('','_blank');if(!w){alert('กรุณาอนุญาตหน้าต่างพิมพ์');return}
+ const css='@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{font:11px Arial,sans-serif;color:#172033;margin:0}.head{display:flex;justify-content:space-between;border-bottom:2px solid #1769e0;padding-bottom:8px}.brand{font-size:20px;font-weight:900}.docTitle{font-size:15px;font-weight:bold}.sub{font-size:10px;color:#667085}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:8px 0}.box{border:1px solid #ddd;padding:5px}.box small{display:block;font-size:9px}.box b{font-size:11px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:4px;text-align:left}.note{margin-top:6px;border:1px solid #ddd;padding:6px}.slip{text-align:center;margin-top:6px}.slip img{display:block;max-width:100%;max-height:105mm;object-fit:contain;margin:4px auto}.foot{border-top:1px solid #ddd;margin-top:5px;padding-top:5px;display:flex;justify-content:space-between}.controls{background:#eef2ff;padding:8px;margin-bottom:8px}@media print{.controls{display:none}}';
+ const image='<div class="slip"><b>ภาพสลิปหลักฐาน</b><img id="slipPicture" alt="ภาพสลิป" src="'+esc(source)+'"></div>';
+ w.document.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><title>'+esc(pid)+'</title><style>'+css+'</style></head><body><div class="controls"><button id="slipPrintBtn" disabled>กำลังโหลดภาพ...</button> <span id="slipStatus">รอภาพสลิป</span></div>'+body.replace('<div class="foot">',image+'<div class="foot">')+'</body></html>');
+ w.document.close();
+ const img=w.document.getElementById('slipPicture'),btn=w.document.getElementById('slipPrintBtn'),status=w.document.getElementById('slipStatus');
+ btn.onclick=()=>w.print();
+ img.onload=()=>{btn.disabled=false;btn.textContent='พิมพ์ A4 หนึ่งหน้า';status.textContent='ภาพพร้อมพิมพ์'};
+ img.onerror=()=>{btn.disabled=true;status.textContent='เปิดภาพจาก Google Drive ไม่ได้ โปรดตรวจสิทธิ์เข้าถึงภาพ'};
+ if(img.complete&&img.naturalWidth>0)img.onload();
+
 }
 function adminLocalDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function adminRowDate(x){return normalizePromoDate(String(x.transferDate||x.transfer_date||x.date||'').trim()).slice(0,10)}
