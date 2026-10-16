@@ -234,6 +234,7 @@ function renderAdminHistory(){
 }
 async function loadReport(){
  try{
+ if(!T2_PROMOS_CENTRAL_READY)await loadCentralPromos();
  const d=await api("getReport",{});
  if(!d.ok)throw Error(d.message||'โหลดรายงานไม่สำเร็จ');
  reportItems=d.items||d.payments||[];
@@ -242,7 +243,17 @@ async function loadReport(){
  renderAdminHistory();
  }catch(e){reportItems=[];$('sumCount').textContent='—';$('sumAmount').textContent='—';$('sumReturn').textContent='—';$('adminHistoryCaption').textContent='โหลดข้อมูลไม่สำเร็จ กรุณากดรีเฟรชอีกครั้ง';$('reportRows').innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ กรุณารีเฟรช</td></tr>'}
 }
-document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await Promise.allSettled([loadMembers(),(async()=>{await loadCentralPromos();await loadReport()})()])}});
+document.addEventListener("DOMContentLoaded",async()=>{
+ // Round 1: Only validate session on entry. All member/report/promo data is on demand.
+ const ok=await guard();
+ if(!ok)return;
+ const memberList=$("memberList");
+ if(memberList)memberList.innerHTML='<div class="muted tiny" style="margin-top:12px">ยังไม่ดึงข้อมูลสมาชิก — ใช้คำสั่งค้นหาเมื่อจำเป็น</div>';
+ const summary=$("memberAccessSummary");
+ if(summary)summary.textContent='ยังไม่เรียกข้อมูลสรุปสมาชิก';
+ const caption=$("adminHistoryCaption");
+ if(caption)caption.textContent='ยังไม่ดึงรายงาน — กดรีเฟรชรายงานเมื่อจะใช้งาน';
+});
 
 function fileToCompressedBase64(file){
  return new Promise((resolve,reject)=>{
