@@ -206,7 +206,7 @@ async function loadReport(){
  const picker=$('adminHistoryDate');
  if(picker&&!picker.value&&adminHistoryMode!=='all')picker.value=adminLocalDate();
  renderAdminHistory();
- }catch(e){$('reportRows').innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ</td></tr>'}
+ }catch(e){reportItems=[];$('sumCount').textContent='—';$('sumAmount').textContent='—';$('sumReturn').textContent='—';$('adminHistoryCaption').textContent='โหลดข้อมูลไม่สำเร็จ กรุณากดรีเฟรชอีกครั้ง';$('reportRows').innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ กรุณารีเฟรช</td></tr>'}
 }
 document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await loadMembers();await loadReport()}});
 
