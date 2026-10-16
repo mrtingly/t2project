@@ -31,7 +31,7 @@ function filterMyMembers(){
 }
 async function loadMembers(){
  const box=$("memberList");
- try{const d=await api("getMyMembers");members=d.items||d.members||[];adminRenderProfileSummary();filterMyMembers();}
+ try{const d=await api("getMyMembers");if(!d.ok)throw Error(d.message||"โหลดสมาชิกไม่สำเร็จ");members=d.items||d.members||[];adminRenderProfileSummary();filterMyMembers();}
  catch(e){box.innerHTML='<div class="warn">โหลดข้อมูลสมาชิกไม่สำเร็จ</div>';}
 }
 async function approveMember(i){const m=members[i];if(!m||String(m.status||"").toLowerCase()!=="pending")return;const fullName=((m.firstName||"")+" "+(m.lastName||"")).trim();if(!confirm("คุณได้ตรวจสอบตัวตนของสมาชิก "+fullName+" กับเจ้าตัวแล้ว และยืนยันเปิดสิทธิ์ให้สร้างโปรไฟล์ใช่หรือไม่?"))return;const box=$("memberMessage");box.textContent="กำลังอนุมัติสมาชิก…";try{const d=await api("approveMember",{memberId:m.memberId,identityConfirmed:true});box.innerHTML=d.ok?'<div class="ok">อนุมัติสมาชิกเรียบร้อยแล้ว<br><strong>รหัสเปิดใช้งานครั้งแรก (ใช้ครั้งเดียว ภายใน 24 ชั่วโมง)</strong><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode||'ไม่พบรหัส')+'</code><br>กรุณาส่งรหัสให้สมาชิกผ่านช่องทางที่ตรวจสอบตัวตนแล้ว รหัสนี้จะไม่แสดงซ้ำ</div>':'<div class="warn">'+esc(d.message||"อนุมัติไม่สำเร็จ")+'</div>';if(d.ok)await loadMembers()}catch(e){box.innerHTML='<div class="warn">เชื่อมต่อระบบอนุมัติไม่ได้</div>'}}
