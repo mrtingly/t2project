@@ -293,7 +293,7 @@ async function ownerPromoSave(){
  const valid=tiers.length&&tiers.every((x,i)=>x[0]>0&&x[1]>=0&&Number.isFinite(x[1])&&!tiers.some((y,j)=>i!==j&&x[0]===y[0]));
  const msg=document.getElementById('ownerPromoEditStatus');
  if(!name){msg.textContent='กรุณากรอกชื่อโปร';document.getElementById('promoEditName').focus();return}
- if(!from||!to){msg.textContent='วันที่ไม่ถูกต้องหรือยังกรอกไม่ครบ — เดือนกุมภาพันธ์ 2025 มีถึงวันที่ 28 เท่านั้น (กรุณาเลือกจากปฏิทิน)';document.getElementById(!from?'promoEditFrom':'promoEditTo').focus();return}
+ if(!from||!to){msg.textContent='วันที่ไม่ถูกต้องหรือยังกรอกไม่ครบ กรุณาเลือกวันที่จากปฏิทิน';document.getElementById(!from?'promoEditFrom':'promoEditTo').focus();return}
  if(from>to){msg.textContent='วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น';document.getElementById('promoEditTo').focus();return}
  if(!valid||[...document.querySelectorAll('.ownerPromoTier input')].some(x=>x.value.trim()==='')){msg.textContent='กรุณากรอกยอดลงทุนและยอดที่จะได้รับให้ครบ (ยอดลงทุนในโปรเดียวกันห้ามซ้ำ)';return}
  const id=OWNER_PROMO_EDIT_ID??Math.max(0,...OWNER_PROMOS.map(x=>Number(x.n)||0))+1;
