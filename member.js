@@ -44,6 +44,7 @@ async function loadCentralProfile(){
    localStorage.setItem(key('othercontacts'),JSON.stringify(contacts));
  }
  fillEdit();renderBeneficiaries();renderContacts();renderProfile();
+ await t2RefreshCentralPhoto();
 }
 async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}await loadMemberCentralPromos();await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
 function toggleMemberMenu(){memberMenu.classList.toggle('open');memberShade.classList.toggle('show')}
@@ -82,7 +83,43 @@ async function setEdit(v){
  }
  profileView.classList.toggle('hidden',v);profileEdit.classList.toggle('hidden',!v);if(v)fillEdit();
 }
-function previewPhoto(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.photo=r.result;editAvatar.innerHTML='<img src="'+r.result+'">';avatar.innerHTML='<img src="'+r.result+'">'};r.readAsDataURL(f)}
+let t2PendingProfilePhoto=null;
+async function t2EncodeProfilePhoto(file){
+ return new Promise((resolve,reject)=>{
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{
+   URL.revokeObjectURL(url);
+   const c=document.createElement('canvas'),max=360,scale=Math.min(1,max/Math.max(img.width,img.height));
+   c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));
+   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+   let data=c.toDataURL('image/jpeg',0.75);
+   if(data.length>230000)data=c.toDataURL('image/jpeg',0.55);
+   if(data.length>230000){reject(Error('รูปใหญ่เกินไป กรุณาใช้รูปขนาดเล็ก'));return}
+   resolve(data);
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('ไม่สามารถอ่านภาพได้'))};
+  img.src=url;
+ });
+}
+async function t2RefreshCentralPhoto(){
+ try{
+  const d=await api('getMemberPhoto',{profileGrant});
+  if(!d.ok||!d.found||!d.dataUrl)return;
+  profile.photo=d.dataUrl;
+  editAvatar.innerHTML='<img src="'+d.dataUrl+'">';
+  avatar.innerHTML='<img src="'+d.dataUrl+'">';
+ }catch(e){console.warn('Profile photo load unavailable')}
+}
+async function previewPhoto(input){
+ const f=input.files[0];if(!f)return;
+ try{
+  const image=await t2EncodeProfilePhoto(f);
+  t2PendingProfilePhoto=image;
+  profile.photo=image;
+  editAvatar.innerHTML='<img src="'+image+'">';
+  avatar.innerHTML='<img src="'+image+'">';
+ }catch(e){alert(e.message||'ไม่สามารถอ่านรูปโปรไฟล์ได้')}
+}
 let cardMaskSource='',cardMaskRects=[],cardMaskDrag=null;
 function openCardMask(){
  const src=profile.idCardPhoto;
@@ -125,6 +162,12 @@ async function saveProfile(){
  try{
    const d=await api('saveMemberProfile',{profileGrant,data:{profile:nextProfile,contacts:t,beneficiaries:b}});
    if(!d.ok){alert(d.message||'บันทึกข้อมูลไม่สำเร็จ');return}
+   if(t2PendingProfilePhoto){
+     const payload=t2PendingProfilePhoto.split(',');
+     const uploaded=await api('uploadMemberPhoto',{profileGrant,mimeType:'image/jpeg',base64:payload[1]||''});
+     if(!uploaded.ok){alert('บันทึกข้อมูลโปรไฟล์สำเร็จ แต่รูปยังไม่ถูกบันทึกส่วนกลาง: '+(uploaded.message||'กรุณาลองอีกครั้ง'));return}
+     t2PendingProfilePhoto=null;
+   }
    profile=nextProfile;beneficiaries=b;contacts=t;centralProfileFound=true;
    // ชื่อสมาชิกยึดฐาน Master จนกว่า Backend จะยืนยันการเปลี่ยนชื่ออย่างถูกต้อง
    localStorage.setItem(key('profile'),JSON.stringify(profile));
