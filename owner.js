@@ -51,13 +51,33 @@ async function openOwnerMember(){
   if(!d.ok){box.textContent=d.message||'Backend ยังไม่ได้รองรับข้อมูลสมาชิก Owner';return}
   CURRENT_OWNER_PROFILE=d;
   const m=d.member||{},p=d.data?.profile||{},summ=d.summary||{},cs=d.data?.contacts||[],bs=d.data?.beneficiaries||[];
+  let displayedReturn=Number(summ.returnEstimate||0),returnNote='';
+  try{
+   const responses=await Promise.all([call('getReport',{from:'',to:''}),call('getPromos')]);
+   const report=responses[0],promos=responses[1];
+   if(report.ok&&promos.ok&&promos.published&&Array.isArray(promos.rules)){
+    const mid=String(m.memberId||'').trim(),cid=String(m.citizenId||'').trim();
+    const rows=(report.items||report.payments||[]).filter(x=>{
+     const rowId=String(x.memberId||x.member_id||'').trim();
+     const rowCid=String(x.citizenId||x.citizen_id||'').trim();
+     return (mid&&rowId===mid)||(cid&&rowCid===cid);
+    });
+    if(rows.length){
+     const results=rows.map(x=>ownerReportPromo(x,promos.rules));
+     displayedReturn=results.reduce((sum,x)=>sum+x.value,0);
+     returnNote=results.some(x=>x.estimated)?' (คำนวณตามโปร ยังไม่บันทึกในสลิป)':'';
+     if(results.some(x=>x.conflict))returnNote+=' (มีโปรทับซ้อน ต้องตรวจสอบ)';
+    }
+   }
+  }catch(e){console.warn('Owner member promotion calculation unavailable',e)}
+
   const field=(label,value)=>'<div style="padding:7px 0;border-bottom:1px solid #eee"><b>'+esc(label)+'</b>: '+esc(value||'—')+'</div>';
   const contact=cs.map((x,i)=>field('ผู้ติดต่อ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' '+String(x.phone||''))).join('');
   const bene=bs.map((x,i)=>field('ผู้รับผลประโยชน์ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' / '+String(x.percent||0)+'%')).join('');
   box.innerHTML='<article id="ownerMemberPrintable" style="padding:20px;border:1px solid #dfe7f2;border-radius:12px;background:white"><h2>T2Project — ข้อมูลสมาชิก</h2>'+
    field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ห้อง',m.adminId)+
    field('เบอร์โทร',p.phone)+field('อีเมล',p.email)+field('ธนาคาร',p.bank)+field('บัญชีธนาคาร',p.bankAccount)+field('ที่อยู่',p.address)+field('แผนที่',p.mapUrl)+
-   field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',money(summ.returnEstimate))+
+   field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',money(displayedReturn)+returnNote)+
    '<h3>ผู้ติดต่อ</h3>'+contact+'<h3>ผู้รับผลประโยชน์</h3>'+bene+'</article>';
  }catch(e){box.textContent='โหลดข้อมูลสมาชิกไม่ได้ กรุณาตรวจการ Deploy Backend รอบ 5'}
 }
