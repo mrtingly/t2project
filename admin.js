@@ -94,16 +94,15 @@ async function loadCentralPromos(){
 function promo(date,amount){
  if(!T2_PROMOS_CENTRAL_READY)return {status:'review',periods:[],reason:'ยังไม่เชื่อมโปรกลาง'};
  date=normalizePromoDate(date);
- const a=Number(amount||0),rs=MONEY_RULES.filter(r=>date>=r.from&&date<=r.to);
- if(!rs.length)return {status:"none"};
- const matches=[];
- rs.forEach(r=>{
-   const exact=r.tiers.find(([paid])=>a===paid);
-   if(exact){matches.push({period:r.n,receive:exact[1],mode:"exact"});return}
-   const ratios=r.tiers.map(([paid,receive])=>receive/paid);
-   if(!r.exactOnly&&ratios.length&&ratios.every(v=>Math.abs(v-ratios[0])<=1e-8*Math.max(1,Math.abs(ratios[0])))&&a>0)matches.push({period:r.n,receive:Math.round(a*ratios[0]*100)/100,mode:"ratio"});
- });
- if(matches.length>1){const unique=[...new Set(matches.map(x=>x.receive))];if(unique.length>1)return {status:"review",periods:matches.map(x=>x.period),reason:"โปรทับซ้อนให้ผลตอบแทนต่างกัน"};}return matches.length?{status:"matched",matches}:{status:"review",periods:rs.map(r=>r.n)};
+ const a=Number(amount),rs=MONEY_RULES.filter(r=>date>=r.from&&date<=r.to);
+ if(!rs.length)return {status:'none'};
+ const matches=rs.map(r=>{
+  const tiers=r.tiers.slice().sort((x,y)=>x[0]-y[0]);
+  const level=tiers.filter(t=>a>=t[0]).pop()||tiers[0];
+  return level&&a>0?{period:r.n,receive:Math.round(a*level[1]/level[0]*100)/100,mode:level===tiers[0]?'normal':'special'}:null;
+ }).filter(Boolean);
+ if(new Set(matches.map(x=>x.receive)).size>1)return {status:'review',periods:matches.map(x=>x.period),reason:'โปรทับซ้อนให้ผลตอบแทนต่างกัน'};
+ return matches.length?{status:'matched',matches}:{status:'review',periods:rs.map(r=>r.n)};
 }
 function previewPromo(){const d=$("payDate").value,a=Number($("amount").value||0),box=$("promoBox");if(!d||!a){box.textContent="เลือกวันที่และจำนวนเงินเพื่อคำนวณโปร";return}const p=promo(d,a);if(p.status==="matched"){box.innerHTML='<b>ยอดลงทุน '+money(a)+'</b><br><b>ยอดที่จะได้รับตามโปร:</b> '+p.matches.map(x=>"ช่วง "+x.period+" → <strong>"+money(x.receive)+"</strong>").join(" / ")}else if(p.status==="review"){box.textContent=p.reason==='ยังไม่เชื่อมโปรกลาง'?'ยังไม่เชื่อมโปรกลาง — ต้อง Deploy Backend และให้ Owner เผยแพร่โปรก่อนคำนวณ':'วันที่อยู่ในช่วงโปร '+p.periods.join(', ')+' แต่ยอดลงทุนยังไม่ตรงอัตราที่ Owner กำหนด ต้องตรวจสอบ'}else box.innerHTML="<b>ไม่พบโปรในวันที่นี้</b>"}
 function previewSlip(e){const files=Array.from(e.target.files||[]);if(files.length>5){alert('เลือกสลิปได้ไม่เกิน 5 ใบต่อครั้ง');e.target.value='';return}t2BatchInit(files);const f=files[0];if(!f){$("slipPreviewBox").classList.add("hidden");$("slipPreview").removeAttribute("src");return}const r=new FileReader();r.onload=()=>{$("slipPreview").src=r.result;$("slipPreviewBox").classList.remove("hidden")};r.readAsDataURL(f);readSlipOCR(f)}
