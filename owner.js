@@ -177,7 +177,14 @@ async function ownerLoadPromos(){
   ownerPromoReset();ownerRenderPromos();ownerPromoCalculate();
   if(!OWNER_PROMO_PUBLISHED&&box)box.textContent='ยังไม่ได้เผยแพร่โปรกลาง — ตรวจรายการ แล้วกด “เผยแพร่โปรไปฐานกลาง”';
  }catch(e){
-  OWNER_PROMOS=null;OWNER_PROMO_VERSION='';if(box)box.textContent='ไม่สามารถเชื่อมฐานกลาง: '+String(e.message||e);
+  OWNER_PROMO_VERSION='';OWNER_PROMO_PUBLISHED=false;
+  try{
+   const r=await fetch('promo-rules-review.json?v=1',{cache:'no-store'});
+   const seed=await r.json();OWNER_PROMOS=seed.rules||[];
+   try{const draft=JSON.parse(localStorage.getItem('t2_owner_promo_drafts_v1')||'null');if(Array.isArray(draft))OWNER_PROMOS=draft}catch(ex){}
+   ownerPromoReset();ownerRenderPromos();ownerPromoCalculate();
+  }catch(ex){OWNER_PROMOS=null}
+  if(box)box.textContent='ยังไม่เชื่อมโปรกลาง: '+String(e.message||e)+' | แสดงโปรเดิมเพื่อดูเท่านั้น กรุณา Deploy Backend ก่อนบันทึก';
  }
 }
 function ownerRenderPromos(){
