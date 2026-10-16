@@ -144,6 +144,18 @@ function confirmCardMask(){
  const cv=document.getElementById('cardMaskCanvas'),out=document.createElement('canvas');out.width=cv.width;out.height=cv.height;const ctx=out.getContext('2d');const img=new Image();
  img.onload=()=>{ctx.drawImage(img,0,0,out.width,out.height);ctx.fillStyle='#111';cardMaskRects.forEach(r=>ctx.fillRect(r.x,r.y,r.w,r.h));const masked=out.toDataURL('image/png');profile.idCardMasked=masked;try{localStorage.setItem(key('profile'),JSON.stringify(profile))}catch(e){alert('พื้นที่เก็บรูปในเบราว์เซอร์เต็ม กรุณาใช้รูปขนาดเล็กลง');return}document.getElementById('cardMaskPanel').style.display='none';renderProfile();alert('สร้างรูปบัตรที่ปิดทับวันที่แล้ว กรุณาตรวจภาพบนหน้า Profile อีกครั้ง')};img.src=cardMaskSource;
 }
+function removeIdCardPhoto(){
+ if(!profile.idCardPhoto&&!($('idCardPhoto')?.value)){alert('ยังไม่มีรูปบัตรให้ลบ');return}
+ if(!confirm('ยืนยันลบรูปบัตรประชาชนออกจากโปรไฟล์บนเครื่องนี้หรือไม่?'))return;
+ delete profile.idCardPhoto;
+ const input=$('idCardPhoto');if(input)input.value='';
+ if(window.idCardPreview){idCardPreview.removeAttribute('src');idCardPreview.classList.add('hidden')}
+ const panel=$('cardMaskPanel');if(panel)panel.style.display='none';
+ cardMaskSource='';cardMaskRects=[];
+ // The present backend does not store identity-card photographs centrally.
+ try{localStorage.setItem(key('profile'),JSON.stringify(profile))}catch(e){}
+ alert('ลบรูปบัตรประชาชนบนเครื่องนี้แล้ว');
+}
 function previewIdCard(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.idCardPhoto=r.result;if(window.idCardPreview){idCardPreview.src=r.result;idCardPreview.classList.remove('hidden')}};r.readAsDataURL(f)}
 function updateMapLink(){if(!window.openMapPin||!window.mapUrl)return;const u=mapUrl.value.trim();openMapPin.classList.toggle('hidden',!u);if(u)openMapPin.href=u}
 async function saveProfile(){
