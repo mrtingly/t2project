@@ -493,13 +493,36 @@ function t2BatchRender(){
   const inputs=fields.map(([key,label,type])=>'<label class="t2BatchField">'+esc(label)+
    '<input type="'+type+'" data-batch-index="'+i+'" data-batch-field="'+key+'" value="'+esc(v[key]||'')+'" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'></label>').join('');
   return '<article class="t2BatchCard'+(current?' current':'')+'" id="t2SlipCard'+i+'"><header class="t2BatchCardHeader"><b>สลิปใบที่ '+(i+1)+'</b><span>'+esc(item.file.name.slice(0,35))+'</span><strong>'+(
-   item.done?(item.duplicate?'รายการซ้ำ — ข้ามแล้ว':'บันทึกสำเร็จ'):item.verified?'ตรวจแล้ว':'รอตรวจ')+'</strong></header>'+
+   item.done?(item.duplicate?'รายการซ้ำ — ข้ามแล้ว':'บันทึกสำเร็จ'):item.verified?'ตรวจแล้ว':'รอตรวจ')+'</strong><button type="button" class="btn red" style="margin-left:8px" onclick="t2BatchRemove('+i+')" '+(item.done||t2SlipBatchBusy?'disabled':'')+'>ลบสลิป</button></header>'+
    '<div class="t2BatchCardBody"><div class="t2BatchPhoto"><img src="'+esc(url)+'" alt="ภาพสลิปใบที่ '+(i+1)+'"></div>'+
    '<div class="t2BatchFields">'+inputs+'<label class="t2BatchField wide">หมายเหตุ<textarea data-batch-index="'+i+'" data-batch-field="note" oninput="t2BatchEdit('+i+',this)" '+(item.done?'disabled':'')+'>'+esc(v.note||'')+'</textarea></label>'+
    '<label class="t2BatchConfirm"><input type="checkbox" '+(item.verified?'checked':'')+' onchange="t2BatchVerify('+i+',this.checked)" '+(item.done?'disabled':'')+'> ตรวจสอบกับภาพใบนี้แล้ว</label>'+
    '<button type="button" class="btn alt" onclick="t2BatchSelect('+i+')" '+(t2SlipBatchBusy?'disabled':'')+'>อ่าน OCR ใบนี้อีกครั้ง</button><div id="t2SlipMissing'+i+'" role="status" style="grid-column:1/-1;font-size:13px"></div></div></div></article>';
  }).join('')+'</div><div id="t2BatchMissingNotice" role="status" style="margin-top:14px;padding:12px;background:#fff4e5;color:#754200;border-radius:10px" hidden></div><div style="margin-top:14px"><button id="t2BatchSaveAll" type="button" class="btn" onclick="t2SaveBatch()" disabled>บันทึกทั้งหมด</button></div>';
  t2BatchUpdateButton();
+}
+function t2BatchRemove(index){
+ if(t2SlipBatchBusy)return;
+ const item=t2SlipQueue[index];if(!item||item.done)return;
+ if(!confirm('ลบสลิปใบที่ '+(index+1)+' ('+item.file.name+') ออกจากรายการรอบันทึกใช่หรือไม่?'))return;
+ if(item.previewUrl)URL.revokeObjectURL(item.previewUrl);
+ t2SlipQueue.splice(index,1);
+ t2SlipIndex=Math.max(0,Math.min(t2SlipIndex-(index<t2SlipIndex?1:0),t2SlipQueue.length-1));
+ if(!t2SlipQueue.length){
+   const fileInput=$('slipImage');if(fileInput)fileInput.value='';
+   T2_SLIP_FIELDS.forEach(id=>{const el=$(id);if(el)el.value=''});
+   if($('bankVerified'))$('bankVerified').checked=false;
+   if($('slipPreviewBox'))$('slipPreviewBox').classList.add('hidden');
+   if($('ocrStatus'))$('ocrStatus').textContent='ยังไม่มีสลิป';
+ }else if(t2SlipQueue.length===1){
+   const kept=t2SlipQueue[0];
+   T2_SLIP_FIELDS.forEach(id=>{const el=$(id);if(el)el.value=kept.values?.[id]||''});
+   if($('bankVerified'))$('bankVerified').checked=!!kept.verified;
+   if($('slipPreview'))$('slipPreview').src=kept.previewUrl;
+   if($('slipPreviewBox'))$('slipPreviewBox').classList.remove('hidden');
+ }
+ t2BatchRender();
+ previewPromo();
 }
 function t2BatchEdit(index,input){
  const item=t2SlipQueue[index];if(!item||item.done)return;
