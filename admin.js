@@ -242,7 +242,7 @@ async function loadReport(){
  renderAdminHistory();
  }catch(e){reportItems=[];$('sumCount').textContent='—';$('sumAmount').textContent='—';$('sumReturn').textContent='—';$('adminHistoryCaption').textContent='โหลดข้อมูลไม่สำเร็จ กรุณากดรีเฟรชอีกครั้ง';$('reportRows').innerHTML='<tr><td colspan="10">โหลดรายงานไม่สำเร็จ กรุณารีเฟรช</td></tr>'}
 }
-document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await Promise.allSettled([loadMembers(),loadCentralPromos(),loadReport()])}});
+document.addEventListener("DOMContentLoaded",async()=>{if(await guard()){await Promise.allSettled([loadMembers(),(async()=>{await loadCentralPromos();await loadReport()})()])}});
 
 function fileToCompressedBase64(file){
  return new Promise((resolve,reject)=>{
