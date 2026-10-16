@@ -280,3 +280,9 @@ function ownerPromoCalculate(){
  else if(out.status==='review')box.textContent='วันที่อยู่ในช่วงโปร แต่ยอดลงทุนนี้ไม่มีอัตราที่กำหนดไว้ ต้องตรวจสอบก่อน';
  else box.textContent='กรอกวันที่และยอดลงทุนที่ถูกต้อง';
 }
+
+async function ownerPromoPublishAll(){
+ if(!OWNER_PROMOS||!OWNER_PROMO_VERSION){alert('ยังเชื่อมฐานโปรกลางไม่ได้');return}
+ if(!confirm('เผยแพร่โปร '+OWNER_PROMOS.length+' ช่วง ไปฐานข้อมูลกลาง เพื่อให้ Admin และ Member คำนวณจากชุดนี้? โปรเก่ายังรอตรวจเอกสารต้นฉบับ'))return;
+ await ownerPromoPersist(OWNER_PROMOS);
+}
