@@ -288,9 +288,9 @@ async function ownerPromoImport(file){
 function ownerPromoCompute(rules,date,amount){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||''))||!Number.isFinite(amount)||amount<=0)return {status:'invalid',matches:[]};
  const candidates=(rules||[]).filter(r=>r.from<=date&&date<=r.to);
- const matches=candidates.flatMap(r=>{const tiers=r.tiers||[];const exact=tiers.find(t=>Number(t[0])===amount);if(exact)return [{n:r.n,name:r.name||'โปรช่วงที่ '+r.n,receive:Number(exact[1])}];const ratios=tiers.map(t=>Number(t[1])/Number(t[0]));if(!r.exactOnly&&ratios.length&&ratios.every(v=>Math.abs(v-ratios[0])<=1e-8*Math.max(1,Math.abs(ratios[0]))))return [{n:r.n,name:r.name||'โปรช่วงที่ '+r.n,receive:Math.round(amount*ratios[0]*100)/100}];return []});
+ const matches=candidates.map(r=>{const tiers=(r.tiers||[]).slice().sort((a,b)=>a[0]-b[0]);const level=tiers.filter(t=>amount>=t[0]).pop()||tiers[0];return level?{n:r.n,name:r.name||'โปรช่วงที่ '+r.n,receive:Math.round(amount*level[1]/level[0]*100)/100,rateType:level===tiers[0]?'อัตราปกติ':'อัตราพิเศษ'}:null}).filter(Boolean);
  if(!candidates.length)return {status:'none',matches:[]};
- if(!matches.length)return {status:'review',reason:'ยอดลงทุนนี้ไม่มีอัตราที่ระบุไว้ในโปร',matches:[]};
+ if(!matches.length)return {status:'review',matches:[]};
  if(new Set(matches.map(x=>x.receive)).size>1)return {status:'conflict',matches};
  return {status:'matched',receive:matches[0].receive,matches};
 }
