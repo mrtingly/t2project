@@ -36,14 +36,21 @@ if(msg)msg.textContent="";
 }catch(e){box.textContent=e.message||"ค้นหาไม่สำเร็จ"}finally{if(btn)btn.disabled=false}
 }
 async function approveMember(i){const m=members[i];if(!m||String(m.status||"").toLowerCase()!=="pending")return;const fullName=((m.firstName||"")+" "+(m.lastName||"")).trim();if(!confirm("คุณได้ตรวจสอบตัวตนของสมาชิก "+fullName+" กับเจ้าตัวแล้ว และยืนยันเปิดสิทธิ์ให้สร้างโปรไฟล์ใช่หรือไม่?"))return;const box=$("memberMessage");box.textContent="กำลังอนุมัติสมาชิก…";try{const d=await api("approveMember",{memberId:m.memberId,identityConfirmed:true});box.innerHTML=d.ok?'<div class="ok">อนุมัติสมาชิกเรียบร้อยแล้ว<br><strong>รหัสเปิดใช้งานครั้งแรก (ใช้ครั้งเดียว ภายใน 24 ชั่วโมง)</strong><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode||'ไม่พบรหัส')+'</code><br>กรุณาส่งรหัสให้สมาชิกผ่านช่องทางที่ตรวจสอบตัวตนแล้ว รหัสนี้จะไม่แสดงซ้ำ</div>':'<div class="warn">'+esc(d.message||"อนุมัติไม่สำเร็จ")+'</div>';if(d.ok)await searchExactAdminMember()}catch(e){box.innerHTML='<div class="warn">เชื่อมต่อระบบอนุมัติไม่ได้</div>'}}
-async function issueActivation(i){const m=members[i];if(!m)return;if(!confirm('คุณตรวจสอบตัวตนสมาชิกกับเจ้าตัวแล้ว และต้องการออกรหัสเปิดใช้งานให้สมาชิกคนนี้ใช่หรือไม่?'))return;const box=$('memberMessage');try{const d=await api('issueMemberActivation',{memberId:m.memberId});box.innerHTML=d.ok?'<div class="ok"><b>รหัสเปิดใช้งานครั้งเดียว (หมดอายุ 24 ชั่วโมง)</b><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode)+'</code><br>แจ้งรหัสให้สมาชิกผ่านช่องทางที่ยืนยันตัวตนแล้ว</div>':'<div class="warn">'+esc(d.message||'ไม่สามารถออกรหัสได้')+'</div>'}catch(e){box.textContent='เชื่อมต่อระบบไม่ได้'}}
+async function issueActivation(i){const m=members[i];if(!m)return;if(!confirm('คุณตรวจสอบตัวตนสมาชิกกับเจ้าตัวแล้ว และต้องการออกรหัสเปิดใช้งานให้สมาชิกคนนี้ใช่หรือไม่?'))return;const box=$('activationResult')||$('memberMessage');box.textContent="กำลังออกรหัส…";try{const d=await api('issueMemberActivation',{memberId:m.memberId});box.innerHTML=d.ok?'<div class="ok"><b>รหัสเปิดใช้งานครั้งเดียว (หมดอายุ 24 ชั่วโมง)</b><br><code style="font-size:18px;overflow-wrap:anywhere">'+esc(d.activationCode)+'</code><br>แจ้งรหัสให้สมาชิกผ่านช่องทางที่ยืนยันตัวตนแล้ว</div>':'<div class="warn">'+esc(d.message||'ไม่สามารถออกรหัสได้')+'</div>'}catch(e){box.textContent='เชื่อมต่อระบบไม่ได้'}}
+function issueSelectedActivation(){
+ if(!selected?.memberId){alert("กรุณาเลือกสมาชิกก่อน");return}
+ const i=members.findIndex(m=>String(m.memberId)===String(selected.memberId));
+ if(i<0){$("activationResult").textContent="กรุณาค้นหาชื่อและนามสกุลสมาชิกอีกครั้ง";return}
+ if(String(members[i].status||"").toLowerCase()==="pending"){approveMember(i);return}
+ issueActivation(i);
+}
 function selectMember(i){const m=members[i];if(!m)return;
  if(t2SlipBatchBusy){alert('กำลังบันทึกสลิป กรุณารอให้เสร็จก่อนเปลี่ยนสมาชิก');return}
  if(selected?.memberId!==m.memberId&&t2SlipQueue.some(item=>!item.done)){
   if(!confirm('มีสลิปที่ยังไม่ได้บันทึกอยู่ หากเปลี่ยนสมาชิก ชุดสลิปที่ค้างจะถูกล้าง ต้องการเปลี่ยนสมาชิกหรือไม่?'))return;
  }
  if(selected?.memberId!==m.memberId)t2BatchInit([]);
- selected={memberId:m.memberId||"",citizenId:m.documentId||m.citizenId||"",firstName:m.firstName||"",lastName:m.lastName||""};$("selectedMember").innerHTML="<b>สมาชิกที่เลือก:</b> "+esc(selected.firstName+" "+selected.lastName)+'<div class="muted tiny">'+esc(selected.memberId)+"</div>";if($("memberFirstSearch"))$("memberFirstSearch").value="";if($("memberLastSearch"))$("memberLastSearch").value="";$("memberList").innerHTML="";$("masterSearchActions")?.classList.add("hidden");$("createMemberBox")?.classList.add("hidden");$("memberMessage").textContent="";newReceipt(false)}
+ selected={memberId:m.memberId||"",citizenId:m.documentId||m.citizenId||"",firstName:m.firstName||"",lastName:m.lastName||""};$("selectedMember").innerHTML="<b>สมาชิกที่เลือก:</b> "+esc(selected.firstName+" "+selected.lastName)+'<div class="muted tiny">'+esc(selected.memberId)+"</div>";if($("memberFirstSearch"))$("memberFirstSearch").value="";if($("memberLastSearch"))$("memberLastSearch").value="";$("memberList").innerHTML="";$("masterSearchActions")?.classList.add("hidden");$("createMemberBox")?.classList.add("hidden");$("memberMessage").textContent="";const activation=$("activationPanel");if(activation)activation.classList.remove("hidden");const result=$("activationResult");if(result)result.textContent="";newReceipt(false)}
 async function findMember(){
  const first=String($("memberFirstSearch")?.value||"").trim();const last=String($("memberLastSearch")?.value||"").trim();const query=first+" "+last;
  const box=$("memberMessage");if(!first||!last){box.textContent="กรุณากรอกชื่อและนามสกุล";return;}
