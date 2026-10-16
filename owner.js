@@ -52,10 +52,24 @@ async function loadOwnerMembers(){
  }catch(e){document.getElementById('ownerMemberDetail').textContent='ยังโหลดรายชื่อสมาชิกไม่ได้'}
 }
 function ownerAccessSummary(){
- const box=document.getElementById('ownerProfileAccessSummary');if(!box)return;
- if(!OWNER_MEMBERS.every(m=>typeof m.profileVisited==='boolean')){box.textContent='สถานะการเข้าโปรไฟล์: รอ Backend รองรับประวัติการเปิดโปรไฟล์';return}
- const yes=OWNER_MEMBERS.filter(m=>m.profileVisited).length;
- box.textContent='สมาชิกทั้งหมด '+OWNER_MEMBERS.length+' คน | เข้าโปรไฟล์แล้ว '+yes+' คน | ยังไม่พบประวัติ '+(OWNER_MEMBERS.length-yes)+' คน';
+ const summary=document.getElementById('ownerProfileAccessSummary');
+ const roster=document.getElementById('ownerProfileVisitRoster');
+ const roomSummary=document.getElementById('ownerAdminVisitSummary');
+ const known=OWNER_MEMBERS.filter(m=>typeof m.profileVisited==='boolean');
+ const entered=known.filter(m=>m.profileVisited).length;
+ const missing=known.length-entered;
+ const unknown=OWNER_MEMBERS.length-known.length;
+ const wording='สมาชิกทั้งหมด '+OWNER_MEMBERS.length+' คน · เข้าโปรไฟล์แล้ว '+entered+' คน · ยังไม่พบประวัติ '+missing+' คน'+(unknown?' · ยังไม่มีข้อมูลสถานะ '+unknown+' คน':'');
+ if(summary)summary.textContent=wording;
+ if(roomSummary)roomSummary.textContent=wording;
+ if(!roster)return;
+ const q=String(document.getElementById('ownerProfileStatusFilter')?.value||'all');
+ const filtered=OWNER_MEMBERS.filter(m=>q==='all'||(q==='yes'?m.profileVisited===true:q==='no'?m.profileVisited===false:typeof m.profileVisited!=='boolean'));
+ roster.innerHTML='<div style="margin:8px 0;color:#64748b">แสดง '+filtered.length+' จาก '+OWNER_MEMBERS.length+' คน</div>'+filtered.slice(0,500).map(m=>{
+ const state=m.profileVisited===true?'เข้าโปรไฟล์แล้ว':m.profileVisited===false?'ยังไม่พบประวัติการเข้า':'ไม่มีข้อมูลสถานะ';
+ const room=ownerRoomInfo(m)?.room||m.room||'—';
+ return '<div style="padding:10px;border-bottom:1px solid #dae2ed"><b>'+esc((m.firstName||'')+' '+(m.lastName||''))+'</b><div style="font-size:13px">ห้อง '+esc(room)+' · '+esc(state)+(m.lastProfileVisit?' · ล่าสุด '+esc(m.lastProfileVisit):'')+'</div></div>';
+ }).join('')+(filtered.length>500?'<p>แสดง 500 รายการแรก กรุณาใช้ตัวกรองเพื่อลดผลลัพธ์</p>':'');
 }
 function filterOwnerMembers(){
  const q=String(document.getElementById('ownerMemberSearch').value||'').trim().toLocaleLowerCase('th-TH');
@@ -116,7 +130,7 @@ function ownerShowSection(which){
  const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection',promos:'ownerPromosSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
- if(which==='admins')ownerRenderAdmins();if(which==='disputes')ownerRenderDisputes();if(which==='promos')ownerLoadPromos();
+ if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='disputes')ownerRenderDisputes();if(which==='promos')ownerLoadPromos();
 }
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
