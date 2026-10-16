@@ -242,7 +242,11 @@ async function ownerPromoSave(){
  const name=document.getElementById('promoEditName').value.trim();
  const tiers=[...document.querySelectorAll('.ownerPromoTier')].map(row=>[Number(row.querySelector('.promoTierPaid').value),Number(row.querySelector('.promoTierReceive').value)]);
  const valid=tiers.length&&tiers.every((x,i)=>x[0]>0&&x[1]>=0&&Number.isFinite(x[1])&&!tiers.some((y,j)=>i!==j&&x[0]===y[0]));
- if(!name||!from||!to||from>to||!valid||[...document.querySelectorAll('.ownerPromoTier input')].some(x=>x.value.trim()==='')){document.getElementById('ownerPromoEditStatus').textContent='กรุณากรอกชื่อ ช่วงวันที่ ยอดลงทุนและยอดที่จะได้รับให้ถูกต้อง (ห้ามยอดลงทุนซ้ำในโปรเดียวกัน)';return}
+ const msg=document.getElementById('ownerPromoEditStatus');
+ if(!name){msg.textContent='กรุณากรอกชื่อโปร';document.getElementById('promoEditName').focus();return}
+ if(!from||!to){msg.textContent='วันที่ไม่ถูกต้องหรือยังกรอกไม่ครบ — เดือนกุมภาพันธ์ 2025 มีถึงวันที่ 28 เท่านั้น (กรุณาเลือกจากปฏิทิน)';document.getElementById(!from?'promoEditFrom':'promoEditTo').focus();return}
+ if(from>to){msg.textContent='วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น';document.getElementById('promoEditTo').focus();return}
+ if(!valid||[...document.querySelectorAll('.ownerPromoTier input')].some(x=>x.value.trim()==='')){msg.textContent='กรุณากรอกยอดลงทุนและยอดที่จะได้รับให้ครบ (ยอดลงทุนในโปรเดียวกันห้ามซ้ำ)';return}
  const id=OWNER_PROMO_EDIT_ID??Math.max(0,...OWNER_PROMOS.map(x=>Number(x.n)||0))+1;
  const ratios=tiers.map(t=>t[1]/t[0]);
  const proportional=ratios.every(v=>Math.abs(v-ratios[0])<=1e-8*Math.max(1,Math.abs(ratios[0])));
