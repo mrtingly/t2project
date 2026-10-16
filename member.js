@@ -49,7 +49,7 @@ async function loadCentralProfile(){
 async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}await loadMemberCentralPromos();await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
 function toggleMemberMenu(){memberMenu.classList.toggle('open');memberShade.classList.toggle('show')}
 function showPage(id){document.querySelectorAll('.memberPage').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');toggleMemberMenu();if(id==='payments')loadBills()}
-function fillEdit(){firstName.value=m.firstName;lastName.value=m.lastName;citizenId.value=memberKey;phone.value=profile.phone||'';email.value=profile.email||'';bank.value=profile.bank||'';bankAccount.value=profile.bankAccount||'';address.value=profile.address||'';mapUrl.value=profile.mapUrl||'';updateMapLink();if(profile.photo){editAvatar.innerHTML='<img src="'+profile.photo+'">';avatar.innerHTML='<img src="'+profile.photo+'">'}if(profile.idCardPhoto&&window.idCardPreview){idCardPreview.src=profile.idCardPhoto;idCardPreview.classList.remove('hidden')}}
+function fillEdit(){firstName.value=m.firstName;lastName.value=m.lastName;citizenId.value=memberKey;phone.value=profile.phone||'';email.value=profile.email||'';bank.value=profile.bank||'';bankAccount.value=profile.bankAccount||'';address.value=profile.address||'';mapUrl.value=profile.mapUrl||'';updateMapLink();if(profile.photo){editAvatar.innerHTML='<img src="'+profile.photo+'">';avatar.innerHTML='<img src="'+profile.photo+'">'}t2RenderIdCardPreview()}
 let showFullCitizenId=false;
 function toggleCitizenId(){showFullCitizenId=!showFullCitizenId;renderProfile()}
 function renderProfile(){
@@ -144,19 +144,49 @@ function confirmCardMask(){
  const cv=document.getElementById('cardMaskCanvas'),out=document.createElement('canvas');out.width=cv.width;out.height=cv.height;const ctx=out.getContext('2d');const img=new Image();
  img.onload=()=>{ctx.drawImage(img,0,0,out.width,out.height);ctx.fillStyle='#111';cardMaskRects.forEach(r=>ctx.fillRect(r.x,r.y,r.w,r.h));const masked=out.toDataURL('image/png');profile.idCardMasked=masked;try{localStorage.setItem(key('profile'),JSON.stringify(profile))}catch(e){alert('พื้นที่เก็บรูปในเบราว์เซอร์เต็ม กรุณาใช้รูปขนาดเล็กลง');return}document.getElementById('cardMaskPanel').style.display='none';renderProfile();alert('สร้างรูปบัตรที่ปิดทับวันที่แล้ว กรุณาตรวจภาพบนหน้า Profile อีกครั้ง')};img.src=cardMaskSource;
 }
-function removeIdCardPhoto(){
- if(!profile.idCardPhoto&&!($('idCardPhoto')?.value)){alert('ยังไม่มีรูปบัตรให้ลบ');return}
- if(!confirm('ยืนยันลบรูปบัตรประชาชนออกจากโปรไฟล์บนเครื่องนี้หรือไม่?'))return;
- delete profile.idCardPhoto;
- const input=$('idCardPhoto');if(input)input.value='';
- if(window.idCardPreview){idCardPreview.removeAttribute('src');idCardPreview.classList.add('hidden')}
- const panel=$('cardMaskPanel');if(panel)panel.style.display='none';
- cardMaskSource='';cardMaskRects=[];
- // The present backend does not store identity-card photographs centrally.
- try{localStorage.setItem(key('profile'),JSON.stringify(profile))}catch(e){}
- alert('ลบรูปบัตรประชาชนบนเครื่องนี้แล้ว');
+let t2IdCardReadGeneration=0;
+function t2RenderIdCardPreview(){
+ const img=document.getElementById('idCardPreview');
+ if(!img)return;
+ if(profile.idCardPhoto){
+  img.src=profile.idCardPhoto;
+  img.classList.remove('hidden');
+  img.style.display='block';
+ }else{
+  img.removeAttribute('src');
+  img.classList.add('hidden');
+  img.style.display='none';
+ }
 }
-function previewIdCard(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{profile.idCardPhoto=r.result;if(window.idCardPreview){idCardPreview.src=r.result;idCardPreview.classList.remove('hidden')}};r.readAsDataURL(f)}
+function removeIdCardPhoto(){
+ const image=document.getElementById('idCardPreview');
+ const input=document.getElementById('idCardPhoto');
+ if(!profile.idCardPhoto&&!input?.files?.length&&!image?.getAttribute('src')){
+  alert('ไม่มีรูปบัตรประชาชนให้ลบ');return;
+ }
+ if(!confirm('ยืนยันลบรูปบัตรประชาชนของสมาชิกออกจากเครื่องนี้หรือไม่?'))return;
+ t2IdCardReadGeneration++; // cancel in-flight FileReader results
+ delete profile.idCardPhoto;
+ if(input)input.value='';
+ cardMaskSource='';cardMaskRects=[];cardMaskDrag=null;
+ const panel=document.getElementById('cardMaskPanel');if(panel)panel.style.display='none';
+ t2RenderIdCardPreview();
+ try{localStorage.setItem(key('profile'),JSON.stringify(profile))}
+ catch(e){alert('ลบภาพบนหน้าจอแล้ว แต่บันทึกการลบในเครื่องไม่สำเร็จ');return}
+ alert('ลบรูปบัตรประชาชนบนเครื่องนี้เรียบร้อยแล้ว');
+}
+function previewIdCard(input){
+ const f=input.files[0];if(!f)return;
+ const generation=++t2IdCardReadGeneration;
+ const r=new FileReader();
+ r.onload=()=>{
+  if(generation!==t2IdCardReadGeneration)return;
+  profile.idCardPhoto=r.result;
+  t2RenderIdCardPreview();
+ };
+ r.onerror=()=>alert('อ่านรูปบัตรประชาชนไม่สำเร็จ');
+ r.readAsDataURL(f);
+}
 function updateMapLink(){if(!window.openMapPin||!window.mapUrl)return;const u=mapUrl.value.trim();openMapPin.classList.toggle('hidden',!u);if(u)openMapPin.href=u}
 async function saveProfile(){
  if(!profileGrant||Date.now()>profileGrantUntil){alert('สิทธิ์หมดอายุ กรุณายืนยันตัวตนอีกครั้ง');return}
