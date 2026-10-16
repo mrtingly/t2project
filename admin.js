@@ -24,8 +24,8 @@ function filterMyMembers(){
  if(extra)extra.classList.add("hidden");
  if(create)create.classList.add("hidden");
  if($("memberMessage"))$("memberMessage").textContent="";
- if(!query){box.innerHTML='<div class="muted tiny" style="margin-top:12px">เริ่มพิมพ์ชื่อหรือนามสกุลเพื่อค้นหา</div>';return;}
- const hits=members.map((m,i)=>({m,i})).filter(({m})=>[m.firstName,m.lastName,(m.firstName||"")+" "+(m.lastName||""),m.memberId].some(x=>String(x||"").toLocaleLowerCase("th-TH").replace(/\s+/g,"").includes(query))).slice(0,30);
+ const state=$('memberProfileFilter')?.value||'all';
+ const hits=members.map((m,i)=>({m,i})).filter(({m})=>[m.firstName,m.lastName,(m.firstName||"")+" "+(m.lastName||""),m.memberId].some(x=>String(x||"").toLocaleLowerCase("th-TH").replace(/\s+/g,"").includes(query))&&(state==='all'||(typeof m.profileVisited==='boolean'&&(state==='visited'?m.profileVisited:!m.profileVisited)))).slice(0,100);
  box.innerHTML=hits.length?hits.map(({m,i})=>`<div class="member ${selected?.memberId===m.memberId?"active":""}"><div style="min-width:0;overflow-wrap:anywhere"><b>${esc((m.firstName||"")+" "+(m.lastName||""))}</b><div class="muted tiny">${esc(m.memberId||"")}</div><div class="muted tiny">${esc(adminProfileState(m))}${m.lastProfileVisit?' · '+esc(m.lastProfileVisit):''}</div></div><div class="actions"><button class="btn alt" onclick="selectMember(${i})">เลือก</button>${String(m.status||"").toLowerCase()==="pending"?`<button class="btn" onclick="approveMember(${i})">ยืนยันและอนุมัติ</button>`:String(m.status||"").toLowerCase()==="active"?`<button class="btn alt" onclick="issueActivation(${i})">ออกรหัสเปิดใช้งาน</button>`:""}</div></div>`).join(""):'<div class="muted tiny" style="margin-top:12px">ไม่พบสมาชิกในความรับผิดชอบ ลองค้นหาใน Master</div>';
  if(!hits.length&&extra)extra.classList.remove("hidden");
 }
