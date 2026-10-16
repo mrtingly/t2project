@@ -213,7 +213,7 @@ async function ownerPromoPersist(next){
   ownerRenderPromos();ownerPromoCalculate();
   if(status)status.textContent='บันทึกโปรลงฐานกลางสำเร็จ • Admin และ Member อ่านเงื่อนไขนี้ได้';
   return true;
- }catch(e){if(status)status.textContent='บันทึกไม่สำเร็จ: '+String(e.message||e)+' — ยังไม่เปลี่ยนข้อมูลบนฐานกลาง';return false}
+ }catch(e){if(status)status.textContent='บันทึกไม่สำเร็จ: '+String(e.message||e)+' — ยังไม่เปลี่ยนข้อมูลบนฐานกลาง';alert('บันทึกโปรไม่สำเร็จ: '+String(e.message||e));return false}
 }
 function ownerPromoReset(){
  OWNER_PROMO_EDIT_ID=null;
@@ -244,7 +244,9 @@ async function ownerPromoSave(){
  const valid=tiers.length&&tiers.every((x,i)=>x[0]>0&&x[1]>=0&&Number.isFinite(x[1])&&!tiers.some((y,j)=>i!==j&&x[0]===y[0]));
  if(!name||!from||!to||from>to||!valid||[...document.querySelectorAll('.ownerPromoTier input')].some(x=>x.value.trim()==='')){document.getElementById('ownerPromoEditStatus').textContent='กรุณากรอกชื่อ ช่วงวันที่ ยอดลงทุนและยอดที่จะได้รับให้ถูกต้อง (ห้ามยอดลงทุนซ้ำในโปรเดียวกัน)';return}
  const id=OWNER_PROMO_EDIT_ID??Math.max(0,...OWNER_PROMOS.map(x=>Number(x.n)||0))+1;
- const obj={n:id,name,from,to,tiers,exactOnly:true,draft:true};
+ const ratios=tiers.map(t=>t[1]/t[0]);
+ const proportional=ratios.every(v=>Math.abs(v-ratios[0])<=1e-8*Math.max(1,Math.abs(ratios[0])));
+ const obj={n:id,name,from,to,tiers,exactOnly:!proportional};
  const next=OWNER_PROMOS.slice(),index=next.findIndex(x=>x.n===id);if(index>=0)next[index]=obj;else next.push(obj);
  if(await ownerPromoPersist(next))ownerPromoReset();
 }
