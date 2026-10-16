@@ -193,18 +193,27 @@ function adminRowDate(x){return normalizePromoDate(String(x.transferDate||x.tran
 let adminHistoryMode='today';
 function adminHistoryToday(){adminHistoryMode='today';$('adminHistoryDate').value=adminLocalDate();renderAdminHistory()}
 function adminHistoryAll(){adminHistoryMode='all';$('adminHistoryDate').value='';renderAdminHistory()}
+function adminDisplayPromo(x){
+ const saved=Number(x.promoReturn??x.promo_return??0);
+ const result=promo(x.transferDate||x.transfer_date||'',Number(x.amount||0));
+ if(result.status==='matched'){
+  const calc=Number(result.matches[0].receive);
+  return {amount:saved>0?saved:calc,estimated:saved<=0,conflict:saved>0&&Math.abs(saved-calc)>0.01};
+ }
+ return {amount:saved,estimated:false,conflict:result.status==='review',missing:result.status==='none'};
+}
 function renderAdminHistory(){
  const picker=$('adminHistoryDate');if(!picker)return;
  const date=picker.value;
  if(date)adminHistoryMode='date';
  const rows=reportItems.map((x,i)=>({x,i})).filter(({x})=>adminHistoryMode==='all'||adminRowDate(x)===date);
  const total=rows.reduce((a,{x})=>a+Number(x.amount||0),0);
- const promo=rows.reduce((a,{x})=>a+Number(x.promoReturn||x.promo_return||0),0);
+ const promo=rows.reduce((a,{x})=>a+adminDisplayPromo(x).amount,0);
  $('sumCount').textContent=rows.length.toLocaleString('th-TH');
  $('sumAmount').textContent=money(total);
- $('sumReturn').textContent=money(promo);
- $('adminHistoryCaption').textContent=(adminHistoryMode==='all'?'ทุกรายการ':('วันที่โอน '+(date||'กรุณาเลือกวันที่')))+' • พบ '+rows.length+' รายการ • แสดงตามวันที่โอนบนสลิป';
- $('reportRows').innerHTML=rows.length?rows.map(({x,i},j)=>`<tr><td class="report-no">${j+1}</td><td class="report-date">${esc(x.transferDate||x.transfer_date||"")}</td><td class="report-time">${esc(x.transferTime||x.transfer_time||"")}</td><td class="report-member">${esc(((x.firstName||x.first_name||"")+" "+(x.lastName||x.last_name||"")).trim())}</td><td class="report-person">${esc(x.payerName||x.payer_name||"-")}</td><td class="report-person">${esc(x.receiverName||x.receiver_name||"-")}</td><td class="report-ref">${esc(x.referenceNo||x.reference_no||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(x.promoReturn||x.promo_return)}</td><td><button type="button" class="report-menu-trigger" aria-label="จัดการรายการที่ ${j+1}" aria-haspopup="true" aria-expanded="false" onclick="toggleAdminReportMenu(event,${i})">⋯</button></td></tr>`).join(""):'<tr><td colspan="10">ไม่มีสลิปในวันที่เลือก</td></tr>';
+ $('sumReturn').textContent=money(promo)+' (คำนวณตามโปร)';
+ $('adminHistoryCaption').textContent=(adminHistoryMode==='all'?'ทุกรายการ':('วันที่โอน '+(date||'กรุณาเลือกวันที่')))+' • พบ '+rows.length+' รายการ • * ยอดคำนวณจากโปรยังไม่ปรับในฐานสลิป • แสดงตามวันที่โอนบนสลิป';
+ $('reportRows').innerHTML=rows.length?rows.map(({x,i},j)=>`<tr><td class="report-no">${j+1}</td><td class="report-date">${esc(x.transferDate||x.transfer_date||"")}</td><td class="report-time">${esc(x.transferTime||x.transfer_time||"")}</td><td class="report-member">${esc(((x.firstName||x.first_name||"")+" "+(x.lastName||x.last_name||"")).trim())}</td><td class="report-person">${esc(x.payerName||x.payer_name||"-")}</td><td class="report-person">${esc(x.receiverName||x.receiver_name||"-")}</td><td class="report-ref">${esc(x.referenceNo||x.reference_no||"")}</td><td class="report-money">${money(x.amount)}</td><td class="report-return">${money(adminDisplayPromo(x).amount)}${adminDisplayPromo(x).estimated?' <small title="ยอดคำนวณใหม่ ยังไม่ได้ปรับฐานสลิป">*</small>':''}${adminDisplayPromo(x).conflict?' ⚠':''}</td><td><button type="button" class="report-menu-trigger" aria-label="จัดการรายการที่ ${j+1}" aria-haspopup="true" aria-expanded="false" onclick="toggleAdminReportMenu(event,${i})">⋯</button></td></tr>`).join(""):'<tr><td colspan="10">ไม่มีสลิปในวันที่เลือก</td></tr>';
 }
 async function loadReport(){
  try{
