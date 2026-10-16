@@ -174,7 +174,7 @@ function openPrint(html,title){
  w.document.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body><div class="printToolbar"><button id="memberPrintButton">พิมพ์ / บันทึก PDF</button><span id="memberPrintStatus">กำลังตรวจภาพ...</span></div>'+html+'</body></html>');
  w.document.close();
  const button=w.document.getElementById('memberPrintButton'),status=w.document.getElementById('memberPrintStatus');
- button.onclick=()=>{const pics=[...w.document.querySelectorAll('.memberSlipPhoto')];if(pics.length&&pics.some(img=>!img.complete||!img.naturalWidth)){alert('บางภาพสลิปยังโหลดไม่สำเร็จ โปรดตรวจภาพก่อนพิมพ์');return}w.print()};
+ button.onclick=()=>{const pics=[...w.document.querySelectorAll('.memberSlipPhoto')];const slips=w.document.querySelectorAll('.printReceipt').length;if(pics.length!==slips||pics.some(img=>!img.complete||!img.naturalWidth)){alert('ภาพสลิปยังไม่ครบหรือโหลดไม่สำเร็จ โปรดตรวจสอบภาพจริงก่อนพิมพ์');return}w.print()};
  const pics=[...w.document.querySelectorAll('.memberSlipPhoto')];if(!pics.length){status.textContent='ไม่มีภาพสลิปในรายการนี้';return}
  let done=0;pics.forEach(img=>{const tick=()=>{done++;if(done===pics.length)status.textContent=pics.every(i=>i.naturalWidth>0)?'ภาพพร้อมพิมพ์':'บางภาพโหลดไม่ได้ กรุณาตรวจสิทธิ์ Google Drive'};if(img.complete)tick();else{img.onload=tick;img.onerror=tick}});
 }
