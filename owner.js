@@ -27,6 +27,21 @@ async function ownerLogout(){try{await call('staffLogout')}catch(e){}sessionStor
 function toggleOwnerPassword(){const p=document.getElementById('ownerPass'),b=document.querySelector('.passwordToggle');const show=p.type==='password';p.type=show?'text':'password';if(b)b.textContent=show?'ซ่อน':'ดู'}
 
 let OWNER_MEMBERS=[],CURRENT_OWNER_PROFILE=null,OWNER_REPORT_PAGE=0;
+const OWNER_ROOM_DIRECTORY=[
+ {room:'A+',code:'001',name:'อรวิภา ชัยสงคราม'},
+ {room:'A',code:'002',name:'มนัสนันท์ ภพกิตติสิริกุล'},
+ {room:'B',code:'003',name:'เมทินี สุมาลี'},
+ {room:'C',code:'004',name:'พชรกฤต โสมนัส'},
+ {room:'D',code:'005',name:'รุ่งนภา สุภาศรี'},
+ {room:'E',code:'006',name:'รมิตา มีคุณ'},
+ {room:'F',code:'007',name:'สมาน พันธ์เพ็ง'},
+ {room:'G',code:'008',name:'กุลคณินท์ นุดศุภร'}
+];
+function ownerRoomInfo(m){
+ const raw=String(m.room||m.roomName||m.room_code||m.adminId||m.admin_id||'').trim();
+ return OWNER_ROOM_DIRECTORY.find(x=>x.room===raw||x.code===raw||'ROOM-'+x.code===raw)||null;
+}
+
 async function loadOwnerMembers(){
  try{
   const d=await call('getMyMembers');
@@ -75,7 +90,7 @@ async function openOwnerMember(){
   const contact=cs.map((x,i)=>field('ผู้ติดต่อ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' '+String(x.phone||''))).join('');
   const bene=bs.map((x,i)=>field('ผู้รับผลประโยชน์ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' / '+String(x.percent||0)+'%')).join('');
   box.innerHTML='<article id="ownerMemberPrintable" style="padding:20px;border:1px solid #dfe7f2;border-radius:12px;background:white"><h2>T2Project — ข้อมูลสมาชิก</h2>'+
-   field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ห้อง',m.adminId)+
+   field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ชื่อห้อง',ownerRoomInfo(m)?.room||m.room||m.adminId)+field('แอดมินผู้ดูแล',ownerRoomInfo(m)?.name||'ยังไม่พบการจับคู่ห้อง')+
    field('เบอร์โทร',p.phone)+field('อีเมล',p.email)+field('ธนาคาร',p.bank)+field('บัญชีธนาคาร',p.bankAccount)+field('ที่อยู่',p.address)+field('แผนที่',p.mapUrl)+
    field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',money(displayedReturn)+returnNote)+
    '<h3>ผู้ติดต่อ</h3>'+contact+'<h3>ผู้รับผลประโยชน์</h3>'+bene+'</article>';
@@ -99,21 +114,22 @@ function ownerShowSection(which){
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
  const el=document.getElementById('ownerAdminSelect');if(!el)return;
- const q=document.getElementById('ownerAdminSearch').value.trim().toLowerCase(),prev=el.value;
- const ids=[...new Set(OWNER_MEMBERS.map(ownerAdminKey))].filter(x=>x.toLowerCase().includes(q)).sort();
- el.innerHTML='<option value="">เลือกแอดมิน / ห้อง</option>'+ids.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
- if(ids.includes(prev))el.value=prev;
- document.getElementById('ownerAdminCards').textContent='พบ '+ids.length+' ห้อง / กลุ่มรับผิดชอบ (ใช้ข้อมูลรหัสห้องในทะเบียนสมาชิก)';
+ const q=document.getElementById('ownerAdminSearch').value.trim().toLocaleLowerCase('th-TH'),prev=el.value;
+ const list=OWNER_ROOM_DIRECTORY.filter(x=>(x.room+' '+x.name+' '+x.code).toLocaleLowerCase('th-TH').includes(q));
+ el.innerHTML='<option value="">เลือกแอดมิน / ห้อง</option>'+list.map(x=>'<option value="'+esc(x.room)+'">ห้อง '+esc(x.room)+' — '+esc(x.name)+'</option>').join('');
+ if(list.some(x=>x.room===prev))el.value=prev;
+ document.getElementById('ownerAdminCards').textContent='ทะเบียนห้องรับผิดชอบ '+list.length+' ห้อง (A+, A, B, C, D, E, F, G) — ข้อมูลแอดมินจากทะเบียนกลาง';
  if(el.value)ownerOpenAdmin();else document.getElementById('ownerAdminDetails').textContent='เลือกห้องเพื่อตรวจสอบ';
 }
 function ownerOpenAdmin(){
  const id=document.getElementById('ownerAdminSelect').value,box=document.getElementById('ownerAdminDetails');
- if(!id){box.textContent='กรุณาเลือกห้อง';return}
- const members=OWNER_MEMBERS.filter(m=>ownerAdminKey(m)===id);
+ const admin=OWNER_ROOM_DIRECTORY.find(x=>x.room===id);
+ if(!admin){box.textContent='กรุณาเลือกห้อง';return}
+ const members=OWNER_MEMBERS.filter(m=>ownerRoomInfo(m)?.room===id);
  const citizens=new Set(members.map(m=>String(m.citizenId||m.citizen_id||m.documentId||'')).filter(Boolean));
  const payments=REPORT.filter(x=>citizens.has(String(x.citizenId||x.citizen_id||x.documentId||'')));
  const sum=payments.reduce((v,x)=>v+Number(x.amount||0),0);
- box.innerHTML='<h3>ห้อง '+esc(id)+'</h3><p>สมาชิก '+members.length.toLocaleString('th-TH')+' คน · สลิปในช่วงรายงาน '+payments.length.toLocaleString('th-TH')+' รายการ · ยอดเงิน '+money(sum)+'</p><p>ยอดสลิปอ้างอิงช่วงวันที่ในหน้ารายงาน หากไม่พบสลิปไม่ได้แปลว่าไม่มีธุรกรรม</p><div class="tableWrap"><table><thead><tr><th>สมาชิก</th><th>รหัสสมาชิก</th><th>รายการสลิป</th><th>ยอด</th><th>ตรวจข้อมูล</th></tr></thead><tbody>'+members.map(m=>{const rs=payments.filter(x=>String(x.citizenId||x.citizen_id||'')===String(m.citizenId||m.citizen_id||m.documentId||''));const amount=rs.reduce((v,x)=>v+Number(x.amount||0),0);return '<tr><td>'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</td><td>'+esc(m.memberId||'')+'</td><td>'+rs.length+'</td><td>'+money(amount)+'</td><td><button type="button" data-member-id="'+esc(m.memberId||'')+'" onclick="ownerInspectMember(this.dataset.memberId)">เปิดสมาชิก</button></td></tr>'}).join('')+'</tbody></table></div>';
+ box.innerHTML='<h3>ห้อง '+esc(id)+' — '+esc(admin.name)+'</h3><p>รหัสผู้รับผิดชอบ '+esc(admin.code)+' · สมาชิก '+members.length.toLocaleString('th-TH')+' คน · สลิปในช่วงรายงาน '+payments.length.toLocaleString('th-TH')+' รายการ · ยอดเงิน '+money(sum)+'</p><p>รายชื่อสมาชิกและสลิปอ้างอิงข้อมูลที่โหลดได้ ไม่ใช่จำนวนบัญชีแอดมินที่เข้าใช้งานสำเร็จ</p><div class="tableWrap"><table><thead><tr><th>สมาชิก</th><th>รหัสสมาชิก</th><th>รายการสลิป</th><th>ยอด</th><th>ตรวจข้อมูล</th></tr></thead><tbody>'+members.map(m=>{const rs=payments.filter(x=>String(x.citizenId||x.citizen_id||'')===String(m.citizenId||m.citizen_id||m.documentId||''));const amount=rs.reduce((v,x)=>v+Number(x.amount||0),0);return '<tr><td>'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</td><td>'+esc(m.memberId||'')+'</td><td>'+rs.length+'</td><td>'+money(amount)+'</td><td><button type="button" data-member-id="'+esc(m.memberId||'')+'" onclick="ownerInspectMember(this.dataset.memberId)">เปิดสมาชิก</button></td></tr>'}).join('')+'</tbody></table></div>';
 }
 function ownerInspectMember(id){
  ownerShowSection('members');document.getElementById('ownerMemberSearch').value=id;filterOwnerMembers();
