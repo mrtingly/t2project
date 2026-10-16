@@ -15,6 +15,19 @@ async function guard(){staff=JSON.parse(sessionStorage.getItem("t2_staff")||"nul
 async function logout(){try{await api("staffLogout")}catch(e){}sessionStorage.removeItem("t2_staff");location.href="admin-login.html"}
 function adminProfileState(m){if(typeof m.profileVisited!=='boolean')return 'ยังไม่มีข้อมูลการเข้าชม';return m.profileVisited?'เข้าโปรไฟล์แล้ว':'ยังไม่พบประวัติการเข้า'}
 function adminRenderProfileSummary(){const box=$('memberAccessSummary');if(!box)return;const ready=members.every(m=>typeof m.profileVisited==='boolean');if(!ready){box.textContent='รอ Backend รุ่นติดตามการเข้าโปรไฟล์ — ไม่สามารถสรุปสถานะได้';if($('memberProfileFilter'))$('memberProfileFilter').disabled=true;return}if($('memberProfileFilter'))$('memberProfileFilter').disabled=false;const entered=members.filter(m=>m.profileVisited).length;box.textContent='สมาชิกทั้งหมด '+members.length+' คน | เข้าโปรไฟล์แล้ว '+entered+' คน | ยังไม่พบประวัติ '+(members.length-entered)+' คน'}
+async function loadAdminMemberCounts(){
+ const button=$('t2RefreshMemberCounts');const box=$('memberAccessSummary');
+ if(button)button.disabled=true;
+ if(box)box.textContent='กำลังนับจำนวนสมาชิก…';
+ try{
+  const d=await api('getAdminMemberCounts');
+  if(!d.ok)throw Error(d.message||'ไม่สามารถอ่านจำนวนสมาชิกได้');
+  if(box)box.textContent='สมาชิกทั้งหมด '+Number(d.total||0).toLocaleString('th-TH')+
+    ' คน | มีโปรไฟล์แล้ว '+Number(d.withProfile||0).toLocaleString('th-TH')+
+    ' คน | ยังไม่ทำโปรไฟล์ '+Number(d.withoutProfile||0).toLocaleString('th-TH')+' คน';
+ }catch(e){if(box)box.textContent='ไม่สามารถโหลดตัวเลขสรุปได้ — กรุณาตรวจว่า Backend ล่าสุดได้รับการ Deploy แล้ว';}
+ finally{if(button)button.disabled=false}
+}
 function filterMyMembers(){const b=$("memberList");if(b)b.textContent="กรอกชื่อและนามสกุลแล้วกดค้นหา";}
 async function loadMembers(){return searchExactAdminMember();}
 async function searchExactAdminMember(){
