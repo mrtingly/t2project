@@ -156,20 +156,29 @@ function ownerRenderDisputes(){
  if(issues.length>100)summary.textContent+=' (แสดง 100 รายการแรก)';
 }
 
-let OWNER_PROMOS=null;
+let OWNER_PROMOS=null,OWNER_PROMO_VERSION='',OWNER_PROMO_PUBLISHED=false;
 async function ownerLoadPromos(){
  const box=document.getElementById('ownerPromoMessage');
- if(OWNER_PROMOS){ownerRenderPromos();return}
- if(box)box.textContent='กำลังโหลดเงื่อนไขโปรตัวเงินที่ระบบใช้อยู่...';
+ if(box)box.textContent='กำลังโหลดโปรจากฐานกลาง...';
  try{
-  const r=await fetch('promo-rules-review.json?v=1',{cache:'no-store'});
-  if(!r.ok)throw new Error('ไม่สามารถโหลดตารางโปรได้');
-  const data=await r.json();
-  if(!Array.isArray(data.rules))throw new Error('รูปแบบข้อมูลโปรไม่ถูกต้อง');
-  OWNER_PROMOS=data.rules;
-  try{OWNER_PROMOS=JSON.parse(localStorage.getItem('t2_owner_promo_drafts_v1')||'null')||OWNER_PROMOS}catch(e){}
+  const data=await call('getPromos');
+  if(!data.ok)throw Error(data.message||'Backend ยังไม่รองรับ getPromos — กรุณา Deploy Code.gs ใหม่');
+  OWNER_PROMO_VERSION=data.version;
+  OWNER_PROMO_PUBLISHED=!!data.published;
+  if(data.published){
+    OWNER_PROMOS=data.rules;
+  }else{
+    const r=await fetch('promo-rules-review.json?v=1',{cache:'no-store'});
+    if(!r.ok)throw Error('โหลดกฎตั้งต้นไม่สำเร็จ');
+    const seed=await r.json();
+    OWNER_PROMOS=seed.rules;
+    try{const draft=JSON.parse(localStorage.getItem('t2_owner_promo_drafts_v1')||'null');if(Array.isArray(draft))OWNER_PROMOS=draft}catch(e){}
+  }
   ownerPromoReset();ownerRenderPromos();ownerPromoCalculate();
- }catch(e){if(box)box.textContent=e.message||'โหลดโปรไม่สำเร็จ'}
+  if(!OWNER_PROMO_PUBLISHED&&box)box.textContent='ยังไม่ได้เผยแพร่โปรกลาง — ตรวจรายการ แล้วกด “เผยแพร่โปรไปฐานกลาง”';
+ }catch(e){
+  OWNER_PROMOS=null;OWNER_PROMO_VERSION='';if(box)box.textContent='ไม่สามารถเชื่อมฐานกลาง: '+String(e.message||e);
+ }
 }
 function ownerRenderPromos(){
  if(!OWNER_PROMOS)return;
@@ -180,12 +189,25 @@ function ownerRenderPromos(){
  const a=OWNER_PROMOS[i],b=OWNER_PROMOS[j];if(a.from<=b.to&&b.from<=a.to){overlaps.add(a.n);overlaps.add(b.n)}
  }
  const rows=OWNER_PROMOS.filter(x=>(filter==='all'||(filter==='review'&&overlaps.has(x.n))||(filter==='exact'&&x.exactOnly))&&(!search||String(x.n).includes(search)||x.from.includes(search)||x.to.includes(search)));
- document.getElementById('ownerPromoMessage').textContent='กฎโปรที่มีอยู่ '+OWNER_PROMOS.length+' ช่วง • ช่วงที่วันที่ทับซ้อน '+overlaps.size+' ช่วง • แสดง '+rows.length+' ช่วง | ยังรอตรวจเอกสารต้นฉบับ';
+ document.getElementById('ownerPromoMessage').textContent='กฎโปร '+OWNER_PROMOS.length+' ช่วง • วันทับซ้อน '+overlaps.size+' ช่วง • แสดง '+rows.length+' ช่วง • '+(OWNER_PROMO_PUBLISHED?'ฐานกลางเผยแพร่แล้ว':'ชุดตั้งต้นยังไม่เผยแพร่');
  document.getElementById('ownerPromoList').innerHTML=rows.map(x=>'<article class="ownerPromoCard"><div class="ownerPromoHead"><strong>'+esc(x.name||('โปรช่วงที่ '+x.n))+'</strong><span>'+esc(x.from)+' ถึง '+esc(x.to)+'</span></div><div class="ownerPromoMeta">'+(overlaps.has(x.n)?'<span>⚠ วันทับซ้อน</span>':'')+(x.exactOnly?'<span>ยอดตามรายการเท่านั้น</span>':'<span>มีกฎอัตราส่วนเดิมที่ต้องตรวจ</span>')+'</div><div class="tableWrap"><table><thead><tr><th>ยอดลงทุน</th><th>ผลตอบแทนตามโปร (ยังไม่ใช่รับจริง)</th></tr></thead><tbody>'+x.tiers.map(t=>'<tr><td>'+money(t[0])+'</td><td>'+money(t[1])+'</td></tr>').join('')+'</tbody></table></div><div class="ownerPromoActions"><button type="button" onclick="ownerPromoEdit('+Number(x.n)+')">แก้ไข</button><button type="button" class="ownerPromoDelete" onclick="ownerPromoDelete('+Number(x.n)+')">ลบ</button></div></article>').join('')||'<p>ไม่พบช่วงโปรที่ค้นหา</p>';
 }
 
 let OWNER_PROMO_EDIT_ID=null;
-function ownerPromoPersist(){localStorage.setItem('t2_owner_promo_drafts_v1',JSON.stringify(OWNER_PROMOS));ownerRenderPromos();ownerPromoCalculate()}
+async function ownerPromoPersist(next){
+ const status=document.getElementById('ownerPromoEditStatus');
+ if(!OWNER_PROMO_VERSION){if(status)status.textContent='ยังไม่เชื่อมฐานกลาง กรุณา Deploy Backend แล้วโหลดใหม่';return false}
+ try{
+  if(status)status.textContent='กำลังบันทึกโปรลงฐานกลาง...';
+  const result=await call('savePromos',{rules:next,expectedVersion:OWNER_PROMO_VERSION});
+  if(!result.ok)throw Error(result.message||'บันทึกไม่สำเร็จ');
+  OWNER_PROMOS=result.rules;OWNER_PROMO_VERSION=result.version;OWNER_PROMO_PUBLISHED=true;
+  localStorage.removeItem('t2_owner_promo_drafts_v1');
+  ownerRenderPromos();ownerPromoCalculate();
+  if(status)status.textContent='บันทึกโปรลงฐานกลางสำเร็จ • Admin และ Member อ่านเงื่อนไขนี้ได้';
+  return true;
+ }catch(e){if(status)status.textContent='บันทึกไม่สำเร็จ: '+String(e.message||e)+' — ยังไม่เปลี่ยนข้อมูลบนฐานกลาง';return false}
+}
 function ownerPromoReset(){
  OWNER_PROMO_EDIT_ID=null;
  for(const id of ['promoEditName','promoEditFrom','promoEditTo']){const e=document.getElementById(id);if(e)e.value=''}
@@ -207,7 +229,7 @@ function ownerPromoEdit(id){
  x.tiers.forEach(t=>ownerPromoAddTier(t[0],t[1]));
  document.querySelector('.ownerPromoEditor')?.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function ownerPromoSave(){
+async function ownerPromoSave(){
  if(!OWNER_PROMOS)return;
  const from=document.getElementById('promoEditFrom').value,to=document.getElementById('promoEditTo').value;
  const name=document.getElementById('promoEditName').value.trim();
@@ -216,12 +238,12 @@ function ownerPromoSave(){
  if(!name||!from||!to||from>to||!valid||[...document.querySelectorAll('.ownerPromoTier input')].some(x=>x.value.trim()==='')){document.getElementById('ownerPromoEditStatus').textContent='กรุณากรอกชื่อ ช่วงวันที่ ยอดลงทุนและยอดที่จะได้รับให้ถูกต้อง (ห้ามยอดลงทุนซ้ำในโปรเดียวกัน)';return}
  const id=OWNER_PROMO_EDIT_ID??Math.max(0,...OWNER_PROMOS.map(x=>Number(x.n)||0))+1;
  const obj={n:id,name,from,to,tiers,exactOnly:true,draft:true};
- const index=OWNER_PROMOS.findIndex(x=>x.n===id);if(index>=0)OWNER_PROMOS[index]=obj;else OWNER_PROMOS.push(obj);
- try{ownerPromoPersist();ownerPromoReset();document.getElementById('ownerPromoEditStatus').textContent='บันทึกฉบับร่างในเบราว์เซอร์นี้แล้ว ยังไม่เผยแพร่ไป Admin / Member'}catch(e){document.getElementById('ownerPromoEditStatus').textContent='จัดเก็บในเครื่องไม่สำเร็จ กรุณาส่งออกไฟล์เพื่อสำรอง'}
+ const next=OWNER_PROMOS.slice(),index=next.findIndex(x=>x.n===id);if(index>=0)next[index]=obj;else next.push(obj);
+ if(await ownerPromoPersist(next))ownerPromoReset();
 }
-function ownerPromoDelete(id){
+async function ownerPromoDelete(id){
  const x=OWNER_PROMOS?.find(z=>z.n===id);if(!x||!confirm('ยืนยันลบ '+(x.name||'โปรช่วง '+id)+' ออกจากฉบับร่างในเครื่องนี้?'))return;
- OWNER_PROMOS=OWNER_PROMOS.filter(z=>z.n!==id);ownerPromoPersist();if(OWNER_PROMO_EDIT_ID===id)ownerPromoReset();
+ const next=OWNER_PROMOS.filter(z=>z.n!==id);if(await ownerPromoPersist(next)&&OWNER_PROMO_EDIT_ID===id)ownerPromoReset();
 }
 function ownerPromoExport(){
  if(!OWNER_PROMOS)return;
@@ -234,7 +256,7 @@ async function ownerPromoImport(file){
  const seen=new Set();
  for(const x of obj.rules){if(!Number.isSafeInteger(x.n)||seen.has(x.n)||!/^\d{4}-\d\d-\d\d$/.test(x.from)||!/^\d{4}-\d\d-\d\d$/.test(x.to)||x.from>x.to||!Array.isArray(x.tiers)||!x.tiers.length||x.tiers.some(t=>!Array.isArray(t)||t.length!==2||!Number.isFinite(t[0])||t[0]<=0||!Number.isFinite(t[1])||t[1]<0))throw Error('พบข้อมูลโปรไม่ถูกต้อง');seen.add(x.n)}
  if(!confirm('แทนที่ฉบับร่างปัจจุบันด้วยข้อมูล '+obj.rules.length+' โปร?'))return;
- OWNER_PROMOS=obj.rules;ownerPromoPersist();ownerPromoReset();
+ if(await ownerPromoPersist(obj.rules))ownerPromoReset();
  }catch(e){alert('นำเข้าไม่ได้: '+e.message)}
 }
 
