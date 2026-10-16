@@ -151,7 +151,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
  <section class="card admin-search-card"><div class="admin-search-title"><h3>ค้นหา / เลือกสมาชิก</h3><span class="muted tiny">กรอกชื่อและนามสกุลครบ แล้วกดค้นหาเท่านั้น</span></div>
  <div class="fields" style="margin-top:12px"><div class="field"><label for="memberFirstSearch">ชื่อ</label><input id="memberFirstSearch" autocomplete="off" placeholder="กรอกชื่อจริง"></div><div class="field"><label for="memberLastSearch">นามสกุล</label><input id="memberLastSearch" autocomplete="off" placeholder="กรอกนามสกุล"></div></div>
  <div class="actions" style="margin-top:10px"><button type="button" class="btn" id="memberSearchButton" onclick="searchExactAdminMember()">ค้นหาสมาชิก</button></div>
- <div id="memberAccessSummary" class="muted tiny" style="padding:9px 0">ยังไม่เรียกข้อมูลสรุปสมาชิก</div><div id="memberList" aria-live="polite">กรอกชื่อและนามสกุล แล้วกดค้นหา</div>
+ <div style="margin-top:12px;padding:12px;border:1px solid #cfe1f8;border-radius:12px;background:#f4f8ff"><b>สรุปสมาชิกในห้องของคุณ</b><div id="memberAccessSummary" class="muted tiny" style="padding:9px 0">ยังไม่เรียกข้อมูลสรุปสมาชิก</div><button id="t2RefreshMemberCounts" type="button" class="btn alt" onclick="loadAdminMemberCounts()">ดูจำนวนสมาชิก</button></div><div id="memberList" aria-live="polite">กรอกชื่อและนามสกุล แล้วกดค้นหา</div>
  <div id="masterSearchActions" class="hidden" style="margin-top:12px"><button type="button" class="btn alt" onclick="findMember()">ตรวจสอบใน Master เพื่อเพิ่มสมาชิก</button></div>
  <div id="memberMessage" style="margin-top:12px"></div>
  <div id="createMemberBox" class="hidden" style="margin-top:14px">
@@ -196,5 +196,5 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
  </section>
 </section>
 </div></main>
-<script src="admin.js?v=83"></script>
+<script src="admin.js?v=84"></script>
 </body></html>
