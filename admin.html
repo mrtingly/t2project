@@ -150,7 +150,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 <aside class="admin-search-bar">
  <section class="card admin-search-card"><div class="admin-search-title"><h3>ค้นหา / เลือกสมาชิก</h3><span class="muted tiny">พิมพ์ชื่อหรือนามสกุลเพื่อค้นหาสมาชิก</span></div>
  <input id="memberSearch" type="search" autocomplete="off" placeholder="พิมพ์ชื่อหรือนามสกุล..." oninput="filterMyMembers()" style="width:100%;padding:13px;margin-top:12px;border:1px solid #cfd9e8;border-radius:10px;font:inherit">
- <div id="memberList" aria-live="polite"></div>
+ <div id="memberAccessSummary" class="muted tiny" style="padding:9px 0">กำลังโหลดสถานะการเข้าโปรไฟล์...</div><div id="memberList" aria-live="polite"></div>
  <div id="masterSearchActions" class="hidden" style="margin-top:12px"><button type="button" class="btn alt" onclick="findMember()">ค้นหาในข้อมูล Master</button></div>
  <div id="memberMessage" style="margin-top:12px"></div>
  <div id="createMemberBox" class="hidden" style="margin-top:14px">
