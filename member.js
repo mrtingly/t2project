@@ -46,7 +46,7 @@ async function loadCentralProfile(){
  fillEdit();renderBeneficiaries();renderContacts();renderProfile();
  await t2RefreshCentralPhoto();
 }
-async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}// Payment history and promotion rules are deliberately loaded only when requested.}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
+async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}void 0;}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
 let memberPaymentsLoading=null;
 async function loadMemberPaymentsOnDemand(){
  if(memberPaymentsLoading)return memberPaymentsLoading;
