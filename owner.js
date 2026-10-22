@@ -50,40 +50,44 @@ function ownerRoomInfo(m){
  return OWNER_ROOM_DIRECTORY.find(x=>x.room===raw||x.code===raw||'ROOM-'+x.code===raw)||null;
 }
 
-async function loadOwnerMembers(){
- try{
-  const d=await call('getMyMembers');
-  if(!d.ok)return;
-  OWNER_MEMBERS=d.items||d.members||[];
-  filterOwnerMembers();ownerRenderAdmins();ownerAccessSummary();
- }catch(e){document.getElementById('ownerMemberDetail').textContent='ยังโหลดรายชื่อสมาชิกไม่ได้'}
+// Search endpoint contract (backend pending): searchOwnerMembers({query,limit})
+// Responds {ok:true,items:[{memberId,firstName,lastName,room,profileVisited?}],hasMore?}.
+// Backend must enforce Owner session/role and use indexed, bounded SQL.
+let ownerMemberSearchTimer=null,ownerMemberSearchSeq=0;
+function loadOwnerMembers(){
+ // Compatibility shim: deliberately do not fetch an unfiltered member roster.
+ const box=document.getElementById('ownerMemberDetail');
+ if(box)box.textContent='พิมพ์ชื่อหรือรหัสสมาชิกเพื่อค้นหา ระบบจะเรียกเฉพาะข้อมูลที่ต้องการ';
 }
 function ownerAccessSummary(){
  const summary=document.getElementById('ownerProfileAccessSummary');
- const roster=document.getElementById('ownerProfileVisitRoster');
  const roomSummary=document.getElementById('ownerAdminVisitSummary');
- const known=OWNER_MEMBERS.filter(m=>typeof m.profileVisited==='boolean');
- const entered=known.filter(m=>m.profileVisited).length;
- const missing=known.length-entered;
- const unknown=OWNER_MEMBERS.length-known.length;
- const wording='สมาชิกทั้งหมด '+OWNER_MEMBERS.length+' คน · เข้าโปรไฟล์แล้ว '+entered+' คน · ยังไม่พบประวัติ '+missing+' คน'+(unknown?' · ยังไม่มีข้อมูลสถานะ '+unknown+' คน':'');
+ const roster=document.getElementById('ownerProfileVisitRoster');
+ const wording='ยังไม่เรียกยอดรวม — จะต้องมี API นับจำนวนแบบสรุปจากฐานข้อมูล';
  if(summary)summary.textContent=wording;
  if(roomSummary)roomSummary.textContent=wording;
- if(!roster)return;
- const q=String(document.getElementById('ownerProfileStatusFilter')?.value||'all');
- const filtered=OWNER_MEMBERS.filter(m=>q==='all'||(q==='yes'?m.profileVisited===true:q==='no'?m.profileVisited===false:typeof m.profileVisited!=='boolean'));
- roster.innerHTML='<div style="margin:8px 0;color:#64748b">แสดง '+filtered.length+' จาก '+OWNER_MEMBERS.length+' คน</div>'+filtered.slice(0,500).map(m=>{
- const state=m.profileVisited===true?'เข้าโปรไฟล์แล้ว':m.profileVisited===false?'ยังไม่พบประวัติการเข้า':'ไม่มีข้อมูลสถานะ';
- const room=ownerRoomInfo(m)?.room||m.room||'—';
- return '<div style="padding:10px;border-bottom:1px solid #dae2ed"><b>'+esc((m.firstName||'')+' '+(m.lastName||''))+'</b><div style="font-size:13px">ห้อง '+esc(room)+' · '+esc(state)+(m.lastProfileVisit?' · ล่าสุด '+esc(m.lastProfileVisit):'')+'</div></div>';
- }).join('')+(filtered.length>500?'<p>แสดง 500 รายการแรก กรุณาใช้ตัวกรองเพื่อลดผลลัพธ์</p>':'');
+ if(roster)roster.textContent='ไม่มีการโหลดรายชื่อสมาชิกทั้งหมดอัตโนมัติ';
 }
 function filterOwnerMembers(){
- const q=String(document.getElementById('ownerMemberSearch').value||'').trim().toLocaleLowerCase('th-TH');
- const select=document.getElementById('ownerMemberSelect'),prev=select.value;
- const list=OWNER_MEMBERS.filter(m=>(String(m.firstName||'')+' '+String(m.lastName||'')+' '+String(m.memberId||'')).toLocaleLowerCase('th-TH').includes(q)).slice(0,100);
- select.innerHTML='<option value="">เลือกสมาชิก</option>'+list.map(m=>'<option value="'+esc(m.memberId)+'">'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</option>').join('');
- if(list.some(m=>m.memberId===prev))select.value=prev;
+ const q=String(document.getElementById('ownerMemberSearch')?.value||'').trim();
+ const el=document.getElementById('ownerMemberSelect');
+ if(ownerMemberSearchTimer)clearTimeout(ownerMemberSearchTimer);
+ const seq=++ownerMemberSearchSeq;
+ OWNER_MEMBERS=[];
+ if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>';
+ const box=document.getElementById('ownerMemberDetail');
+ if(q.length<2){if(box)box.textContent='กรุณาพิมพ์ชื่อหรือรหัสสมาชิกอย่างน้อย 2 ตัวอักษร';return}
+ if(box)box.textContent='กำลังค้นหา...';
+ ownerMemberSearchTimer=setTimeout(async()=>{
+  try{
+   const d=await call('searchOwnerMembers',{query:q,limit:20});
+   if(seq!==ownerMemberSearchSeq)return;
+   if(!d.ok||!Array.isArray(d.items))throw Error(d.message||'API ค้นหาสมาชิกยังไม่พร้อม');
+   OWNER_MEMBERS=d.items.slice(0,20);
+   if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>'+OWNER_MEMBERS.map(m=>'<option value="'+esc(m.memberId)+'">'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</option>').join('');
+   if(box)box.textContent=OWNER_MEMBERS.length?'พบ '+OWNER_MEMBERS.length+' รายการ (แสดงสูงสุด 20 รายการ)':'ไม่พบสมาชิก';
+  }catch(e){if(seq!==ownerMemberSearchSeq)return;if(box)box.textContent='ค้นหาไม่ได้: Backend ยังต้องรองรับ searchOwnerMembers';}
+ },350);
 }
 async function openOwnerMember(){
  const id=document.getElementById('ownerMemberSelect').value,box=document.getElementById('ownerMemberDetail');
