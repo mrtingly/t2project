@@ -46,9 +46,15 @@ async function loadCentralProfile(){
  fillEdit();renderBeneficiaries();renderContacts();renderProfile();
  await t2RefreshCentralPhoto();
 }
-async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}await loadMemberCentralPromos();await loadBills()}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
+async function init(){id4.textContent=memberKey.slice(-4);fillEdit();renderProfile();renderBeneficiaries();renderContacts();try{const s=await api('checkSession');if(!s.ok){logout();return}try{await loadCentralProfile()}catch(e){centralProfileReady=false;window.t2ProfileError=String(e.message||e);console.warn('Central profile unavailable:',window.t2ProfileError);}// Payment history and promotion rules are deliberately loaded only when requested.}catch(e){allBills.innerHTML='<div class="warn">เชื่อมต่อรายการชำระเงินไม่ได้ กรุณาลองใหม่</div>'}}
+let memberPaymentsLoading=null;
+async function loadMemberPaymentsOnDemand(){
+ if(memberPaymentsLoading)return memberPaymentsLoading;
+ memberPaymentsLoading=(async()=>{await loadMemberCentralPromos();await loadBills()})().finally(()=>{memberPaymentsLoading=null});
+ return memberPaymentsLoading;
+}
 function toggleMemberMenu(){memberMenu.classList.toggle('open');memberShade.classList.toggle('show')}
-function showPage(id){document.querySelectorAll('.memberPage').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');toggleMemberMenu();if(id==='payments')loadBills()}
+function showPage(id){document.querySelectorAll('.memberPage').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');toggleMemberMenu();if(id==='payments')loadMemberPaymentsOnDemand()}
 function fillEdit(){firstName.value=m.firstName;lastName.value=m.lastName;citizenId.value=memberKey;phone.value=profile.phone||'';email.value=profile.email||'';bank.value=profile.bank||'';bankAccount.value=profile.bankAccount||'';address.value=profile.address||'';mapUrl.value=profile.mapUrl||'';updateMapLink();if(profile.photo){editAvatar.innerHTML='<img src="'+profile.photo+'">';avatar.innerHTML='<img src="'+profile.photo+'">'}t2RenderIdCardPreview()}
 let showFullCitizenId=false;
 function toggleCitizenId(){showFullCitizenId=!showFullCitizenId;renderProfile()}
