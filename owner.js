@@ -5,8 +5,14 @@ async function call(action,data={},token=staff&&staff.token){
  try{return JSON.parse(raw)}catch(e){throw new Error('API response is not JSON')}
 }
 function money(n){return '฿'+Number(n||0).toLocaleString('th-TH')}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function ownerLogin(){ownerLoginResult.innerHTML='<div class="info">กำลังเข้าสู่ระบบ...</div>';try{const d=await call('staffLogin',{username:ownerUser.value.trim(),password:ownerPass.value},null);if(d.ok&&d.token&&d.role==='owner'){staff={token:d.token,role:d.role,username:ownerUser.value.trim()};sessionStorage.setItem('t2_owner',JSON.stringify(staff));showDashboard();await Promise.all([loadOwnerReport(),loadOwnerMembers()])}else ownerLoginResult.innerHTML='<div class="warn">Username หรือ Password ไม่ถูกต้อง</div>'}catch(e){console.error('Owner login error',e);ownerLoginResult.innerHTML='<div class="warn">เชื่อมต่อ API ไม่สำเร็จ<br><small>'+esc(e&&e.message?e.message:e)+'</small></div>'}}
-async function boot(){if(!staff||!staff.token)return;try{const d=await call('checkSession');if(d.ok&&d.role==='owner'){showDashboard();loadOwnerReport();loadOwnerMembers()}else sessionStorage.removeItem('t2_owner')}catch(e){}}
+async function ownerLogin(){ownerLoginResult.innerHTML='<div class="info">กำลังเข้าสู่ระบบ...</div>';try{const d=await call('staffLogin',{username:ownerUser.value.trim(),password:ownerPass.value},null);if(d.ok&&d.token&&d.role==='owner'){staff={token:d.token,role:d.role,username:ownerUser.value.trim()};sessionStorage.setItem('t2_owner',JSON.stringify(staff));showDashboard();ownerOnDemandHint()}else ownerLoginResult.innerHTML='<div class="warn">Username หรือ Password ไม่ถูกต้อง</div>'}catch(e){console.error('Owner login error',e);ownerLoginResult.innerHTML='<div class="warn">เชื่อมต่อ API ไม่สำเร็จ<br><small>'+esc(e&&e.message?e.message:e)+'</small></div>'}}
+async function boot(){if(!staff||!staff.token)return;try{const d=await call('checkSession');if(d.ok&&d.role==='owner'){showDashboard();ownerOnDemandHint()}else sessionStorage.removeItem('t2_owner')}catch(e){}}
+function ownerOnDemandHint(){
+ const rows=document.getElementById('ownerRows');
+ if(rows&&!REPORT.length)rows.innerHTML='<tr><td colspan="7">ยังไม่ดึงรายงาน — เลือกช่วงวันที่แล้วกดอัปเดต Report</td></tr>';
+ const summary=document.getElementById('ownerProfileAccessSummary');
+ if(summary&&!OWNER_MEMBERS.length)summary.textContent='ยังไม่ดึงข้อมูลสมาชิก — เปิดเมนูสมาชิกเมื่อจำเป็น';
+}
 function showDashboard(){document.getElementById('ownerLogin').classList.add('hidden');document.getElementById('ownerDashboard').classList.remove('hidden');document.getElementById('ownerLogout').classList.remove('hidden')}
 function iso(d){return d.toISOString().slice(0,10)}function setRange(k){const n=new Date(),e=iso(n);if(k==='today'){oFrom.value=e;oTo.value=e}else if(k==='month'){oFrom.value=iso(new Date(n.getFullYear(),n.getMonth(),1));oTo.value=e}else if(k==='year'){oFrom.value=iso(new Date(n.getFullYear(),0,1));oTo.value=e}else{oFrom.value='';oTo.value=''}loadOwnerReport()}
 function ownerReportPromo(x,rules){
@@ -130,7 +136,7 @@ function ownerShowSection(which){
  const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection',promos:'ownerPromosSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
- if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='disputes')ownerRenderDisputes();if(which==='promos')ownerLoadPromos();
+ if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='reports'&&!REPORT.length)loadOwnerReport();if(which==='members'&&!OWNER_MEMBERS.length)loadOwnerMembers();if(which==='disputes'){if(!REPORT.length)loadOwnerReport();else ownerRenderDisputes();}if(which==='promos')ownerLoadPromos();
 }
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
