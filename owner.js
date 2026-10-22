@@ -14,7 +14,8 @@ function ownerOnDemandHint(){
  if(summary&&!OWNER_MEMBERS.length)summary.textContent='ยังไม่ดึงข้อมูลสมาชิก — เปิดเมนูสมาชิกเมื่อจำเป็น';
 }
 function showDashboard(){document.getElementById('ownerLogin').classList.add('hidden');document.getElementById('ownerDashboard').classList.remove('hidden');document.getElementById('ownerLogout').classList.remove('hidden')}
-function iso(d){return d.toISOString().slice(0,10)}function setRange(k){const n=new Date(),e=iso(n);if(k==='today'){oFrom.value=e;oTo.value=e}else if(k==='month'){oFrom.value=iso(new Date(n.getFullYear(),n.getMonth(),1));oTo.value=e}else if(k==='year'){oFrom.value=iso(new Date(n.getFullYear(),0,1));oTo.value=e}else{oFrom.value='';oTo.value=''}loadOwnerReport()}
+function iso(d){return d.toISOString().slice(0,10)}// Explicit report filters/actions are the only triggers for full report fetching.
+function setRange(k){const n=new Date(),e=iso(n);if(k==='today'){oFrom.value=e;oTo.value=e}else if(k==='month'){oFrom.value=iso(new Date(n.getFullYear(),n.getMonth(),1));oTo.value=e}else if(k==='year'){oFrom.value=iso(new Date(n.getFullYear(),0,1));oTo.value=e}else{oFrom.value='';oTo.value=''}loadOwnerReport()}
 function ownerReportPromo(x,rules){
  const saved=Number(x.promoReturn??x.promo_return??x.reward??0);
  const date=String(x.transferDate||x.transfer_date||x.date||'').slice(0,10);
@@ -136,7 +137,7 @@ function ownerShowSection(which){
  const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection',promos:'ownerPromosSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
- if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='reports'&&!REPORT.length)loadOwnerReport();if(which==='members'&&!OWNER_MEMBERS.length)loadOwnerMembers();if(which==='disputes'){if(!REPORT.length)loadOwnerReport();else ownerRenderDisputes();}if(which==='promos')ownerLoadPromos();
+ if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='members'&&!OWNER_MEMBERS.length)loadOwnerMembers();if(which==='disputes'){if(REPORT.length)ownerRenderDisputes();else {const hint=document.getElementById('ownerDisputesSummary');if(hint)hint.textContent='ยังไม่ดึงรายการ — เลือกช่วงวันที่หน้า ภาพรวม แล้วกด อัปเดต Report ก่อน';}}if(which==='promos')ownerLoadPromos();
 }
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
