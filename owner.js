@@ -141,12 +141,7 @@ function ownerOpenAdmin(){
  const id=document.getElementById('ownerAdminSelect').value,box=document.getElementById('ownerAdminDetails');
  const admin=OWNER_ROOM_DIRECTORY.find(x=>x.room===id);
  if(!admin){box.textContent='กรุณาเลือกห้อง';return}
- const members=OWNER_MEMBERS.filter(m=>ownerRoomInfo(m)?.room===id);
- const citizens=new Set(members.map(m=>String(m.citizenId||m.citizen_id||m.documentId||'')).filter(Boolean));
- const payments=REPORT.filter(x=>citizens.has(String(x.citizenId||x.citizen_id||x.documentId||'')));
- const sum=payments.reduce((v,x)=>v+Number(x.amount||0),0);
- const accessKnown=members.every(m=>typeof m.profileVisited==='boolean');const entered=members.filter(m=>m.profileVisited===true).length;
- box.innerHTML='<h3>ห้อง '+esc(id)+' — '+esc(admin.name)+'</h3><p>รหัสผู้รับผิดชอบ '+esc(admin.code)+' · สมาชิก '+members.length.toLocaleString('th-TH')+' คน · เข้าโปรไฟล์ '+(accessKnown?entered+' คน / ยังไม่พบประวัติ '+(members.length-entered)+' คน':'รอ Backend')+' · สลิปในช่วงรายงาน '+payments.length.toLocaleString('th-TH')+' รายการ · ยอดเงิน '+money(sum)+'</p><p>รายชื่อสมาชิกและสลิปอ้างอิงข้อมูลที่โหลดได้ ไม่ใช่จำนวนบัญชีแอดมินที่เข้าใช้งานสำเร็จ</p><div class="tableWrap"><table><thead><tr><th>สมาชิก</th><th>รหัสสมาชิก</th><th>รายการสลิป</th><th>ยอด</th><th>ตรวจข้อมูล</th></tr></thead><tbody>'+members.map(m=>{const rs=payments.filter(x=>String(x.citizenId||x.citizen_id||'')===String(m.citizenId||m.citizen_id||m.documentId||''));const amount=rs.reduce((v,x)=>v+Number(x.amount||0),0);return '<tr><td>'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</td><td>'+esc(m.memberId||'')+'</td><td>'+rs.length+'</td><td>'+money(amount)+'</td><td><button type="button" data-member-id="'+esc(m.memberId||'')+'" onclick="ownerInspectMember(this.dataset.memberId)">เปิดสมาชิก</button></td></tr>'}).join('')+'</tbody></table></div>';
+ box.innerHTML='<h3>ห้อง '+esc(id)+' — '+esc(admin.name)+'</h3><p>ยังไม่ดึงข้อมูลสมาชิกและสลิปของห้องนี้ เพื่อไม่โหลดทั้งฐานอัตโนมัติ</p><p>ขั้นต่อไปจะเชื่อม API สรุปเฉพาะห้อง (จำนวนสมาชิก/สลิป/ยอดเงิน) โดยให้ Backend ตรวจสิทธิ์ทุกคำขอ</p>';
 }
 function ownerInspectMember(id){
  ownerShowSection('members');document.getElementById('ownerMemberSearch').value=id;filterOwnerMembers();
