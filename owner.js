@@ -5,10 +5,17 @@ async function call(action,data={},token=staff&&staff.token){
  try{return JSON.parse(raw)}catch(e){throw new Error('API response is not JSON')}
 }
 function money(n){return '฿'+Number(n||0).toLocaleString('th-TH')}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function ownerLogin(){ownerLoginResult.innerHTML='<div class="info">กำลังเข้าสู่ระบบ...</div>';try{const d=await call('staffLogin',{username:ownerUser.value.trim(),password:ownerPass.value},null);if(d.ok&&d.token&&d.role==='owner'){staff={token:d.token,role:d.role,username:ownerUser.value.trim()};sessionStorage.setItem('t2_owner',JSON.stringify(staff));showDashboard();await Promise.all([loadOwnerReport(),loadOwnerMembers()])}else ownerLoginResult.innerHTML='<div class="warn">Username หรือ Password ไม่ถูกต้อง</div>'}catch(e){console.error('Owner login error',e);ownerLoginResult.innerHTML='<div class="warn">เชื่อมต่อ API ไม่สำเร็จ<br><small>'+esc(e&&e.message?e.message:e)+'</small></div>'}}
-async function boot(){if(!staff||!staff.token)return;try{const d=await call('checkSession');if(d.ok&&d.role==='owner'){showDashboard();loadOwnerReport();loadOwnerMembers()}else sessionStorage.removeItem('t2_owner')}catch(e){}}
+async function ownerLogin(){ownerLoginResult.innerHTML='<div class="info">กำลังเข้าสู่ระบบ...</div>';try{const d=await call('staffLogin',{username:ownerUser.value.trim(),password:ownerPass.value},null);if(d.ok&&d.token&&d.role==='owner'){staff={token:d.token,role:d.role,username:ownerUser.value.trim()};sessionStorage.setItem('t2_owner',JSON.stringify(staff));showDashboard();ownerOnDemandHint()}else ownerLoginResult.innerHTML='<div class="warn">Username หรือ Password ไม่ถูกต้อง</div>'}catch(e){console.error('Owner login error',e);ownerLoginResult.innerHTML='<div class="warn">เชื่อมต่อ API ไม่สำเร็จ<br><small>'+esc(e&&e.message?e.message:e)+'</small></div>'}}
+async function boot(){if(!staff||!staff.token)return;try{const d=await call('checkSession');if(d.ok&&d.role==='owner'){showDashboard();ownerOnDemandHint()}else sessionStorage.removeItem('t2_owner')}catch(e){}}
+function ownerOnDemandHint(){
+ const rows=document.getElementById('ownerRows');
+ if(rows&&!REPORT.length)rows.innerHTML='<tr><td colspan="7">ยังไม่ดึงรายงาน — เลือกช่วงวันที่แล้วกดอัปเดต Report</td></tr>';
+ const summary=document.getElementById('ownerProfileAccessSummary');
+ if(summary&&!OWNER_MEMBERS.length)summary.textContent='ยังไม่ดึงข้อมูลสมาชิก — เปิดเมนูสมาชิกเมื่อจำเป็น';
+}
 function showDashboard(){document.getElementById('ownerLogin').classList.add('hidden');document.getElementById('ownerDashboard').classList.remove('hidden');document.getElementById('ownerLogout').classList.remove('hidden')}
-function iso(d){return d.toISOString().slice(0,10)}function setRange(k){const n=new Date(),e=iso(n);if(k==='today'){oFrom.value=e;oTo.value=e}else if(k==='month'){oFrom.value=iso(new Date(n.getFullYear(),n.getMonth(),1));oTo.value=e}else if(k==='year'){oFrom.value=iso(new Date(n.getFullYear(),0,1));oTo.value=e}else{oFrom.value='';oTo.value=''}loadOwnerReport()}
+function iso(d){return d.toISOString().slice(0,10)}// Explicit report filters/actions are the only triggers for full report fetching.
+function setRange(k){const n=new Date(),e=iso(n);if(k==='today'){oFrom.value=e;oTo.value=e}else if(k==='month'){oFrom.value=iso(new Date(n.getFullYear(),n.getMonth(),1));oTo.value=e}else if(k==='year'){oFrom.value=iso(new Date(n.getFullYear(),0,1));oTo.value=e}else{oFrom.value='';oTo.value=''}loadOwnerReport()}
 function ownerReportPromo(x,rules){
  const saved=Number(x.promoReturn??x.promo_return??x.reward??0);
  const date=String(x.transferDate||x.transfer_date||x.date||'').slice(0,10);
@@ -43,40 +50,46 @@ function ownerRoomInfo(m){
  return OWNER_ROOM_DIRECTORY.find(x=>x.room===raw||x.code===raw||'ROOM-'+x.code===raw)||null;
 }
 
-async function loadOwnerMembers(){
- try{
-  const d=await call('getMyMembers');
-  if(!d.ok)return;
-  OWNER_MEMBERS=d.items||d.members||[];
-  filterOwnerMembers();ownerRenderAdmins();ownerAccessSummary();
- }catch(e){document.getElementById('ownerMemberDetail').textContent='ยังโหลดรายชื่อสมาชิกไม่ได้'}
+// Search endpoint contract (backend pending): searchOwnerMembers({query,limit})
+// Responds {ok:true,items:[{memberId,firstName,lastName,room,profileVisited?}],hasMore?}.
+// Backend must enforce Owner session/role and use indexed, bounded SQL.
+let ownerMemberSearchTimer=null,ownerMemberSearchSeq=0;
+function loadOwnerMembers(){
+ // Compatibility shim: deliberately do not fetch an unfiltered member roster.
+ const box=document.getElementById('ownerMemberDetail');
+ if(box)box.textContent='พิมพ์ชื่อหรือรหัสสมาชิกเพื่อค้นหา ระบบจะเรียกเฉพาะข้อมูลที่ต้องการ';
 }
 function ownerAccessSummary(){
  const summary=document.getElementById('ownerProfileAccessSummary');
- const roster=document.getElementById('ownerProfileVisitRoster');
  const roomSummary=document.getElementById('ownerAdminVisitSummary');
- const known=OWNER_MEMBERS.filter(m=>typeof m.profileVisited==='boolean');
- const entered=known.filter(m=>m.profileVisited).length;
- const missing=known.length-entered;
- const unknown=OWNER_MEMBERS.length-known.length;
- const wording='สมาชิกทั้งหมด '+OWNER_MEMBERS.length+' คน · เข้าโปรไฟล์แล้ว '+entered+' คน · ยังไม่พบประวัติ '+missing+' คน'+(unknown?' · ยังไม่มีข้อมูลสถานะ '+unknown+' คน':'');
+ const roster=document.getElementById('ownerProfileVisitRoster');
+ const wording='ยังไม่เรียกยอดรวม — จะต้องมี API นับจำนวนแบบสรุปจากฐานข้อมูล';
  if(summary)summary.textContent=wording;
  if(roomSummary)roomSummary.textContent=wording;
- if(!roster)return;
- const q=String(document.getElementById('ownerProfileStatusFilter')?.value||'all');
- const filtered=OWNER_MEMBERS.filter(m=>q==='all'||(q==='yes'?m.profileVisited===true:q==='no'?m.profileVisited===false:typeof m.profileVisited!=='boolean'));
- roster.innerHTML='<div style="margin:8px 0;color:#64748b">แสดง '+filtered.length+' จาก '+OWNER_MEMBERS.length+' คน</div>'+filtered.slice(0,500).map(m=>{
- const state=m.profileVisited===true?'เข้าโปรไฟล์แล้ว':m.profileVisited===false?'ยังไม่พบประวัติการเข้า':'ไม่มีข้อมูลสถานะ';
- const room=ownerRoomInfo(m)?.room||m.room||'—';
- return '<div style="padding:10px;border-bottom:1px solid #dae2ed"><b>'+esc((m.firstName||'')+' '+(m.lastName||''))+'</b><div style="font-size:13px">ห้อง '+esc(room)+' · '+esc(state)+(m.lastProfileVisit?' · ล่าสุด '+esc(m.lastProfileVisit):'')+'</div></div>';
- }).join('')+(filtered.length>500?'<p>แสดง 500 รายการแรก กรุณาใช้ตัวกรองเพื่อลดผลลัพธ์</p>':'');
+ if(roster)roster.textContent='ไม่มีการโหลดรายชื่อสมาชิกทั้งหมดอัตโนมัติ';
 }
 function filterOwnerMembers(){
- const q=String(document.getElementById('ownerMemberSearch').value||'').trim().toLocaleLowerCase('th-TH');
- const select=document.getElementById('ownerMemberSelect'),prev=select.value;
- const list=OWNER_MEMBERS.filter(m=>(String(m.firstName||'')+' '+String(m.lastName||'')+' '+String(m.memberId||'')).toLocaleLowerCase('th-TH').includes(q)).slice(0,100);
- select.innerHTML='<option value="">เลือกสมาชิก</option>'+list.map(m=>'<option value="'+esc(m.memberId)+'">'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</option>').join('');
- if(list.some(m=>m.memberId===prev))select.value=prev;
+ const q=String(document.getElementById('ownerMemberSearch')?.value||'').trim();
+ const el=document.getElementById('ownerMemberSelect');
+ if(ownerMemberSearchTimer)clearTimeout(ownerMemberSearchTimer);
+ const seq=++ownerMemberSearchSeq;
+ OWNER_MEMBERS=[];
+ if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>';
+ const box=document.getElementById('ownerMemberDetail');
+ if(q.length<2){if(box)box.textContent='กรุณาพิมพ์ชื่อหรือรหัสสมาชิกอย่างน้อย 2 ตัวอักษร';return}
+ if(q.length>100){if(box)box.textContent='คำค้นหายาวเกิน 100 ตัวอักษร';return}
+ if(box)box.textContent='กำลังค้นหา...';
+ ownerMemberSearchTimer=setTimeout(async()=>{
+  try{
+   const d=await call('searchOwnerMembers',{query:q,limit:20});
+   if(seq!==ownerMemberSearchSeq)return;
+   if(!d.ok||!Array.isArray(d.items))throw Error(d.message||'API ค้นหาสมาชิกยังไม่พร้อม');
+   // Fail closed: do not render an oversized or malformed backend response.
+   OWNER_MEMBERS=d.items.filter(m=>m&&typeof m==='object'&&m.memberId!=null).slice(0,20);
+   if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>'+OWNER_MEMBERS.map(m=>'<option value="'+esc(m.memberId)+'">'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</option>').join('');
+   if(box)box.textContent=OWNER_MEMBERS.length?'พบ '+OWNER_MEMBERS.length+' รายการ (แสดงสูงสุด 20 รายการ)':'ไม่พบสมาชิก';
+  }catch(e){if(seq!==ownerMemberSearchSeq)return;if(box)box.textContent='ค้นหาไม่ได้: Backend ยังต้องรองรับ searchOwnerMembers';}
+ },350);
 }
 async function openOwnerMember(){
  const id=document.getElementById('ownerMemberSelect').value,box=document.getElementById('ownerMemberDetail');
@@ -87,33 +100,17 @@ async function openOwnerMember(){
   if(!d.ok){box.textContent=d.message||'Backend ยังไม่ได้รองรับข้อมูลสมาชิก Owner';return}
   CURRENT_OWNER_PROFILE=d;
   const m=d.member||{},p=d.data?.profile||{},summ=d.summary||{},cs=d.data?.contacts||[],bs=d.data?.beneficiaries||[];
-  let displayedReturn=Number(summ.returnEstimate||0),returnNote='';
-  try{
-   const responses=await Promise.all([call('getReport',{from:'',to:''}),call('getPromos')]);
-   const report=responses[0],promos=responses[1];
-   if(report.ok&&promos.ok&&promos.published&&Array.isArray(promos.rules)){
-    const mid=String(m.memberId||'').trim(),cid=String(m.citizenId||'').trim();
-    const rows=(report.items||report.payments||[]).filter(x=>{
-     const rowId=String(x.memberId||x.member_id||'').trim();
-     const rowCid=String(x.citizenId||x.citizen_id||'').trim();
-     return (mid&&rowId===mid)||(cid&&rowCid===cid);
-    });
-    if(rows.length){
-     const results=rows.map(x=>ownerReportPromo(x,promos.rules));
-     displayedReturn=results.reduce((sum,x)=>sum+x.value,0);
-     returnNote=results.some(x=>x.estimated)?' (คำนวณตามโปร ยังไม่บันทึกในสลิป)':'';
-     if(results.some(x=>x.conflict))returnNote+=' (มีโปรทับซ้อน ต้องตรวจสอบ)';
-    }
-   }
-  }catch(e){console.warn('Owner member promotion calculation unavailable',e)}
-
+  // Use this member's server-side summary; never scan every member's payments on profile open.
+  const hasReturn=Number.isFinite(Number(summ.returnEstimate))&&summ.returnEstimate!==undefined&&summ.returnEstimate!==null;
+  const displayedReturn=hasReturn?Number(summ.returnEstimate):null;
+  const returnNote=hasReturn?' (ข้อมูลสรุปจากระบบ)':' (ยังไม่มีข้อมูลสรุป — ไม่ได้ดึงสลิปทั้งหมด)';
   const field=(label,value)=>'<div style="padding:7px 0;border-bottom:1px solid #eee"><b>'+esc(label)+'</b>: '+esc(value||'—')+'</div>';
   const contact=cs.map((x,i)=>field('ผู้ติดต่อ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' '+String(x.phone||''))).join('');
   const bene=bs.map((x,i)=>field('ผู้รับผลประโยชน์ '+(i+1),String(x.firstName||'')+' '+String(x.lastName||'')+' / '+String(x.percent||0)+'%')).join('');
   box.innerHTML='<article id="ownerMemberPrintable" style="padding:20px;border:1px solid #dfe7f2;border-radius:12px;background:white"><h2>T2Project — ข้อมูลสมาชิก</h2>'+
    field('ชื่อ-นามสกุล',String(m.firstName||'')+' '+String(m.lastName||''))+field('รหัสสมาชิก',m.memberId)+field('เลขบัตร',m.citizenId)+field('ชื่อห้อง',ownerRoomInfo(m)?.room||m.room||m.adminId)+field('แอดมินผู้ดูแล',ownerRoomInfo(m)?.name||'ยังไม่พบการจับคู่ห้อง')+field('สถานะเข้าโปรไฟล์',typeof OWNER_MEMBERS.find(x=>String(x.memberId)===String(m.memberId))?.profileVisited==='boolean'?(OWNER_MEMBERS.find(x=>String(x.memberId)===String(m.memberId)).profileVisited?'เข้าโปรไฟล์แล้ว':'ยังไม่พบประวัติการเข้า'):'รอข้อมูลจาก Backend')+
    field('เบอร์โทร',p.phone)+field('อีเมล',p.email)+field('ธนาคาร',p.bank)+field('บัญชีธนาคาร',p.bankAccount)+field('ที่อยู่',p.address)+field('แผนที่',p.mapUrl)+
-   field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',money(displayedReturn)+returnNote)+
+   field('ยอดลงทุน',money(summ.investment))+field('จำนวนบิล',summ.billCount)+field('ผลตอบแทนตามโปร',displayedReturn===null?'ยังไม่มีข้อมูล'+returnNote:money(displayedReturn)+returnNote)+
    '<h3>ผู้ติดต่อ</h3>'+contact+'<h3>ผู้รับผลประโยชน์</h3>'+bene+'</article>';
  }catch(e){box.textContent='โหลดข้อมูลสมาชิกไม่ได้ กรุณาตรวจการ Deploy Backend รอบ 5'}
 }
@@ -130,7 +127,7 @@ function ownerShowSection(which){
  const ids={overview:'ownerOverviewSection',admins:'ownerAdminSection',members:'ownerMembersSection',reports:'ownerReportsSection',statement:'ownerStatementSection',disputes:'ownerDisputesSection',promos:'ownerPromosSection'};
  Object.entries(ids).forEach(([key,id])=>document.getElementById(id).classList.toggle('hidden',key!==which));
  document.querySelectorAll('[data-owner-nav]').forEach(button=>{if(button.dataset.ownerNav===which)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});
- if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='disputes')ownerRenderDisputes();if(which==='promos')ownerLoadPromos();
+ if(which==='admins'){ownerRenderAdmins();ownerAccessSummary();}if(which==='members'&&!OWNER_MEMBERS.length)loadOwnerMembers();if(which==='disputes'){if(REPORT.length)ownerRenderDisputes();else {const hint=document.getElementById('ownerDisputesSummary');if(hint)hint.textContent='ยังไม่ดึงรายการ — เลือกช่วงวันที่หน้า ภาพรวม แล้วกด อัปเดต Report ก่อน';}}if(which==='promos')ownerLoadPromos();
 }
 function ownerAdminKey(m){return String(m.adminId||m.admin_id||m.roomId||m.room_id||'ไม่ระบุห้อง').trim()}
 function ownerRenderAdmins(){
@@ -146,12 +143,7 @@ function ownerOpenAdmin(){
  const id=document.getElementById('ownerAdminSelect').value,box=document.getElementById('ownerAdminDetails');
  const admin=OWNER_ROOM_DIRECTORY.find(x=>x.room===id);
  if(!admin){box.textContent='กรุณาเลือกห้อง';return}
- const members=OWNER_MEMBERS.filter(m=>ownerRoomInfo(m)?.room===id);
- const citizens=new Set(members.map(m=>String(m.citizenId||m.citizen_id||m.documentId||'')).filter(Boolean));
- const payments=REPORT.filter(x=>citizens.has(String(x.citizenId||x.citizen_id||x.documentId||'')));
- const sum=payments.reduce((v,x)=>v+Number(x.amount||0),0);
- const accessKnown=members.every(m=>typeof m.profileVisited==='boolean');const entered=members.filter(m=>m.profileVisited===true).length;
- box.innerHTML='<h3>ห้อง '+esc(id)+' — '+esc(admin.name)+'</h3><p>รหัสผู้รับผิดชอบ '+esc(admin.code)+' · สมาชิก '+members.length.toLocaleString('th-TH')+' คน · เข้าโปรไฟล์ '+(accessKnown?entered+' คน / ยังไม่พบประวัติ '+(members.length-entered)+' คน':'รอ Backend')+' · สลิปในช่วงรายงาน '+payments.length.toLocaleString('th-TH')+' รายการ · ยอดเงิน '+money(sum)+'</p><p>รายชื่อสมาชิกและสลิปอ้างอิงข้อมูลที่โหลดได้ ไม่ใช่จำนวนบัญชีแอดมินที่เข้าใช้งานสำเร็จ</p><div class="tableWrap"><table><thead><tr><th>สมาชิก</th><th>รหัสสมาชิก</th><th>รายการสลิป</th><th>ยอด</th><th>ตรวจข้อมูล</th></tr></thead><tbody>'+members.map(m=>{const rs=payments.filter(x=>String(x.citizenId||x.citizen_id||'')===String(m.citizenId||m.citizen_id||m.documentId||''));const amount=rs.reduce((v,x)=>v+Number(x.amount||0),0);return '<tr><td>'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</td><td>'+esc(m.memberId||'')+'</td><td>'+rs.length+'</td><td>'+money(amount)+'</td><td><button type="button" data-member-id="'+esc(m.memberId||'')+'" onclick="ownerInspectMember(this.dataset.memberId)">เปิดสมาชิก</button></td></tr>'}).join('')+'</tbody></table></div>';
+ box.innerHTML='<h3>ห้อง '+esc(id)+' — '+esc(admin.name)+'</h3><p>ยังไม่ดึงข้อมูลสมาชิกและสลิปของห้องนี้ เพื่อไม่โหลดทั้งฐานอัตโนมัติ</p><p>ขั้นต่อไปจะเชื่อม API สรุปเฉพาะห้อง (จำนวนสมาชิก/สลิป/ยอดเงิน) โดยให้ Backend ตรวจสิทธิ์ทุกคำขอ</p>';
 }
 function ownerInspectMember(id){
  ownerShowSection('members');document.getElementById('ownerMemberSearch').value=id;filterOwnerMembers();
