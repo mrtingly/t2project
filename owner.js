@@ -77,13 +77,15 @@ function filterOwnerMembers(){
  if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>';
  const box=document.getElementById('ownerMemberDetail');
  if(q.length<2){if(box)box.textContent='กรุณาพิมพ์ชื่อหรือรหัสสมาชิกอย่างน้อย 2 ตัวอักษร';return}
+ if(q.length>100){if(box)box.textContent='คำค้นหายาวเกิน 100 ตัวอักษร';return}
  if(box)box.textContent='กำลังค้นหา...';
  ownerMemberSearchTimer=setTimeout(async()=>{
   try{
    const d=await call('searchOwnerMembers',{query:q,limit:20});
    if(seq!==ownerMemberSearchSeq)return;
    if(!d.ok||!Array.isArray(d.items))throw Error(d.message||'API ค้นหาสมาชิกยังไม่พร้อม');
-   OWNER_MEMBERS=d.items.slice(0,20);
+   // Fail closed: do not render an oversized or malformed backend response.
+   OWNER_MEMBERS=d.items.filter(m=>m&&typeof m==='object'&&m.memberId!=null).slice(0,20);
    if(el)el.innerHTML='<option value="">เลือกสมาชิก</option>'+OWNER_MEMBERS.map(m=>'<option value="'+esc(m.memberId)+'">'+esc(String(m.firstName||'')+' '+String(m.lastName||''))+'</option>').join('');
    if(box)box.textContent=OWNER_MEMBERS.length?'พบ '+OWNER_MEMBERS.length+' รายการ (แสดงสูงสุด 20 รายการ)':'ไม่พบสมาชิก';
   }catch(e){if(seq!==ownerMemberSearchSeq)return;if(box)box.textContent='ค้นหาไม่ได้: Backend ยังต้องรองรับ searchOwnerMembers';}
